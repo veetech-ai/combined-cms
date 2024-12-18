@@ -1,0 +1,162 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Enum for user roles
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// Enum for catalog status
+enum CatalogStatus {
+  ACTIVE
+  INACTIVE
+  ONLINE
+  OFFLINE
+}
+
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(255)
+  logo      String?  @db.VarChar(255)
+  website   String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  stores Store[]
+  users  User[]
+
+  @@map("organizations")
+}
+
+model Store {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  name           String   @db.VarChar(255)
+  location       String?  @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  users        User[]
+  aisles       Aisle[]
+  products     Product[]
+  searchEvents SearchEvent[]
+  catalogs     Catalog[]
+
+  @@map("stores")
+}
+
+model User {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String     @unique @db.VarChar(255)
+  password       String     @db.VarChar(255)
+  phone          String?    @db.VarChar(255)
+  address        String?    @db.VarChar(255)
+  name           String     @db.VarChar(255)
+  role           UserRole   @default(USER)
+  status         UserStatus @default(ACTIVE)
+  organizationId String?    @map("organization_id") @db.Uuid
+  storeId        String?    @map("store_id") @db.Uuid
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  organization  Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  store         Store?         @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token     String   @unique @db.Text
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Catalog {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  socketId  String?       @map("socket_id")
+  status    CatalogStatus @default(ACTIVE)
+  filePath  String?       @map("file_path")
+  storeId   String?       @map("store_id") @db.Uuid
+  lastSeen  DateTime?     @default(now()) @map("last_seen")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  store    Store?    @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  products Product[]
+
+  @@map("catalogs")
+}
+
+model Aisle {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String?  @map("store_id") @db.Uuid
+  number    Int
+  name      String   @db.VarChar(255)
+  category  String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  store        Store?        @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  products     Product[]
+  searchEvents SearchEvent[]
+
+  @@map("aisles")
+}
+
+model Product {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId   String?  @map("store_id") @db.Uuid
+  aisleId   String?  @map("aisle_id") @db.Uuid
+  catalogId String?  @map("catalog_id") @db.Uuid
+  name      String   @db.VarChar(255)
+  category  String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  store        Store?        @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  aisle        Aisle?        @relation(fields: [aisleId], references: [id], onDelete: SetNull)
+  catalog      Catalog?      @relation(fields: [catalogId], references: [id], onDelete: SetNull)
+  searchEvents SearchEvent[]
+
+  @@map("products")
+}
+
+model SearchEvent {
+  searchTerm String   @map("search_term") @db.VarChar(255)
+  matched    Boolean
+  time       DateTime @db.Timestamptz
+  storeId    String   @map("store_id") @db.Uuid
+  productId  String?  @map("product_id") @db.Uuid
+  aisleId    String?  @map("aisle_id") @db.Uuid
+  sessionId  String?  @map("session_id") @db.VarChar(255)
+  userAgent  String?  @map("user_agent") @db.VarChar(255)
+
+  store   Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  aisle   Aisle?   @relation(fields: [aisleId], references: [id], onDelete: SetNull)
+
+  @@id([time, storeId, searchTerm])
+  @@index([storeId, time(sort: Desc)])
+  @@index([productId, time(sort: Desc)])
+  @@index([aisleId, time(sort: Desc)])
+  @@index([searchTerm])
+  @@map("search_events")
+}
