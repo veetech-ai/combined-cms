@@ -13,6 +13,18 @@ export const getStores = asyncHandler(async (req: Request, res: Response) => {
 	res.json(stores);
 });
 
+export const getStoresByUser = asyncHandler(
+	async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) {
+			throw new ApiError(400, 'User ID is required');
+		}
+
+		const orgs = await storeService.getStoresByUser(userId);
+		res.json(orgs);
+	}
+);
+
 export const createStore = asyncHandler(async (req: Request, res: Response) => {
 	const { name, location, description, organizationId } = req.body;
 

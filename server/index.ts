@@ -75,7 +75,7 @@ const server = http.createServer(app);
 
 server.listen(config.port, async () => {
 	try {
-		const db = await new DBService(prisma).testConnection();
+		await new DBService(prisma).testConnection();
 		console.log(
 			`Server running on port ${config.port} (${process.env.NODE_ENV} mode)`
 		);

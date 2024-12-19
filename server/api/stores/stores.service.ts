@@ -24,6 +24,45 @@ export class StoreService extends DBService {
 		});
 	}
 
+	async getStoresByUser(userId: string) {
+		try {
+			// Get user with their role and store
+			const user = await this.db.user.findUnique({
+				where: { id: userId },
+				include: {
+					store: true,
+				},
+			});
+
+			if (!user) {
+				throw new Error('User not found');
+			}
+
+			// For SUPER_ADMIN, return all stores
+			if (user.role === 'SUPER_ADMIN') {
+				return this.db.store.findMany();
+			} 
+			// For ADMIN, return all stores of his org
+			else if (user.role === 'ADMIN') {
+				return this.db.store.findMany({
+					where: {
+						organizationId: user.organizationId,
+					},
+				});
+			}
+
+			// For all other roles, return only their store
+			if (user.storeId) {
+				return [user.store];
+			}
+
+			// If user has no store assigned
+			return [];
+		} catch (error) {
+			throw new Error('Failed to fetch organizations');
+		}
+	}
+
 	async getStoreById(id: string) {
 		return this.db.store.findUnique({
 			where: { id },

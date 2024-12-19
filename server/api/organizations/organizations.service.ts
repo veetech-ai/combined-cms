@@ -41,7 +41,7 @@ export class OrganizationService extends DBService {
 
 			// For SUPER_ADMIN, return all organizations
 			if (user.role === 'SUPER_ADMIN') {
-				return await this.db.organization.findMany();
+				return this.db.organization.findMany();
 			}
 
 			// For all other roles, return only their organization
