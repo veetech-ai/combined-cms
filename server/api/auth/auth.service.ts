@@ -1,14 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { DBService } from '../../services/db.service';
 
-export class AuthService {
-	private prisma: PrismaClient;
-
-	constructor(prisma: PrismaClient) {
-		this.prisma = prisma;
-	}
-
+export class AuthService extends DBService {
 	async findUserByEmail(email: string) {
-		return this.prisma.user.findUnique({
+		return this.db.user.findUnique({
 			where: { email },
 			select: {
 				id: true,
@@ -18,12 +12,13 @@ export class AuthService {
 				role: true,
 				organizationId: true,
 				storeId: true,
+				status: true,
 			},
 		});
 	}
 
 	async findUserById(id: string) {
-		return this.prisma.user.findUnique({
+		return this.db.user.findUnique({
 			where: { id },
 			select: {
 				id: true,
@@ -33,6 +28,7 @@ export class AuthService {
 				role: true,
 				organizationId: true,
 				storeId: true,
+				status: true,
 			},
 		});
 	}
@@ -42,7 +38,7 @@ export class AuthService {
 		userId: string,
 		expiresAt: Date
 	): Promise<void> {
-		await this.prisma.refreshToken.create({
+		await this.db.refreshToken.create({
 			data: {
 				token,
 				userId,
@@ -57,7 +53,7 @@ export class AuthService {
 		userId: string;
 		expiresAt: Date;
 	} | null> {
-		return this.prisma.refreshToken.findUnique({
+		return this.db.refreshToken.findUnique({
 			where: { token },
 			select: {
 				id: true,
@@ -69,13 +65,13 @@ export class AuthService {
 	}
 
 	async deleteRefreshToken(token: string): Promise<void> {
-		await this.prisma.refreshToken.delete({
+		await this.db.refreshToken.delete({
 			where: { token },
 		});
 	}
 
 	async deleteExpiredRefreshTokens(): Promise<void> {
-		await this.prisma.refreshToken.deleteMany({
+		await this.db.refreshToken.deleteMany({
 			where: {
 				expiresAt: {
 					lt: new Date(),

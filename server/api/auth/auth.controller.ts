@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 
 import { config } from '../../config';
 import { prisma } from '../../db';
+import { checkPassword } from '../../util/password';
 
 interface LoginRequest {
 	email: string;
@@ -15,6 +16,8 @@ interface LoginRequest {
 interface TokenPayload {
 	userId: string;
 	role: User['role'];
+	organizationId?: string;
+	storeId?: string;
 	rememberMe?: boolean;
 }
 
@@ -37,7 +40,7 @@ export const login = async (req, res) => {
 		}
 
 		// Verify password
-		const isValidPassword = await bcrypt.compare(password, user.password);
+		const isValidPassword = await checkPassword(password, user.password);
 		if (!isValidPassword) {
 			return res.status(401).json({ message: 'Invalid credentials' });
 		}
@@ -46,6 +49,8 @@ export const login = async (req, res) => {
 		const payload: TokenPayload = {
 			userId: user.id,
 			role: user.role,
+			organizationId: user.organizationId ?? undefined,
+			storeId: user.storeId ?? undefined,
 			rememberMe,
 		};
 

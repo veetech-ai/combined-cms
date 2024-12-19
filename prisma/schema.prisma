@@ -28,6 +28,12 @@ enum CatalogStatus {
   OFFLINE
 }
 
+enum ModuleStatus {
+  DISABLED
+  PENDING_APPROVAL
+  APPROVED
+}
+
 model Organization {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String   @db.VarChar(255)
@@ -39,6 +45,15 @@ model Organization {
   users  User[]
 
   @@map("organizations")
+}
+
+model Module {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  createdAt   DateTime      @default(now()) @map("created_at")
+  StoreModule StoreModule[]
+
+  @@map("modules")
 }
 
 model Store {
@@ -54,8 +69,21 @@ model Store {
   products     Product[]
   searchEvents SearchEvent[]
   catalogs     Catalog[]
+  storeModules StoreModule[]
 
   @@map("stores")
+}
+
+model StoreModule {
+  id       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId  String       @map("store_id") @db.Uuid
+  moduleId String       @map("module_id") @db.Uuid
+  status   ModuleStatus @default(DISABLED)
+
+  store  Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@map("store_modules")
 }
 
 model User {

@@ -1,22 +1,4 @@
-import pkg from 'pg';
-import { config } from '../config';
 import { PrismaClient } from '@prisma/client';
-const { Pool } = pkg;
-
-const pool = new Pool({
-	host: config.db.host,
-	port: config.db.port,
-	database: config.db.name,
-	user: config.db.user,
-	password: config.db.password,
-	ssl: config.db.ssl,
-});
-
-// Optional: add error handling
-pool.on('error', err => {
-	console.error('Unexpected error on idle client', err);
-	process.exit(-1);
-});
 
 class PrismaSingleton {
 	private static instance: PrismaClient;
@@ -46,5 +28,3 @@ class PrismaSingleton {
 }
 
 export const prisma = PrismaSingleton.getInstance();
-
-export default pool;
