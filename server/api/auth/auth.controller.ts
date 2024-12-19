@@ -1,11 +1,10 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
 import { AuthService } from './auth.service';
-
 import { config } from '../../config';
 import { prisma } from '../../db';
 import { checkPassword } from '../../util/password';
+import crypto from 'crypto';
+import { User } from '@prisma/client';
 
 interface LoginRequest {
 	email: string;
@@ -23,11 +22,24 @@ interface TokenPayload {
 
 // Token configuration
 const ACCESS_TOKEN_EXPIRY = config.jwt.accessTokenExpiry;
-const REFRESH_TOKEN_EXPIRY = config.jwt.refreshTokenExpiry;
 const JWT_SECRET = config.jwt.accessTokenSecret;
 const REFRESH_TOKEN_SECRET = config.jwt.refreshTokenSecret;
 
+const REFRESH_TOKEN_EXPIRY_MS_REMEMBER_ME = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+const REFRESH_TOKEN_EXPIRY_MS_DEFAULT = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+
 const authService = new AuthService(prisma);
+
+const encryptToken = (token: string): string => {
+	const cipher = crypto.createCipheriv(
+		'aes-256-cbc',
+		crypto.createHash('sha256').update(REFRESH_TOKEN_SECRET).digest(),
+		Buffer.alloc(16, 0) // Initialization vector (IV) set to zero
+	);
+	let encrypted = cipher.update(token, 'utf8', 'hex');
+	encrypted += cipher.final('hex');
+	return encrypted;
+};
 
 export const login = async (req, res) => {
 	try {
@@ -68,16 +80,21 @@ export const login = async (req, res) => {
 			expiresIn: ACCESS_TOKEN_EXPIRY,
 		});
 		const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET, {
-			expiresIn: rememberMe ? REFRESH_TOKEN_EXPIRY : '1d',
+			expiresIn: rememberMe
+				? `${REFRESH_TOKEN_EXPIRY_MS_REMEMBER_ME / 1000}s`
+				: `${REFRESH_TOKEN_EXPIRY_MS_DEFAULT / 1000}s`,
 		});
 
-		// Store refresh token in database
+		// Encrypt refresh token
+		const encryptedRefreshToken = encryptToken(refreshToken);
+
+		// Store encrypted refresh token in database
 		await authService.createRefreshToken(
-			refreshToken,
+			encryptedRefreshToken,
 			user.id,
 			rememberMe
-				? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-				: new Date(Date.now() + 24 * 60 * 60 * 1000)
+				? new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS_REMEMBER_ME)
+				: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS_DEFAULT)
 		);
 
 		// Set refresh token as HTTP-only cookie
@@ -85,11 +102,14 @@ export const login = async (req, res) => {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === 'production',
 			sameSite: 'strict',
-			maxAge: rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
+			maxAge: rememberMe
+				? REFRESH_TOKEN_EXPIRY_MS_REMEMBER_ME
+				: REFRESH_TOKEN_EXPIRY_MS_DEFAULT,
 		});
 
 		res.json({
 			accessToken,
+			expiresIn: ACCESS_TOKEN_EXPIRY,
 			user: {
 				id: user.id,
 				email: user.email,
@@ -113,7 +133,11 @@ export const refreshToken = async (req, res) => {
 	}
 
 	try {
-		const storedToken = await authService.findRefreshToken(refreshToken);
+		// Encrypt incoming refresh token for lookup
+		const encryptedRefreshToken = encryptToken(refreshToken);
+		const storedToken = await authService.findRefreshToken(
+			encryptedRefreshToken
+		);
 		if (!storedToken || storedToken.expiresAt < new Date()) {
 			return res.status(401).json({ message: 'Invalid refresh token' });
 		}
@@ -136,7 +160,9 @@ export const logout = async (req, res) => {
 	const refreshToken = req.cookies.refreshToken;
 
 	if (refreshToken) {
-		await authService.deleteRefreshToken(refreshToken);
+		// Encrypt incoming refresh token for deletion
+		const encryptedRefreshToken = encryptToken(refreshToken);
+		await authService.deleteRefreshToken(encryptedRefreshToken);
 	}
 
 	res.clearCookie('refreshToken');
