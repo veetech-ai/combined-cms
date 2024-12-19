@@ -84,11 +84,6 @@ export enum ROLES {
 	USER = 4,
 }
 
-interface AccessConfig {
-	entityType: 'organization' | 'store';
-	bypassRoles?: ROLES[];
-	requiresDbVerification?: boolean;
-}
 
 // Base middleware factory for role-based access
 export const checkAccess = (requiredAccessLevel: ROLES) => {

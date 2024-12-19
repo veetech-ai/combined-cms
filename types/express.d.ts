@@ -1,4 +1,4 @@
-import { ROLES } from '../server/middleware/auth';
+import { ROLES } from "../server/middleware/auth.middleware";
 
 declare namespace Express {
 	export interface Request {

@@ -10,8 +10,8 @@
 		"preview": "vite preview",
 		"server:dev": "tsx watch server/index.ts",
 		"start": "tsx server/index.ts",
-		"db:migrate": "prisma migrate dev",
-		"db:migrate:deploy": "prisma migrate deploy && npm run db:build",
+		"db:migrate:new": "prisma migrate dev",
+		"db:migrate": "prisma migrate deploy && npm run db:build",
 		"db:build": "prisma generate",
 		"db:seed": "tsx server/db/seeds/seed.ts",
 		"db:seed:production": "tsx server/db/seeds/production.ts"
@@ -35,9 +35,11 @@
 		"react": "^18.3.1",
 		"react-chartjs-2": "^5.2.0",
 		"react-dom": "^18.3.1",
+		"react-router-dom": "^7.0.2",
 		"recharts": "^2.12.2",
 		"winston": "^3.11.0",
-		"zod": "^3.22.4"
+		"zod": "^3.22.4",
+		"zustand": "^5.0.2"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.9.1",

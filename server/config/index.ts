@@ -19,7 +19,7 @@ const configSchema = z.object({
 		url: z.string().url(),
 	}),
 	cors: z.object({
-		origin: z.string().default('*'),
+		origin: z.string().default('http://localhost:5173'),
 		credentials: z.boolean().default(true),
 	}),
 	jwt: z.object({

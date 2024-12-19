@@ -25,6 +25,7 @@ export class OrganizationService extends DBService {
 			},
 		});
 	}
+
 	async getOrganizationsByUser(userId: string) {
 		try {
 			// Get user with their role and organization

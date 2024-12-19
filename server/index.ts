@@ -34,10 +34,13 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.use(express.json());
+
+
+// Use CORS middleware
 app.use(
 	cors({
-		origin: config!.cors.origin,
-		credentials: config!.cors.credentials, // Allow cookies and credentials
+		origin: config.cors.origin, // Replace with allowed origins
+		credentials: true, // Allow cookies and credentials
 	})
 );
 
@@ -54,9 +57,9 @@ app.use('/api/auth', authRoutes);
 // Protected routes example
 app.use('/api/v1', ensureValidToken); // Protect all routes under /api
 
-app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/organizations', organizationRoutes);
-app.use('/api/v1/stores', storeRoutes);
+app.use('/api/v1', userRoutes);
+app.use('/api/v1', organizationRoutes);
+app.use('/api/v1', storeRoutes);
 
 // not found handler for /api endpoints
 app.use('/api/*', (req, res) => {

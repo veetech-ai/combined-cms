@@ -33,6 +33,15 @@ export const login = async (req, res) => {
 	try {
 		const { email, password, rememberMe } = req.body as LoginRequest;
 
+		if (
+			!email ||
+			!email.trim().length ||
+			!password ||
+			!password.trim().length
+		) {
+			return res.status(400).json({ message: 'Invalid credentials' });
+		}
+
 		// Find user in database
 		const user = await authService.findUserByEmail(email);
 		if (!user) {

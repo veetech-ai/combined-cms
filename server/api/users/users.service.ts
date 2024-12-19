@@ -13,17 +13,19 @@ export class UserService extends DBService {
 		where?: Prisma.UserWhereInput;
 		orderBy?: Prisma.UserOrderByWithRelationInput;
 	}) {
-		return this.db.user.findMany({
+		const users = await this.db.user.findMany({
 			...params,
 			include: {
 				organization: true,
 				store: true,
 			},
 		});
+
+		return users.map(({ password, ...user }) => user);
 	}
 
 	async getUserById(id: string) {
-		return this.db.user.findUnique({
+		const { password, ...user } = await this.db.user.findUnique({
 			where: { id },
 			include: {
 				organization: true,
@@ -31,26 +33,36 @@ export class UserService extends DBService {
 				refreshTokens: true,
 			},
 		});
+
+		return user;
 	}
 
 	async getUserByEmail(email: string) {
-		return this.db.user.findUnique({
+		const { password, ...user } = await this.db.user.findUnique({
 			where: { email },
 			include: {
 				organization: true,
 				store: true,
 			},
 		});
+
+		return user;
 	}
 
 	async updateUser(id: string, data: Prisma.UserUpdateInput) {
 		return this.db.user.update({
 			where: { id },
 			data,
+			select: {
+				password: false,
+			},
 		});
 	}
 
 	async deleteUser(id: string) {
-		return this.db.user.delete({ where: { id } });
+		return this.db.user.delete({
+			where: { id },
+			select: { password: false },
+		});
 	}
 }

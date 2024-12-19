@@ -23,6 +23,12 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
 		throw new ApiError(400, 'Name, email, password, and role are required');
 	}
 
+	if (password.trim().length < 8) {
+		return res.status(400).json({
+			message: 'Password must be atleast of 8 characters',
+		});
+	}
+
 	// Validate role
 	if (!['USER', 'MANAGER', 'ADMIN'].includes(role)) {
 		throw new ApiError(400, 'Invalid role');
