@@ -1,10 +1,12 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { User } from "../../src/types";
-import { config } from "../config";
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { config } from '../config';
 import { AuthService } from '../api/auth/auth.service';
 import { prisma } from '../db';
 import { UserService } from '../api/users/users.service';
+import { StoreService } from '../api/stores/stores.service';
+import { OrganizationService } from '../api/organizations/organizations.service';
+import { User } from '@prisma/client';
 
 interface AuthRequest extends Request {
 	user?: User;
@@ -29,6 +31,7 @@ export const ensureValidToken = async (
 			userId: string;
 			role: User['role'];
 			exp?: number;
+			rememberMe: boolean;
 		};
 
 		// Check if token is close to expiry, if rememberMe is true
@@ -105,22 +108,40 @@ export const checkAccess = (requiredAccessLevel: ROLES) => {
 
 const userService = new UserService(prisma);
 
-// Generic entity access middleware factory
-export const createEntityAccessMiddleware = (config: AccessConfig) => {
+const organizationService = new OrganizationService();
+const storeService = new StoreService();
+
+type resourceType = 'user' | 'store' | 'organization' | 'module';
+interface EntityMiddlewareConfig {
+	entityType: 'organization' | 'store';
+	resource: resourceType;
+	bypassRoles?: ROLES[];
+}
+
+export const belongsToEntity = ({
+	entityType,
+	resource,
+	bypassRoles = [ROLES.SUPER_ADMIN],
+}: EntityMiddlewareConfig) => {
+	const services = {
+		user: userService,
+		organization: organizationService,
+		store: storeService,
+	};
+
 	return async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const {
-				entityType,
-				bypassRoles = [ROLES.SUPER_ADMIN],
-				requiresDbVerification = false,
-			} = config;
-
-			// Get the relevant IDs based on entity type
-			const accessedId = req.params.id;
 			const entityId =
 				entityType === 'organization'
 					? req.user.organizationId
 					: req.user.storeId;
+
+			const resourceId = req.params.id || req.body[`${entityType}Id`];
+
+			if (!(resource in services)) {
+				console.error(`Invalid resource type: ${resource}`);
+				return res.status(400).json({ error: 'Invalid resource type' });
+			}
 
 			// Check if user role bypasses restrictions
 			if (bypassRoles.includes(req.user.role as unknown as ROLES)) {
@@ -128,48 +149,82 @@ export const createEntityAccessMiddleware = (config: AccessConfig) => {
 			}
 
 			// Basic validation
-			if (!accessedId || !entityId) {
+			if (!entityId) {
 				return res.status(403).json({ error: 'Access denied' });
 			}
 
-			// Optional DB verification (if needed in the future)
-			if (requiresDbVerification) {
-				const user = await userService.getUserById(req.user.userId);
-				if (!user) {
-					return res.status(403).json({ error: 'User not found' });
-				}
+			// Fetch and validate the resource
 
-				const hasAccess =
-					entityType === 'organization'
-						? user.organizationId === accessedId
-						: user.storeId === accessedId;
+			const service = services[resource];
+			if (!service)
+				return res.status(403).json({ error: 'Access denied' });
 
-				if (hasAccess) {
-					return next();
-				} else {
-					return res.status(403).json({ error: 'Access denied' });
-				}
-			}
+			const resourceData = await service[
+				`get${capitalize(resource)}ById`
+			](resourceId);
 
-			// Direct ID comparison
-			if (accessedId === entityId) {
+			const hasAccess =
+				resourceData && resourceData[`${entityType}Id`] === entityId;
+
+			if (hasAccess) {
 				return next();
 			}
 
 			return res.status(403).json({ error: 'Access denied' });
 		} catch (error) {
+			console.error('Access validation error:', error);
 			return res.status(500).json({ error: 'Access validation failed' });
 		}
 	};
 };
 
-// Create specific middleware instances
-export const belongsToOrganization = createEntityAccessMiddleware({
+const capitalize = (str: string) =>
+	str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+
+export const belongsToOrganization = belongsToEntity({
 	entityType: 'organization',
+	resource: 'organization',
 	bypassRoles: [ROLES.SUPER_ADMIN],
 });
 
-export const belongsToStore = createEntityAccessMiddleware({
+export const belongsToStore = belongsToEntity({
 	entityType: 'store',
+	resource: 'store',
 	bypassRoles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
 });
+
+export const belongsToOrganizationOfStore = belongsToEntity({
+	entityType: 'organization',
+	resource: 'store',
+	bypassRoles: [ROLES.SUPER_ADMIN],
+});
+
+export const belongsToOrganizationOfUser = belongsToEntity({
+	entityType: 'organization',
+	resource: 'user',
+	bypassRoles: [ROLES.SUPER_ADMIN],
+});
+
+export const belongsToStoreOfOrganization = belongsToEntity({
+	entityType: 'store',
+	resource: 'organization',
+	bypassRoles: [ROLES.SUPER_ADMIN],
+});
+
+export const belongsToStoreOfUser = belongsToEntity({
+	entityType: 'store',
+	resource: 'user',
+	bypassRoles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+});
+
+/*
+
+belongsToOrganization
+belongsToStore
+
+belongsToOrganizationOf(Store)
+belongsToOrganizationOf(User)
+
+belongsToStoreOf(Organization)
+belongstoStoreOf(User)
+*/

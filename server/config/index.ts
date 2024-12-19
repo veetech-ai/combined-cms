@@ -31,6 +31,7 @@ const configSchema = z.object({
 	}),
 });
 
+
 const env = {
 	port: process.env.SERVER_PORT
 		? parseInt(process.env.SERVER_PORT)
@@ -71,5 +72,8 @@ export const config = (() => {
 			console.error(formatZodError(error));
 			process.exit(1);
 		}
+
+		// The following is technically unreachable but satisfies TypeScript:
+		throw new Error('Configuration initialization failed.');
 	}
 })();

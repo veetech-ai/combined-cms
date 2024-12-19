@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as storeController from './stores.controller';
 import {
 	belongsToOrganization,
+	belongsToOrganizationOfStore,
 	belongsToStore,
 	checkAccess,
 	ROLES,
@@ -21,7 +22,6 @@ router.post(
 router.put(
 	'/stores/:id',
 	checkAccess(ROLES.MANAGER),
-	belongsToOrganization,
 	belongsToStore,
 	storeController.updateStore
 );
@@ -29,7 +29,7 @@ router.put(
 router.delete(
 	'/stores/:id',
 	checkAccess(ROLES.ADMIN),
-	belongsToOrganization,
+	belongsToOrganizationOfStore,
 	storeController.deleteStore
 );
 

@@ -1,10 +1,11 @@
 import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db';
 
 export class DBService {
 	protected db: PrismaClient;
 
-	constructor(prisma: PrismaClient) {
-		this.db = prisma;
+	constructor(prismaC: PrismaClient = prisma) {
+		this.db = prismaC;
 	}
 
 	testConnection() {
