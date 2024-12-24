@@ -10,12 +10,13 @@ const configSchema = z.object({
 		.enum(['development', 'production', 'test'])
 		.default('development'),
 	db: z.object({
-		host: z.string(),
+		host: z.string().default('localhost'),
 		port: z.number().default(5432),
-		name: z.string().default('plct_core'),
-		user: z.string(),
-		password: z.string(),
+		name: z.string().default('app_db'),
+		user: z.string().default('postgres'),
+		password: z.string().default('postgres'),
 		ssl: z.boolean().default(false),
+		// DATABASE_URL is reauired by prisma, making it required so that developer doesn't forget to set it
 		url: z.string().url(),
 	}),
 	cors: z.object({
@@ -58,8 +59,8 @@ const env = {
 		refreshTokenSecret: process.env.JWT_REFRESH_TOKEN_SECRET,
 		accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY,
 		refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY,
-		refreshThreshold: process.env.JWT_REFRESH_THRESHOLD
-			? parseInt(process.env.JWT_REFRESH_THRESHOLD)
+		refreshThreshold: process.env.JWT_REFRESH_THRESHOLD_MS
+			? parseInt(process.env.JWT_REFRESH_THRESHOLD_MS)
 			: undefined,
 	},
 };
