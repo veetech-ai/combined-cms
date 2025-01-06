@@ -12,4 +12,10 @@ export interface TimeRangeParams {
   startDate?: string;
   endDate?: string;
   interval?: 'hour' | 'day' | 'week' | 'month';
-} 
+}
+
+export interface AuthenticationRequest extends Request {
+  user?: {
+    userId: string;
+  };
+}
