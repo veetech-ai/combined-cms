@@ -1,4 +1,11 @@
 import { Request, Response } from 'express';
+
+/**
+ * @swagger
+ * tags:
+ *   name: Stores
+ *   description: API for managing stores
+ */
 import { StoreService } from './stores.service';
 import { prisma } from '../../db';
 import { OrganizationService } from '../organizations/organizations.service';
@@ -9,11 +16,31 @@ import { AuthenticationRequest } from '../../types';
 const storeService = new StoreService(prisma);
 const organizationService = new OrganizationService(prisma);
 
+/**
+ * @swagger
+ * /stores:
+ *   get:
+ *     summary: Retrieve all stores
+ *     tags: [Stores]
+ *     responses:
+ *       200:
+ *         description: A list of stores
+ */
 export const getStores = asyncHandler(async (req: Request, res: Response) => {
   const stores = await storeService.getStores();
   res.json(stores);
 });
 
+/**
+ * @swagger
+ * /stores/user:
+ *   get:
+ *     summary: Retrieve stores by user
+ *     tags: [Stores]
+ *     responses:
+ *       200:
+ *         description: A list of stores for the authenticated user
+ */
 export const getStoresByUser = asyncHandler(
   async (req: AuthenticationRequest, res: Response) => {
     const userId = req.user?.userId;
@@ -26,6 +53,29 @@ export const getStoresByUser = asyncHandler(
   }
 );
 
+/**
+ * @swagger
+ * /stores:
+ *   post:
+ *     summary: Create a new store
+ *     tags: [Stores]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               organizationId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: The created store
+ */
 export const createStore = asyncHandler(async (req: Request, res: Response) => {
   const { name, location, organizationId } = req.body;
 
@@ -49,6 +99,38 @@ export const createStore = asyncHandler(async (req: Request, res: Response) => {
   res.status(201).json(newStore);
 });
 
+/**
+ * @swagger
+ * /stores/{id}:
+ *   put:
+ *     summary: Update an existing store
+ *     tags: [Stores]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: The ID of the store
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               organizationId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: The updated store
+ */
 export const updateStore = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, location, description, organizationId } = req.body;
@@ -73,6 +155,23 @@ export const updateStore = asyncHandler(async (req: Request, res: Response) => {
   res.json(updatedStore);
 });
 
+/**
+ * @swagger
+ * /stores/{id}:
+ *   delete:
+ *     summary: Delete a store
+ *     tags: [Stores]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: The ID of the store
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Store deleted
+ */
 export const deleteStore = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   await storeService.deleteStore(id);

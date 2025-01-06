@@ -1,14 +1,35 @@
 import path from 'path';
 import http from 'http';
-
 import { fileURLToPath } from 'url';
-
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan'; // Import morgan
+import swaggerJSDoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 import { config } from './config';
+
+// Swagger configuration
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Combined CMS API',
+      version: '1.0.0',
+      description: 'API documentation for the Combined CMS application',
+    },
+    servers: [
+      {
+        url: `http://localhost:${config.port}`,
+        description: 'Development server',
+      },
+    ],
+  },
+  apis: ['./server/api/**/*.ts'], // Path to the API routes
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
 import { errorHandler } from './middleware/error.middleware';
 import { ensureValidToken } from './middleware/auth.middleware';
@@ -34,6 +55,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.use(express.json());
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 // Use CORS middleware
