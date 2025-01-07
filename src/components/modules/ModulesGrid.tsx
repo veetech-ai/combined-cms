@@ -1,16 +1,24 @@
 import React from 'react';
-import ModuleCard from './ModuleCard';
-import { useCustomerModules } from '../../hooks/useCustomerModules';
+import { useCustomer } from '../../contexts/CustomerContext';
 import CustomerSelect from '../common/CustomerSelect';
+import { ModuleCard } from './ModuleCard';
+import { useState } from 'react';
 
 export default function ModulesGrid() {
-  const {
-    selectedCustomerId,
-    setSelectedCustomerId,
-    customerModules,
-    customers,
-    handleModuleToggle,
-  } = useCustomerModules();
+  const { state: { customers }, dispatch } = useCustomer();
+  const [selectedCustomerId, setSelectedCustomerId] = useState(customers[0]?.id || '');
+
+  const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+  const customerModules = selectedCustomer?.modules || [];
+
+  const handleModuleToggle = (moduleId: string, enabled: boolean) => {
+    if (selectedCustomerId) {
+      dispatch({
+        type: 'UPDATE_MODULE',
+        payload: { customerId: selectedCustomerId, storeId: null, moduleId, enabled }
+      });
+    }
+  };
 
   if (!customers || customers.length === 0) {
     return (

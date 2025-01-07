@@ -23,7 +23,7 @@ interface ModuleCardProps {
   onToggle: (enabled: boolean) => void;
 }
 
-export default function ModuleCard({ module, onToggle }: ModuleCardProps) {
+export function ModuleCard({ module, onToggle }: ModuleCardProps) {
   const Icon = moduleIcons[module.id as keyof typeof moduleIcons] || Store;
 
   return (
@@ -37,10 +37,18 @@ export default function ModuleCard({ module, onToggle }: ModuleCardProps) {
             <h3 className="font-semibold text-gray-900">{module.name}</h3>
           </div>
         </div>
-        <ToggleSwitch
-          enabled={module.isEnabled}
-          onChange={onToggle}
-        />
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle(!module.isEnabled);
+          }}
+        >
+          <ToggleSwitch
+            enabled={module.isEnabled}
+            onChange={(enabled) => onToggle(enabled)}
+            size="md"
+          />
+        </div>
       </div>
 
       <div className="border-t pt-4 mt-4">

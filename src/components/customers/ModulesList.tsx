@@ -17,11 +17,13 @@ export default function ModulesList({ modules, onToggle }: ModulesListProps) {
       {modules.map((module) => (
         <div key={module.id} className="flex items-center justify-between text-sm">
           <span className="text-gray-700">{module.name}</span>
-          <ToggleSwitch
-            enabled={module.isEnabled}
-            onChange={(enabled) => onToggle(module.id, enabled)}
-            size="sm"
-          />
+          <div onClick={(e) => e.stopPropagation()}>
+            <ToggleSwitch
+              enabled={module.isEnabled}
+              onChange={(enabled) => onToggle(module.id, enabled)}
+              size="sm"
+            />
+          </div>
         </div>
       ))}
     </div>

@@ -36,8 +36,17 @@ export default function StoreCard({ store, onClick, onModuleToggle }: StoreCardP
 
       <div>
         <h4 className="font-medium text-sm text-gray-700 mb-2">Active Modules</h4>
-        <div className="text-sm text-gray-500">
-          {store.modules.filter(m => m.isEnabled).length} of {store.modules.length} enabled
+        <div 
+          className="text-sm text-gray-500" 
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          <ModulesList
+            modules={store.modules}
+            onToggle={onModuleToggle}
+          />
         </div>
       </div>
     </div>

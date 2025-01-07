@@ -4,6 +4,8 @@ import { Store } from '../../types/store';
 import StoreInfo from './StoreInfo';
 import StoreOperatingHours from './StoreOperatingHours';
 import StoreModulesSection from './StoreModulesSection';
+import StoreMenuSection from './StoreMenuSection';
+import CollapsibleSection from '../common/CollapsibleSection';
 import ModuleManagementView from '../modules/ModuleManagementView';
 
 interface StoreDetailsViewProps {
@@ -37,8 +39,8 @@ export default function StoreDetailsView({
   }
 
   return (
-    <div>
-      <div className="flex items-center space-x-4 mb-6">
+    <div className="max-w-7xl mx-auto">
+      <div className="flex items-center space-x-4 mb-8">
         <button
           onClick={onBack}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -51,21 +53,35 @@ export default function StoreDetailsView({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <StoreInfo store={store} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm">
+          <CollapsibleSection title="Store Information">
+            <StoreInfo store={store} />
+          </CollapsibleSection>
         </div>
-
-        <div className="md:col-span-2 bg-white rounded-xl shadow-sm p-6">
-          <StoreOperatingHours operatingHours={store.operatingHours} />
+        <div className="bg-white rounded-xl shadow-sm">
+          <CollapsibleSection title="Operating Hours">
+            <StoreOperatingHours operatingHours={store.operatingHours} />
+          </CollapsibleSection>
         </div>
       </div>
 
-      <StoreModulesSection
-        modules={store.modules}
-        onModuleToggle={onModuleToggle}
-        onModuleClick={setSelectedModuleId}
-      />
+      <div className="mb-8">
+        <CollapsibleSection title="Menu Management">
+          <StoreMenuSection storeId={store.id} />
+        </CollapsibleSection>
+      </div>
+
+      <CollapsibleSection 
+        title="Store Modules" 
+        subtitle="Manage your store's active modules and devices"
+      >
+        <StoreModulesSection
+          modules={store.modules}
+          onModuleToggle={onModuleToggle}
+          onModuleClick={setSelectedModuleId}
+        />
+      </CollapsibleSection>
     </div>
   );
 }

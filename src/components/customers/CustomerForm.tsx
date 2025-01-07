@@ -14,7 +14,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Customer Name
+            Customer Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -27,7 +27,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Company Name
+            Company Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -40,7 +40,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email Address
+            Email Address <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -53,7 +53,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Phone Number
+            Phone Number <span className="text-red-500">*</span>
           </label>
           <input
             type="tel"
@@ -70,7 +70,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Street Address
+              Street Address <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -83,7 +83,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              City
+              City <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -96,7 +96,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              State
+              State <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -109,7 +109,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              ZIP Code
+              ZIP Code <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -122,7 +122,7 @@ export default function CustomerForm({ formData, onChange }: CustomerFormProps) 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Country
+              Country <span className="text-red-500">*</span>
             </label>
             <input
               type="text"

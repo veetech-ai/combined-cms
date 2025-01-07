@@ -17,7 +17,7 @@ const moduleIcons = {
 };
 
 const moduleLabels = {
-  venu: 'Venu (Video Menu)',
+  venu: 'Venu (Digital Menu)',
   kiosk: 'Kiosk System',
   kitchen: 'Kitchen Display',
   rewards: 'Rewards Program',
@@ -30,8 +30,6 @@ export default function StoreModulesSection({
 }: StoreModulesSectionProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-800">Store Modules</h2>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {modules.map((module) => {
           const Icon = moduleIcons[module.id as keyof typeof moduleIcons] || Store;
@@ -39,7 +37,7 @@ export default function StoreModulesSection({
           return (
             <div 
               key={module.id}
-              className={`bg-white rounded-xl shadow-sm p-6 ${
+              className={`border border-gray-200 rounded-lg p-6 ${
                 module.isEnabled ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
               }`}
               onClick={() => module.isEnabled && onModuleClick(module.id)}
@@ -77,13 +75,19 @@ export default function StoreModulesSection({
 
               {module.isEnabled && (
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-gray-50/50 p-4 rounded-lg">
                     <h4 className="text-sm font-medium text-gray-700">Active Devices</h4>
-                    <p className="text-2xl font-bold mt-1">0</p>
+                    <p className="text-2xl font-bold mt-1">
+                      {module.stats?.activeDevices?.toLocaleString() || '0'}
+                    </p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-gray-50/50 p-4 rounded-lg">
                     <h4 className="text-sm font-medium text-gray-700">Last Updated</h4>
-                    <p className="text-sm font-medium mt-1">Just now</p>
+                    <p className="text-sm font-medium mt-1">
+                      {module.stats?.lastUpdated 
+                        ? new Date(module.stats.lastUpdated).toLocaleString() 
+                        : 'Never'}
+                    </p>
                   </div>
                 </div>
               )}
