@@ -2,6 +2,13 @@ import { Customer } from '../types/customer';
 import { DEFAULT_MODULES } from '../types/module';
 import { DEFAULT_POS_INTEGRATION } from '../types/pos';
 
+const moduleStats = {
+  venu: { activeDevices: 12, activeUsers: 45, lastUpdated: new Date().toISOString() },
+  kiosk: { activeDevices: 8, activeUsers: 32, lastUpdated: new Date().toISOString() },
+  kitchen: { activeDevices: 6, activeUsers: 24, lastUpdated: new Date().toISOString() },
+  rewards: { activeDevices: 1, activeUsers: 89, lastUpdated: new Date().toISOString() }
+};
+
 export const mockCustomers: Customer[] = [
   {
     id: '1',
@@ -25,7 +32,11 @@ export const mockCustomers: Customer[] = [
         state: 'CA',
         zipCode: '94105',
         phone: '(555) 987-6543',
-        modules: DEFAULT_MODULES.map(m => ({ ...m, isEnabled: false })),
+        modules: DEFAULT_MODULES.map(m => ({ 
+          ...m, 
+          isEnabled: true,
+          stats: moduleStats[m.id as keyof typeof moduleStats]
+        })),
         operatingHours: {
           monday: { open: '09:00', close: '21:00' },
           tuesday: { open: '09:00', close: '21:00' },
@@ -37,7 +48,11 @@ export const mockCustomers: Customer[] = [
         }
       }
     ],
-    modules: DEFAULT_MODULES.map(m => ({ ...m, isEnabled: false })),
+    modules: DEFAULT_MODULES.map(m => ({ 
+      ...m, 
+      isEnabled: true,
+      stats: moduleStats[m.id as keyof typeof moduleStats]
+    })),
     primaryContact: {
       name: 'John Smith',
       email: 'john@example.com',

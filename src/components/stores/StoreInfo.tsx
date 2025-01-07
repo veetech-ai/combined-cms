@@ -8,21 +8,27 @@ interface StoreInfoProps {
 
 export default function StoreInfo({ store }: StoreInfoProps) {
   return (
-    <>
-      <h3 className="font-medium text-gray-700 mb-4">Store Information</h3>
-      <div className="space-y-4">
-        <div className="flex items-start space-x-2">
-          <MapPin size={18} className="text-gray-400 mt-0.5" />
-          <div className="text-sm">
-            <p>{store.address}</p>
-            <p>{store.city}, {store.state} {store.zipCode}</p>
-          </div>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="flex items-start space-x-3">
+        <div className="p-1.5 bg-blue-50 rounded-lg">
+          <MapPin className="w-4 h-4 text-blue-600" />
         </div>
-        <div className="flex items-center space-x-2">
-          <Phone size={18} className="text-gray-400" />
-          <span className="text-sm">{store.phone}</span>
+        <div className="min-w-0">
+          <h4 className="text-sm font-medium text-gray-900">Address</h4>
+          <p className="text-sm text-gray-600 truncate">{store.address}</p>
+          <p className="text-sm text-gray-600">{store.city}, {store.state} {store.zipCode}</p>
         </div>
       </div>
-    </>
+
+      <div className="flex items-start space-x-3">
+        <div className="p-1.5 bg-blue-50 rounded-lg">
+          <Phone className="w-4 h-4 text-blue-600" />
+        </div>
+        <div>
+          <h4 className="text-sm font-medium text-gray-900">Contact</h4>
+          <p className="text-sm text-gray-600">{store.phone}</p>
+        </div>
+      </div>
+    </div>
   );
 }

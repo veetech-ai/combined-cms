@@ -8,7 +8,14 @@ export const createDefaultStore = (): Omit<Store, 'id'> => ({
   state: '',
   zipCode: '',
   phone: '',
-  modules: [...DEFAULT_MODULES],
+  modules: DEFAULT_MODULES.map(module => ({
+    ...module,
+    stats: {
+      activeUsers: 0,
+      activeDevices: 0,
+      lastUpdated: new Date().toISOString()
+    }
+  })),
   operatingHours: {
     monday: { open: '09:00', close: '17:00' },
     tuesday: { open: '09:00', close: '17:00' },

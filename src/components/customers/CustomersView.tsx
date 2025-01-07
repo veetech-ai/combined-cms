@@ -1,39 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus } from 'lucide-react';
 import CustomerCard from './CustomerCard';
 import CustomerDetailsView from './CustomerDetailsView';
 import AddCustomerModal from './AddCustomerModal';
 import { Customer } from '../../types/customer';
-import { mockCustomers } from '../../data/mockData';
+import { useCustomer } from '../../contexts/CustomerContext';
 import SearchInput from '../common/SearchInput';
 
 export default function CustomersView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { state: { customers }, dispatch } = useCustomer();
 
-  const handleModuleToggle = (customerId: string, storeId: string, moduleId: string, enabled: boolean) => {
-    setCustomers(prevCustomers => 
-      prevCustomers.map(customer => {
-        if (customer.id !== customerId) return customer;
-        
-        return {
-          ...customer,
-          stores: customer.stores.map(store => {
-            if (store.id !== storeId) return store;
-            
-            return {
-              ...store,
-              modules: store.modules.map(module => 
-                module.id === moduleId ? { ...module, isEnabled: enabled } : module
-              )
-            };
-          })
-        };
-      })
-    );
+  const handleModuleToggle = (customerId: string, storeId: string | null, moduleId: string, enabled: boolean) => {
+    dispatch({
+      type: 'UPDATE_MODULE',
+      payload: { customerId, storeId, moduleId, enabled }
+    });
   };
+
+  // Keep selected customer in sync with store updates
+  useEffect(() => {
+    if (selectedCustomer) {
+      const updatedCustomer = customers.find(c => c.id === selectedCustomer.id);
+      setSelectedCustomer(updatedCustomer || null);
+    }
+  }, [customers, selectedCustomer?.id]);
 
   const filteredCustomers = customers.filter(customer => 
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,15 +84,15 @@ export default function CustomersView() {
       <AddCustomerModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={(customerData) => {
+        onAdd={async (customerData) => {
           const newCustomer: Customer = {
             ...customerData,
-            id: `customer-${Date.now()}`,
-            avatar: `https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000)}?w=32&h=32&fit=crop&crop=faces`,
+            id: `customer-${Date.now()}`, 
+            avatar: customerData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(customerData.name)}&background=random`,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
-          setCustomers(prev => [...prev, newCustomer]);
+          dispatch({ type: 'ADD_CUSTOMER', payload: newCustomer });
           setIsModalOpen(false);
         }}
       />

@@ -26,7 +26,7 @@ export default function CustomerCard({ customer, onClick }: CustomerCardProps) {
             <p className="text-sm text-gray-500">{customer.company}</p>
           </div>
         </div>
-        <StatusBadge status={customer.subscription.status} />
+        <StatusBadge status={customer.subscription.status === 'active' ? 'active' : 'inactive'} />
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-4">
@@ -56,7 +56,12 @@ export default function CustomerCard({ customer, onClick }: CustomerCardProps) {
       </div>
 
       <div className="text-sm text-gray-500">
-        <p>Click to view stores and details</p>
+        <div className="flex items-center justify-between">
+          <p>Click to view stores and details</p>
+          <StatusBadge 
+            status={customer.posIntegration.status === 'synced' ? 'active' : 'pending'} 
+          />
+        </div>
       </div>
     </div>
   );

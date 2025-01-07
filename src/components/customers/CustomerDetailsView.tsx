@@ -116,7 +116,7 @@ export default function CustomerDetailsView({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {customer.stores.map((store) => (
                 <StoreCard
-                  key={store.id}
+                  key={`${customer.id}-${store.id}`}
                   store={store}
                   onClick={() => setSelectedStore(store.id)}
                   onModuleToggle={(moduleId, enabled) => onModuleToggle(store.id, moduleId, enabled)}

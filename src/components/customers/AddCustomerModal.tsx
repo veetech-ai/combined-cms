@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, UserCircle, Camera } from 'lucide-react';
 import { Customer, Store } from '../../types/customer';
+import { DEFAULT_MODULES } from '../../types/module';
+import { DEFAULT_POS_INTEGRATION } from '../../types/pos';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -36,6 +38,21 @@ const defaultStore: Omit<Store, 'id'> = {
 
 export default function AddCustomerModal({ isOpen, onClose, onAdd }: AddCustomerModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const [formData, setFormData] = useState({
     // Customer Details
     name: '',
@@ -59,7 +76,7 @@ export default function AddCustomerModal({ isOpen, onClose, onAdd }: AddCustomer
     // Subscription
     subscription: {
       plan: 'basic' as const,
-      status: 'pending' as const,
+      status: 'active' as const,
       startDate: new Date().toISOString(),
       renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
     },
@@ -74,12 +91,36 @@ export default function AddCustomerModal({ isOpen, onClose, onAdd }: AddCustomer
       return;
     }
     
+    const storesWithIds = formData.stores.map(store => ({
+      ...store,
+      id: `store-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      modules: store.modules.map(m => ({
+        ...m,
+        stats: {
+          activeUsers: 0,
+          activeDevices: 0,
+          lastUpdated: new Date().toISOString()
+        }
+      }))
+    }));
+
     const newCustomer: Omit<Customer, 'id' | 'avatar' | 'createdAt' | 'updatedAt'> = {
       ...formData,
+      stores: storesWithIds,
       posIntegration: {
+        ...DEFAULT_POS_INTEGRATION,
         status: 'pending',
         type: 'None',
+        provider: 'None'
       },
+      modules: DEFAULT_MODULES.map(m => ({
+        ...m,
+        stats: {
+          activeUsers: 0,
+          activeDevices: 0,
+          lastUpdated: new Date().toISOString()
+        }
+      }))
     };
 
     onAdd(newCustomer);
@@ -103,7 +144,7 @@ export default function AddCustomerModal({ isOpen, onClose, onAdd }: AddCustomer
       },
       subscription: {
         plan: 'basic',
-        status: 'pending',
+        status: 'active' as const,
         startDate: new Date().toISOString(),
         renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       },
@@ -159,6 +200,43 @@ export default function AddCustomerModal({ isOpen, onClose, onAdd }: AddCustomer
             <div className="space-y-4">
               <h3 className="text-lg font-medium mb-4">Customer Information</h3>
               
+              <div className="flex items-center space-x-6 mb-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100">
+                    {avatarPreview ? (
+                      <img 
+                        src={avatarPreview} 
+                        alt="Avatar preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <UserCircle size={64} />
+                      </div>
+                    )}
+                  </div>
+                  <label 
+                    htmlFor="avatar-upload" 
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
+                  >
+                    <Camera size={16} />
+                  </label>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Company Logo</h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Upload a company logo or profile picture
+                  </p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -355,10 +433,9 @@ export default function AddCustomerModal({ isOpen, onClose, onAdd }: AddCustomer
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Role
+                    Access Level
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={formData.primaryContact.role}
                     onChange={(e) => setFormData({
@@ -366,7 +443,17 @@ export default function AddCustomerModal({ isOpen, onClose, onAdd }: AddCustomer
                       primaryContact: { ...formData.primaryContact, role: e.target.value }
                     })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  >
+                    <option value="">Select access level...</option>
+                    <option value="super_admin">Super Admin (Full Access)</option>
+                    <option value="admin">Admin (Organization Access)</option>
+                    <option value="manager">Manager (Store Access)</option>
+                  </select>
+                  <p className="mt-1 text-sm text-gray-500">
+                    <span className="block">• Super Admin: Full system access and configuration</span>
+                    <span className="block">• Admin: Organization-wide settings and management</span>
+                    <span className="block">• Manager: Store-level operations and reporting</span>
+                  </p>
                 </div>
               </div>
 
