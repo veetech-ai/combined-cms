@@ -9,8 +9,39 @@ const USER_PASSORD_DEV = '123456';
 async function seedOrganizations(count: number) {
 	const organizations = Array.from({ length: count }).map(() => ({
 		name: faker.company.name(),
+		email: faker.internet.email(),
+		company: faker.company.name(),
+		phone: faker.phone.number(),
 		logo: faker.image.urlLoremFlickr(),
 		website: faker.internet.url(),
+		
+		// Billing Address
+		billingStreet: faker.location.street(),
+		billingCity: faker.location.city(),
+		billingState: faker.location.state(),
+		billingZip: faker.location.zipCode(),
+		billingCountry: faker.location.country(),
+		
+		// Primary Contact
+		contactName: faker.person.fullName(),
+		contactEmail: faker.internet.email(),
+		contactPhone: faker.phone.number(),
+		contactRole: faker.person.jobTitle(),
+		
+		// Subscription
+		subscriptionPlan: faker.helpers.arrayElement(['BASIC', 'PREMIUM', 'ENTERPRISE']),
+		subscriptionStatus: faker.helpers.arrayElement(['ACTIVE', 'PENDING', 'CANCELLED']),
+		subscriptionStart: faker.date.past(),
+		subscriptionRenewal: faker.date.future(),
+		
+		// POS Integration
+		posType: faker.helpers.arrayElement(['NONE', 'SQUARE', 'CLOVER', 'STRIPE', 'CUSTOM']),
+		posProvider: faker.helpers.arrayElement(['Square', 'Clover', 'Stripe', null]),
+		posConfig: {
+			webhookUrl: faker.internet.url(),
+			apiKey: faker.string.uuid(),
+			settings: {}
+		}
 	}));
 
 	const result = await prisma.organization.createMany({
