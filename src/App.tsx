@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import {
-    BrowserRouter as Router,
-    Routes,
-    Route,
-    Navigate,
-    useLocation,
-    useNavigate,
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate
 } from 'react-router-dom';
 import { CustomerProvider } from './contexts/CustomerContext';
 import Sidebar from './components/Sidebar';
@@ -22,72 +22,82 @@ import { ROUTES } from './constants/route-names';
 import { useAuthStore } from './stores/auth-store';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    const { checkAuth, isAuthenticated } = useAuthStore();
-    const location = useLocation();
+  const { checkAuth, isAuthenticated, token } = useAuthStore();
+  const location = useLocation();
 
-    useEffect(() => {
-        checkAuth();
-    }, [checkAuth]);
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
-    }
+  if (!isAuthenticated && !localStorage.getItem('access_token')) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-    return <>{children}</>;
+  return <>{children}</>;
 }
 
 const App = () => {
-    return (
-        <Router>
-            <CustomerProvider>
-                <div className="min-h-screen bg-gray-50">
-                    <Routes>
-                        {/* Public Route */}
-                        <Route path="/login" element={<Login />} />
-                        
-                        {/* Protected Routes */}
-                        <Route
-                            path="/*"
-                            element={
-                                <ProtectedRoute>
-                                    <MainLayout />
-                                </ProtectedRoute>
-                            }
-                        />
-                    </Routes>
-                </div>
-            </CustomerProvider>
-        </Router>
-    );
+  useEffect(() => {
+    const isAuthenticated = useAuthStore.getState().checkAuth();
+    if (!isAuthenticated) {
+      // Optionally handle redirection logic here
+    }
+  }, []);
+
+  return (
+    <Router>
+      <CustomerProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            {/* Public Route */}
+            <Route path="/login" element={<Login />} />
+
+            {/* Protected Routes */}
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </div>
+      </CustomerProvider>
+    </Router>
+  );
 };
 
 const MainLayout = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const handleNavigation = (path: string) => {
-        navigate(path);
-    };
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
-    return (
-        <div>
-            <Sidebar onNavigate={handleNavigation} />
-            <div className="ml-64">
-                <Header />
-                <div className="mt-16">
-                    <Routes>
-                        <Route path={ROUTES.DASHBOARD} element={<DashboardContent />} />
-                        <Route path={ROUTES.CUSTOMERS} element={<CustomersView />} />
-                        <Route path={ROUTES.MODULES} element={<ModulesView />} />
-                        <Route path={ROUTES.POS} element={<PosIntegrationView />} />
-                        <Route path={ROUTES.ANALYTICS} element={<AnalyticsView />} />
-                        <Route path={ROUTES.STORES} element={<StoresView />} />
-                        <Route path="/menus/:storeId" element={<MenusPage />} />
-                        <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-                    </Routes>
-                </div>
-            </div>
+  return (
+    <div>
+      <Sidebar onNavigate={handleNavigation} />
+      <div className="ml-64">
+        <Header />
+        <div className="mt-16">
+          <Routes>
+            <Route path={ROUTES.DASHBOARD} element={<DashboardContent />} />
+            <Route path={ROUTES.CUSTOMERS} element={<CustomersView />} />
+            <Route path={ROUTES.MODULES} element={<ModulesView />} />
+            <Route path={ROUTES.POS} element={<PosIntegrationView />} />
+            <Route path={ROUTES.ANALYTICS} element={<AnalyticsView />} />
+            <Route path={ROUTES.STORES} element={<StoresView />} />
+            <Route path="/menus/:storeId" element={<MenusPage />} />
+            <Route
+              path="*"
+              element={<Navigate to={ROUTES.DASHBOARD} replace />}
+            />
+          </Routes>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default App;

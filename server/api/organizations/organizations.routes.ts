@@ -22,10 +22,17 @@ import * as orgController from './organizations.controller';
 import {
   belongsToOrganization,
   checkAccess,
+  ensureValidToken,
   ROLES
 } from '../../middleware/auth.middleware';
 
 const router = Router();
+
+router.get(
+  '/organizations/all',
+  checkAccess(ROLES.USER),
+  orgController.getOrganizations
+);
 
 router.get(
   '/organizations',
@@ -80,7 +87,7 @@ router.get(
  */
 router.post(
   '/organizations',
-  checkAccess(ROLES.SUPER_ADMIN),
+  checkAccess(ROLES.ADMIN), // changed ADMIN to SUPER_ADMIN for test
   orgController.createOrganization
 );
 

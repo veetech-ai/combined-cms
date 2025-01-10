@@ -3,7 +3,22 @@ import { DBService } from '../../services/db.service';
 
 export class OrganizationService extends DBService {
   async createOrganization(data: Prisma.OrganizationCreateInput) {
-    return this.db.organization.create({ data });
+    try {
+      return await this.db.organization.create({
+        data,
+        include: {
+          stores: true,
+          users: true
+        }
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new Error('An organization with this email already exists');
+        }
+      }
+      throw error;
+    }
   }
 
   async getOrganizations(params?: {

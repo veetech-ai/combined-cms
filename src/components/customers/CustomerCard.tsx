@@ -1,67 +1,61 @@
 import React from 'react';
-import { Store, UserCircle, CreditCard } from 'lucide-react';
-import { Customer } from '../../types/customer';
-import StatusBadge from '../common/StatusBadge';
+import { Building2, Users, Calendar } from 'lucide-react';
+import { Organization } from '../../types';
 
 interface CustomerCardProps {
-  customer: Customer;
+  customer: Organization;
   onClick: () => void;
 }
 
 export default function CustomerCard({ customer, onClick }: CustomerCardProps) {
   return (
-    <div 
+    <div
       onClick={onClick}
-      className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">{customer.name}</h3>
+          <p className="text-sm text-gray-500">{customer.company}</p>
+        </div>
+        {customer.logo && (
           <img
-            src={customer.avatar}
-            alt=""
-            className="w-12 h-12 rounded-full"
+            src={customer.logo}
+            alt={`${customer.name} logo`}
+            className="w-12 h-12 rounded-full object-cover"
           />
-          <div>
-            <h3 className="font-semibold text-gray-900">{customer.name}</h3>
-            <p className="text-sm text-gray-500">{customer.company}</p>
-          </div>
-        </div>
-        <StatusBadge status={customer.subscription.status === 'active' ? 'active' : 'inactive'} />
+        )}
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="text-sm">
-          <div className="flex items-center space-x-1 text-gray-500 mb-1">
-            <Store size={16} />
-            <span>Stores</span>
-          </div>
-          <p className="font-medium">{customer.stores.length}</p>
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center text-sm text-gray-600">
+          <Building2 size={16} className="mr-2" />
+          <span>{customer.stores?.length || 0} Stores</span>
+        </div>
+        
+        <div className="flex items-center text-sm text-gray-600">
+          <Users size={16} className="mr-2" />
+          <span>{customer.users?.length || 0} Users</span>
         </div>
 
-        <div className="text-sm">
-          <div className="flex items-center space-x-1 text-gray-500 mb-1">
-            <UserCircle size={16} />
-            <span>Plan</span>
-          </div>
-          <p className="font-medium capitalize">{customer.subscription.plan}</p>
-        </div>
-
-        <div className="text-sm">
-          <div className="flex items-center space-x-1 text-gray-500 mb-1">
-            <CreditCard size={16} />
-            <span>POS</span>
-          </div>
-          <p className="font-medium">{customer.posIntegration.type}</p>
+        <div className="flex items-center text-sm text-gray-600">
+          <Calendar size={16} className="mr-2" />
+          <span>
+            {new Date(customer.subscriptionRenewal || '').toLocaleDateString()}
+          </span>
         </div>
       </div>
 
-      <div className="text-sm text-gray-500">
-        <div className="flex items-center justify-between">
-          <p>Click to view stores and details</p>
-          <StatusBadge 
-            status={customer.posIntegration.status === 'synced' ? 'active' : 'pending'} 
-          />
-        </div>
+      <div className="mt-4 flex items-center justify-between">
+        <span className={`px-2 py-1 text-xs rounded-full ${
+          customer.subscriptionStatus === 'ACTIVE'
+            ? 'bg-green-100 text-green-800'
+            : customer.subscriptionStatus === 'PENDING'
+            ? 'bg-yellow-100 text-yellow-800'
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {customer.subscriptionPlan} - {customer.subscriptionStatus}
+        </span>
       </div>
     </div>
   );

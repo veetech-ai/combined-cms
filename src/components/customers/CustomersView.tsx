@@ -3,47 +3,74 @@ import { UserPlus } from 'lucide-react';
 import CustomerCard from './CustomerCard';
 import CustomerDetailsView from './CustomerDetailsView';
 import AddCustomerModal from './AddCustomerModal';
-import { Customer } from '../../types/customer';
+import { Customer, Organization } from '../../types';
 import { useCustomer } from '../../contexts/CustomerContext';
 import SearchInput from '../common/SearchInput';
+import { organizationService } from '../../services/organizationService';
+import { toast } from 'react-hot-toast';
 
 export default function CustomersView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { state: { customers }, dispatch } = useCustomer();
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleModuleToggle = (customerId: string, storeId: string | null, moduleId: string, enabled: boolean) => {
-    dispatch({
-      type: 'UPDATE_MODULE',
-      payload: { customerId, storeId, moduleId, enabled }
-    });
+  const fetchOrganizations = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log('Fetching organizations...'); // Debug log
+      const data = await organizationService.fetchAllOrganizations();
+      console.log('Fetched organizations:', data); // Debug log
+      setOrganizations(data);
+    } catch (err) {
+      console.error('Error fetching organizations:', err); // Debug log
+      setError('Failed to fetch organizations');
+      toast.error('Failed to fetch organizations');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Keep selected customer in sync with store updates
   useEffect(() => {
-    if (selectedCustomer) {
-      const updatedCustomer = customers.find(c => c.id === selectedCustomer.id);
-      setSelectedCustomer(updatedCustomer || null);
-    }
-  }, [customers, selectedCustomer?.id]);
+    fetchOrganizations();
+  }, []);
 
-  const filteredCustomers = customers.filter(customer => 
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.company.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleAddCustomer = async (customerData: Partial<Organization>) => {
+    try {
+      setIsSubmitting(true);
+      console.log('Creating organization with data:', customerData); // Debug log
+      
+      const newOrg = await organizationService.createOrganization(customerData);
+      console.log('Organization created:', newOrg); // Debug log
+      
+      // Immediately fetch updated data
+      await fetchOrganizations();
+      
+      toast.success('Organization created successfully');
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error creating organization:', err); // Debug log
+      toast.error('Failed to create organization');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredOrganizations = organizations.filter(org => 
+    org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    org.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (selectedCustomer) {
     return (
-      <main className="p-6">
-        <CustomerDetailsView
-          customer={selectedCustomer}
-          onBack={() => setSelectedCustomer(null)}
-          onModuleToggle={(storeId, moduleId, enabled) => 
-            handleModuleToggle(selectedCustomer.id, storeId, moduleId, enabled)
-          }
-        />
-      </main>
+      <CustomerDetailsView
+        customer={selectedCustomer}
+        onBack={() => setSelectedCustomer(null)}
+      />
     );
   }
 
@@ -71,31 +98,37 @@ export default function CustomersView() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCustomers.map((customer) => (
-          <CustomerCard
-            key={customer.id}
-            customer={customer}
-            onClick={() => setSelectedCustomer(customer)}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : error ? (
+        <div className="text-center text-red-600 py-8">
+          {error}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredOrganizations.map((organization) => (
+            <CustomerCard
+              key={organization.id}
+              customer={organization}
+              onClick={() => setSelectedCustomer(organization)}
+            />
+          ))}
+        </div>
+      )}
       
       <AddCustomerModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={async (customerData) => {
-          const newCustomer: Customer = {
-            ...customerData,
-            id: `customer-${Date.now()}`, 
-            avatar: customerData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(customerData.name)}&background=random`,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          dispatch({ type: 'ADD_CUSTOMER', payload: newCustomer });
-          setIsModalOpen(false);
-        }}
+        onAdd={handleAddCustomer}
       />
+
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      )}
     </main>
   );
 }
