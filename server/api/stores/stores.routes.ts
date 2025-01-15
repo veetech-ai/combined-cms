@@ -10,12 +10,12 @@ import {
 
 const router = Router();
 
-router.get('/stores', checkAccess(ROLES.USER), storeController.getStoresByUser);
+router.get('/stores', checkAccess(ROLES.ADMIN), storeController.getStoresByUser);
 
 router.post(
   '/stores',
   checkAccess(ROLES.ADMIN),
-  belongsToOrganization,
+  //belongsToOrganization,
   storeController.createStore
 );
 

@@ -12,35 +12,30 @@ export interface OrganizationSubscription {
 export interface Organization {
   id: string;
   name: string;
-  email: string;
   company: string;
-  phone?: string;
+  email: string;
+  phone: string;
   logo?: string;
   website?: string;
   
-  billingStreet?: string;
-  billingCity?: string;
-  billingState?: string;
-  billingZip?: string;
-  billingCountry?: string;
+  // Billing Address
+  billingStreet: string;
+  billingCity: string;
+  billingState: string;
+  billingZip: string;
+  billingCountry: string;
   
-  contactName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  contactRole?: string;
+  // Subscription
+  subscriptionPlan: string;
+  subscriptionStatus: string;
+  subscriptionRenewal?: string;
   
-  subscriptionPlan: SubscriptionPlan;
-  subscriptionStatus: SubscriptionStatus;
-  subscriptionStart?: Date;
-  subscriptionRenewal?: Date;
-  
-  posType: PosIntegrationType;
-  posProvider?: string;
-  posConfig?: any;
-  
-  createdAt: Date;
-  updatedAt: Date;
+  // POS Integration
+  posIntegration?: {
+    type: string;
+    provider: string;
+    config: any;
+  };
   
   stores?: Store[];
-  users?: User[];
 } 

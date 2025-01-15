@@ -54,10 +54,54 @@ async function seedStores(organizationIds: string[], count: number) {
 	const stores = Array.from({ length: count }).map(() => ({
 		organizationId: faker.helpers.arrayElement(organizationIds),
 		name: faker.company.name(),
+		address: faker.location.streetAddress(),
+		city: faker.location.city(),
+		state: faker.location.state(),
+		zipCode: faker.location.zipCode(),
+		phone: faker.phone.number(),
 		location: faker.location.city(),
+		modules: [], // Empty array as default
+		operatingHours: {
+			monday: { open: '09:00', close: '17:00' },
+			tuesday: { open: '09:00', close: '17:00' },
+			wednesday: { open: '09:00', close: '17:00' },
+			thursday: { open: '09:00', close: '17:00' },
+			friday: { open: '09:00', close: '17:00' },
+			saturday: { open: '10:00', close: '15:00' },
+			sunday: { open: 'closed', close: 'closed' }
+		}
 	}));
 
 	const result = await prisma.store.createMany({ data: stores });
+	return result;
+}
+
+async function seedModules(count: number) {
+	const modules = Array.from({ length: count }).map(() => ({
+		name: faker.helpers.arrayElement([
+			'Digital Menu Board',
+			'Self-Service Kiosk',
+			'Order Display System',
+			'Customer Feedback',
+			'Inventory Management',
+			'Analytics Dashboard'
+		])
+	}));
+
+	const result = await prisma.module.createMany({ data: modules });
+	return result;
+}
+
+async function seedStoreModules(storeIds: string[], moduleIds: string[]) {
+	const storeModules = storeIds.flatMap(storeId => 
+		faker.helpers.arrayElements(moduleIds, { min: 1, max: 3 }).map(moduleId => ({
+			storeId,
+			moduleId,
+			status: faker.helpers.arrayElement(['DISABLED', 'PENDING_APPROVAL', 'APPROVED'])
+		}))
+	);
+
+	const result = await prisma.storeModule.createMany({ data: storeModules });
 	return result;
 }
 
@@ -90,7 +134,7 @@ async function main() {
 		format: '[{bar}] {percentage}% | {value}/{total} | {task}',
 	});
 
-	const overallBar = multibar.create(3, 0, { task: 'Seed Progress' });
+	const overallBar = multibar.create(5, 0, { task: 'Seed Progress' });
 
 	try {
 		// Seed Organizations
@@ -103,6 +147,16 @@ async function main() {
 		await seedStores(organizationIds, 8);
 		const stores = await prisma.store.findMany();
 		const storeIds = stores.map(store => store.id);
+		overallBar.increment();
+
+		// Seed Modules
+		await seedModules(6);
+		const modules = await prisma.module.findMany();
+		const moduleIds = modules.map(module => module.id);
+		overallBar.increment();
+
+		// Seed Store Modules
+		await seedStoreModules(storeIds, moduleIds);
 		overallBar.increment();
 
 		// Seed Users

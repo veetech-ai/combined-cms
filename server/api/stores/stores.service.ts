@@ -3,7 +3,18 @@ import { DBService } from '../../services/db.service';
 
 export class StoreService extends DBService {
   async createStore(data: Prisma.StoreCreateInput) {
-    return this.db.store.create({ data });
+    try {
+      return this.db.store.create({
+        data,
+        include: {
+          organization: true,
+          users: true
+        }
+      });
+    } catch (error) {
+      console.error('Error creating store:', error);
+      throw error;
+    }
   }
 
   async getStores(params?: {

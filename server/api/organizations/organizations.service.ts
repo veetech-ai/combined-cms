@@ -32,13 +32,33 @@ export class OrganizationService extends DBService {
   }
 
   async getOrganizationById(id: string) {
-    return this.db.organization.findUnique({
-      where: { id },
-      include: {
-        stores: true,
-        users: true
+    if (!id) {
+      throw new Error('Organization ID is required');
+    }
+
+    try {
+      const organization = await this.db.organization.findUnique({
+        where: { id },
+        include: {
+          stores: true,
+          users: true
+        }
+      });
+
+      console.log(organization);
+
+      if (!organization) {
+        throw new Error('Organization not found');
       }
-    });
+
+      return organization;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to fetch organization';
+      throw new Error(errorMessage);
+    }
   }
 
   async getOrganizationsByUser(userId: string) {
