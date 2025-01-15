@@ -59,8 +59,8 @@ router.get(
  */
 router.get(
   '/organizations/:id',
-  checkAccess(ROLES.USER),
-  belongsToOrganization,
+  checkAccess(ROLES.ADMIN),
+  // belongsToOrganization,
   orgController.getOrganizationById
 );
 

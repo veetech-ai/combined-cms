@@ -17,7 +17,9 @@ export const getOrganizations = asyncHandler(
 
 export const getOrganizationById = asyncHandler(
   async (req: Request, res: Response) => {
+    console.log(req,'check')
     const orgId = req.params.id;
+    console.log(orgId)
     if (!orgId) {
       throw new ApiError(400, 'Organization ID is required');
     }

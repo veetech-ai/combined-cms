@@ -4,6 +4,7 @@ import { Customer, Store } from '../../types/customer';
 import { DEFAULT_MODULES } from '../../types/module';
 import { DEFAULT_POS_INTEGRATION } from '../../types/pos';
 import { toast } from 'react-hot-toast';
+import { uploadImage } from '../../services/imageService';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -39,6 +40,8 @@ const defaultStore: Omit<Store, 'id'> = {
   }
 };
 
+const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=0D8ABC&color=fff';
+
 export default function AddCustomerModal({
   isOpen,
   onClose,
@@ -47,16 +50,33 @@ export default function AddCustomerModal({
   const [currentStep, setCurrentStep] = useState(1);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setAvatarFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        setIsUploading(true);
+        setUploadError(null);
+        
+        // Show preview immediately
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAvatarPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+
+        // Upload the file
+        const imageUrl = await uploadImage(file);
+        setFormData(prev => ({ ...prev, logo: imageUrl }));
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setUploadError('Failed to upload image. Using default avatar.');
+        setFormData(prev => ({ ...prev, logo: DEFAULT_AVATAR }));
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -108,7 +128,7 @@ export default function AddCustomerModal({
         email: formData.email,
         company: formData.company,
         phone: formData.phone,
-        logo: formData.logo,
+        logo: formData.logo || DEFAULT_AVATAR,
         website: formData.website,
         
         billing_address: {
@@ -212,7 +232,11 @@ export default function AddCustomerModal({
               <div className="flex items-center space-x-6 mb-6">
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100">
-                    {avatarPreview ? (
+                    {isUploading ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      </div>
+                    ) : avatarPreview ? (
                       <img 
                         src={avatarPreview} 
                         alt="Avatar preview" 
@@ -236,6 +260,7 @@ export default function AddCustomerModal({
                     accept="image/*"
                     onChange={handleAvatarChange}
                     className="hidden"
+                    disabled={isUploading}
                   />
                 </div>
                 <div>
@@ -243,6 +268,9 @@ export default function AddCustomerModal({
                   <p className="text-sm text-gray-500 mt-1">
                     Upload a company logo or profile picture
                   </p>
+                  {uploadError && (
+                    <p className="text-sm text-red-500 mt-1">{uploadError}</p>
+                  )}
                 </div>
               </div>
 

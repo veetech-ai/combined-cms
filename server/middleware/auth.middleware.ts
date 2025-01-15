@@ -116,7 +116,7 @@ interface EntityMiddlewareConfig {
 export const belongsToEntity = ({
 	entityType,
 	resource,
-	bypassRoles = [ROLES.SUPER_ADMIN],
+	bypassRoles = [ROLES.ADMIN],
 }: EntityMiddlewareConfig) => {
 	const services = {
 		user: userService,
@@ -179,37 +179,37 @@ const capitalize = (str: string) =>
 export const belongsToOrganization = belongsToEntity({
 	entityType: 'organization',
 	resource: 'organization',
-	bypassRoles: [ROLES.SUPER_ADMIN],
+	bypassRoles: [ROLES.ADMIN],
 });
 
 export const belongsToStore = belongsToEntity({
 	entityType: 'store',
 	resource: 'store',
-	bypassRoles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+	bypassRoles: [ROLES.ADMIN, ROLES.ADMIN],
 });
 
 export const belongsToOrganizationOfStore = belongsToEntity({
 	entityType: 'organization',
 	resource: 'store',
-	bypassRoles: [ROLES.SUPER_ADMIN],
+	bypassRoles: [ROLES.ADMIN],
 });
 
 export const belongsToOrganizationOfUser = belongsToEntity({
 	entityType: 'organization',
 	resource: 'user',
-	bypassRoles: [ROLES.SUPER_ADMIN],
+	bypassRoles: [ROLES.ADMIN],
 });
 
 export const belongsToStoreOfOrganization = belongsToEntity({
 	entityType: 'store',
 	resource: 'organization',
-	bypassRoles: [ROLES.SUPER_ADMIN],
+	bypassRoles: [ROLES.ADMIN],
 });
 
 export const belongsToStoreOfUser = belongsToEntity({
 	entityType: 'store',
 	resource: 'user',
-	bypassRoles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+	bypassRoles: [ROLES.ADMIN, ROLES.ADMIN],
 });
 
 /*

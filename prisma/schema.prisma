@@ -75,43 +75,39 @@ model User {
 }
 
 model Organization {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name            String            @db.VarChar(255)
-  email           String            @unique @db.VarChar(255)
-  company         String            @db.VarChar(255)
-  phone           String?           @db.VarChar(255)
-  logo            String?           @db.VarChar(255)
-  website         String?           @db.VarChar(255)
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String              @db.VarChar(255)
+  email             String              @unique @db.VarChar(255)
+  company           String              @db.VarChar(255)
+  phone             String?             @db.VarChar(255)
+  logo              String?             @db.VarChar(255)
+  website           String?             @db.VarChar(255)
   
-  // Billing Address
-  billingStreet   String?           @map("billing_street") @db.VarChar(255)
-  billingCity     String?           @map("billing_city") @db.VarChar(255)
-  billingState    String?           @map("billing_state") @db.VarChar(255)
-  billingZip      String?           @map("billing_zip") @db.VarChar(255)
-  billingCountry  String?           @map("billing_country") @db.VarChar(255)
+  billingStreet     String?             @map("billing_street") @db.VarChar(255)
+  billingCity       String?             @map("billing_city") @db.VarChar(255)
+  billingState      String?             @map("billing_state") @db.VarChar(255)
+  billingZip        String?             @map("billing_zip") @db.VarChar(255)
+  billingCountry    String?             @map("billing_country") @db.VarChar(255)
   
-  // Primary Contact
-  contactName     String?           @map("contact_name") @db.VarChar(255)
-  contactEmail    String?           @map("contact_email") @db.VarChar(255)
-  contactPhone    String?           @map("contact_phone") @db.VarChar(255)
-  contactRole     String?           @map("contact_role") @db.VarChar(255)
+  contactName       String?             @map("contact_name") @db.VarChar(255)
+  contactEmail      String?             @map("contact_email") @db.VarChar(255)
+  contactPhone      String?             @map("contact_phone") @db.VarChar(255)
+  contactRole       String?             @map("contact_role") @db.VarChar(255)
   
-  // Subscription
   subscriptionPlan      SubscriptionPlan    @default(BASIC) @map("subscription_plan")
   subscriptionStatus    SubscriptionStatus  @default(PENDING) @map("subscription_status")
   subscriptionStart     DateTime?           @map("subscription_start")
   subscriptionRenewal   DateTime?           @map("subscription_renewal")
   
-  // POS Integration
-  posType              PosIntegrationType   @default(NONE) @map("pos_type")
-  posProvider          String?              @map("pos_provider") @db.VarChar(255)
-  posConfig            Json?                @map("pos_config") @db.JsonB
+  posType          PosIntegrationType   @default(NONE) @map("pos_type")
+  posProvider      String?              @map("pos_provider") @db.VarChar(255)
+  posConfig        Json?                @map("pos_config") @db.JsonB
   
-  createdAt      DateTime          @default(now()) @map("created_at")
-  updatedAt      DateTime          @updatedAt @map("updated_at")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
 
-  stores         Store[]
-  users          User[]
+  stores           Store[]
+  users            User[]
 
   @@map("organizations")
 }
@@ -126,17 +122,26 @@ model Module {
 }
 
 model Store {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String?  @map("organization_id") @db.Uuid
-  name           String   @db.VarChar(255)
-  location       String?  @db.VarChar(255)
-  createdAt      DateTime @default(now()) @map("created_at")
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  name            String    @db.VarChar(255)
+  address         String    @db.VarChar(255)
+  city            String    @db.VarChar(255)
+  state           String    @db.VarChar(255)
+  zipCode         String    @map("zip_code") @db.VarChar(255)
+  phone           String    @db.VarChar(255)
+  location        String?   @db.VarChar(255)
+  modules         Json      @default("[]") @db.JsonB
+  operatingHours  Json      @default("{}") @map("operating_hours") @db.JsonB
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   users        User[]
   storeModules StoreModule[]
 
   @@map("stores")
+  @@index([organizationId])
 }
 
 model StoreModule {

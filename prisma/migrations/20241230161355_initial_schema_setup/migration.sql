@@ -10,6 +10,15 @@ CREATE TYPE "CatalogStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'ONLINE', 'OFFLINE');
 -- CreateEnum
 CREATE TYPE "ModuleStatus" AS ENUM ('DISABLED', 'PENDING_APPROVAL', 'APPROVED');
 
+-- CreateEnum
+CREATE TYPE "SubscriptionPlan" AS ENUM ('BASIC', 'PREMIUM', 'ENTERPRISE');
+
+-- CreateEnum
+CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'PENDING', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "PosIntegrationType" AS ENUM ('NONE', 'SQUARE', 'CLOVER', 'STRIPE', 'CUSTOM');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -31,11 +40,50 @@ CREATE TABLE "users" (
 CREATE TABLE "organizations" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "company" VARCHAR(255) NOT NULL,
+    "phone" VARCHAR(255),
     "logo" VARCHAR(255),
     "website" VARCHAR(255),
+    "billing_street" VARCHAR(255),
+    "billing_city" VARCHAR(255),
+    "billing_state" VARCHAR(255),
+    "billing_zip" VARCHAR(255),
+    "billing_country" VARCHAR(255),
+    "contact_name" VARCHAR(255),
+    "contact_email" VARCHAR(255),
+    "contact_phone" VARCHAR(255),
+    "contact_role" VARCHAR(255),
+    "subscription_plan" "SubscriptionPlan" NOT NULL DEFAULT 'BASIC',
+    "subscription_status" "SubscriptionStatus" NOT NULL DEFAULT 'PENDING',
+    "subscription_start" TIMESTAMP(3),
+    "subscription_renewal" TIMESTAMP(3),
+    "pos_type" "PosIntegrationType" NOT NULL DEFAULT 'NONE',
+    "pos_provider" VARCHAR(255),
+    "pos_config" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "organizations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "stores" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "organization_id" UUID NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "address" VARCHAR(255) NOT NULL,
+    "city" VARCHAR(255) NOT NULL,
+    "state" VARCHAR(255) NOT NULL,
+    "zip_code" VARCHAR(255) NOT NULL,
+    "phone" VARCHAR(255) NOT NULL,
+    "location" VARCHAR(255),
+    "modules" JSONB NOT NULL DEFAULT '[]',
+    "operating_hours" JSONB NOT NULL DEFAULT '{}',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "stores_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -45,17 +93,6 @@ CREATE TABLE "modules" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "modules_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "stores" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "organization_id" UUID,
-    "name" VARCHAR(255) NOT NULL,
-    "location" VARCHAR(255),
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "stores_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -107,6 +144,12 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "refresh_tokens_token_key" ON "refresh_tokens"("token");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "organizations_email_key" ON "organizations"("email");
+
+-- CreateIndex
+CREATE INDEX "stores_organization_id_idx" ON "stores"("organization_id");
+
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -114,7 +157,7 @@ ALTER TABLE "users" ADD CONSTRAINT "users_organization_id_fkey" FOREIGN KEY ("or
 ALTER TABLE "users" ADD CONSTRAINT "users_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "stores"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stores" ADD CONSTRAINT "stores_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "stores" ADD CONSTRAINT "stores_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "store_modules" ADD CONSTRAINT "store_modules_store_id_fkey" FOREIGN KEY ("store_id") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;

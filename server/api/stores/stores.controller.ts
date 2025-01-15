@@ -77,25 +77,48 @@ export const getStoresByUser = asyncHandler(
  *         description: The created store
  */
 export const createStore = asyncHandler(async (req: Request, res: Response) => {
-  const { name, location, organizationId } = req.body;
+  const {
+    name,
+    location,
+    phone,
+    address,
+    modules,
+    operatingHours,
+    organizationId
+  } = req.body;
 
+  // Validate required fields
   if (!name || !location || !organizationId) {
     throw new ApiError(400, 'Name, location, and organization ID are required');
   }
+  
+  //Validate organization exists
+  // var org = await organizationService.getOrganizationById(
+  //   req.body.organizationId
+  // );
 
-  // Validate organization exists
-  const org = await organizationService.getOrganizationById(organizationId);
+  // console.log(org);
 
-  if (!org) {
-    throw new ApiError(400, 'Org not found');
-  }
-
-  const newStore = await storeService.createStore({
+  // if (!org) {
+  //   throw new ApiError(400, 'Organization not found');
+  // }
+  //Transform the data to match Prisma schema
+  const storeData = {
     name,
     location,
-    organization: { connect: { id: organizationId } }
-  });
+    phone,
+    address: address.street,
+    city: address.city,
+    state: address.state,
+    zipCode: address.zipCode,
+    modules: modules || [],
+    operatingHours: operatingHours || {},
+    organization: {
+      connect: { id: organizationId }
+    }
+  };
 
+  const newStore = await storeService.createStore(storeData);
   res.status(201).json(newStore);
 });
 
