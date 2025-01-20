@@ -13,6 +13,8 @@ import ModulesList from './ModulesList';
 import StoreDetailsView from '../stores/StoreDetailsView';
 import { organizationService } from '../../services/organizationService';
 import { toast } from 'react-hot-toast';
+import AddStoreModal from '../stores/AddStoreModal';
+import { storeService } from '../../services/storeService';
 
 const DEFAULT_AVATAR =
   'https://ui-avatars.com/api/?background=0D8ABC&color=fff';
@@ -39,30 +41,45 @@ export default function CustomerDetailsView({
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddingStore, setIsAddingStore] = useState(false);
+
+  const fetchOrganizationDetails = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await organizationService.getOrganizationById(customerId);
+      setOrganization(data);
+    } catch (err) {
+      setError(
+        'Unable to load organization details. Please try again later.'
+      );
+      toast.error('Failed to load organization details');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrganizationDetails = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await organizationService.getOrganizationById(customerId);
-        setOrganization(data);
-      } catch (err) {
-        setError(
-          'Unable to load organization details. Please try again later.'
-        );
-        toast.error('Failed to load organization details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchOrganizationDetails();
   }, [customerId]);
 
   const selectedStoreData = organization?.stores?.find(
     (store) => store.id === selectedStore
   );
+
+  const handleAddStore = async (storeData: Omit<Store, 'id'>) => {
+    try {
+      await storeService.createStore(storeData);
+      
+      await fetchOrganizationDetails();
+      
+      setIsAddingStore(false);
+      toast.success('Store added successfully');
+    } catch (error) {
+      console.error('Error adding store:', error);
+      toast.error('Failed to add store');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -243,14 +260,17 @@ export default function CustomerDetailsView({
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-800">Stores</h2>
-              <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={() => setIsAddingStore(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 <Plus size={18} />
                 <span>Add Store</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {organization.stores?.map((store) => (
+              {organization?.stores?.map((store) => (
                 <StoreCard
                   key={store.id}
                   store={store}
@@ -267,6 +287,16 @@ export default function CustomerDetailsView({
         <CustomerPosIntegration
           customer={organization}
           onUpdate={(posIntegration) => onPosUpdate(posIntegration)}
+        />
+      )}
+
+      {isAddingStore && organization && (
+        <AddStoreModal
+          isOpen={isAddingStore}
+          onClose={() => setIsAddingStore(false)}
+          onAdd={handleAddStore}
+          organizationId={organization.id}
+          organizationName={organization.name}
         />
       )}
     </div>

@@ -17,9 +17,9 @@ export const getOrganizations = asyncHandler(
 
 export const getOrganizationById = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log(req,'check')
+    // console.log(req,'check')
     const orgId = req.params.id;
-    console.log(orgId)
+    // console.log(orgId)
     if (!orgId) {
       throw new ApiError(400, 'Organization ID is required');
     }
@@ -37,7 +37,7 @@ export const getOrganizationsByUser = asyncHandler(
   async (req: AuthenticationRequest, res: Response) => {
     const userId = req.user?.id;
 
-    console.log(userId);
+    // console.log(userId);
 
     if (!userId) {
       throw new ApiError(400, 'User ID is required');

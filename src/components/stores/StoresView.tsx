@@ -7,6 +7,8 @@ import AddStoreModal from './AddStoreModal';
 import { useCustomer } from '../../contexts/CustomerContext';
 import SearchInput from '../common/SearchInput';
 import { storeService } from '../../services/storeService';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 export default function StoresView() {
   const [selectedStore, setSelectedStore] = useState<
@@ -20,50 +22,62 @@ export default function StoresView() {
     dispatch
   } = useCustomer();
 
-  // Get unique organizations
-  const organizations = Array.from(new Set(customers.map((c) => c.company)));
+  const [storesList, setStoresList] = useState([]);
 
-  // Keep selected store in sync with store updates
-  useEffect(() => {
-    if (selectedStore) {
-      const customer = customers.find((c) =>
-        c.stores.some((s) => s.id === selectedStore.id)
-      );
-      if (customer) {
-        const updatedStore = customer.stores.find(
-          (s) => s.id === selectedStore.id
-        );
-        if (updatedStore) {
-          setSelectedStore({
-            ...updatedStore,
-            customerName: customer.name
-          });
-        } else {
-          setSelectedStore(null);
+  const token = localStorage.getItem('access_token');
+
+  // Add a function to fetch stores
+  const fetchStores = async () => {
+    try {
+      const resp = await axios.get(
+        'http://localhost:4000/api/v1/stores/all',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      } else {
-        setSelectedStore(null);
-      }
-    }
-  }, [customers, selectedStore?.id]);
+      );
 
-  // Filter and flatten stores based on selected customer and search term
-  const stores = customers
-    .reduce<(Store & { customerName: string })[]>((acc, customer) => {
-      if (selectedOrganization && customer.company !== selectedOrganization) {
-        return acc;
+      if (resp && resp.data) {
+        setStoresList(resp.data);
       }
-      const customerStores = customer.stores.map((store) => ({
-        ...store,
-        customerName: customer.name
-      }));
-      return [...acc, ...customerStores];
-    }, [])
+    } catch (err) {
+      console.error('Failed to fetch Stores');
+      toast.error('Failed to fetch stores');
+    }
+  };
+
+  // Use the fetchStores function in useEffect
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  // Get unique organizations from the stores list
+  const organizations = Array.from(
+    new Set(storesList.map((store) => store.organization?.name).filter(Boolean))
+  );
+
+  // Filter and flatten stores based on selected organization and search term
+  const filteredStores = storesList
     .filter(
       (store) =>
         store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        store.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+        store.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (store.organization?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(
+      (store) =>
+        !selectedOrganization || store.organization?.name === selectedOrganization
     );
+
+  // Handle when a store is clicked to view details
+  const handleStoreClick = (store: Store & { organization?: { name: string } }) => {
+    setSelectedStore({
+      ...store,
+      customerName: store.organization?.name || 'Unknown Organization'
+    });
+  };
 
   const handleModuleToggle = (
     storeId: string,
@@ -78,6 +92,20 @@ export default function StoresView() {
         type: 'UPDATE_MODULE',
         payload: { customerId: customer.id, storeId, moduleId, enabled }
       });
+    }
+  };
+
+  // Update the onAdd handler in AddStoreModal
+  const handleAddStore = async (store: Omit<Store, 'id'>) => {
+    try {
+      const newStore = await storeService.createStore(store);
+      // Fetch updated stores list
+      await fetchStores();
+      setIsAddingStore(false);
+      toast.success('Store added successfully');
+    } catch (error) {
+      console.error('Error adding store:', error);
+      toast.error('Failed to add store');
     }
   };
 
@@ -114,21 +142,21 @@ export default function StoresView() {
       <div className="mb-6 space-y-4">
         <div className="flex items-center space-x-4">
           <div className="flex -space-x-1 overflow-hidden">
-            {organizations.map((company) => (
+            {organizations.map((orgName) => (
               <button
-                key={company}
+                key={orgName}
                 onClick={() =>
                   setSelectedOrganization(
-                    selectedOrganization === company ? '' : company
+                    selectedOrganization === orgName ? '' : orgName
                   )
                 }
                 className={`relative inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-full border-2 transition-all ${
-                  selectedOrganization === company
+                  selectedOrganization === orgName
                     ? 'border-blue-600 bg-blue-50 text-blue-600 z-10'
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
-                {company}
+                {orgName}
               </button>
             ))}
           </div>
@@ -136,50 +164,39 @@ export default function StoresView() {
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder="Search stores..."
+              placeholder="Search stores or organizations..."
             />
           </div>
         </div>
       </div>
 
-      <StoresList stores={stores} onStoreClick={setSelectedStore} />
+      <StoresList 
+        stores={filteredStores.map(store => ({
+          ...store,
+          customerName: store.organization?.name || 'Unknown Organization',
+          address: store.address || store.location,
+          city: store.city || '',
+          state: store.state || '',
+          zipCode: store.zipCode || '',
+          phone: store.phone || '',
+          modules: store.modules || []
+        }))} 
+        onStoreClick={handleStoreClick} 
+      />
 
-      {isAddingStore && customers.length > 0 && (
+      {isAddingStore && organizations.length > 0 && (
         <AddStoreModal
           isOpen={isAddingStore}
           onClose={() => setIsAddingStore(false)}
-          onAdd={async (store, organizationId) => {
-            const newStore = await storeService.createStore(
-              store,
-              organizationId
-            );
-
-            console.log(newStore);
-
-            return;
-
-            const targetCustomer = selectedOrganization
-              ? customers.find((c) => c.company === selectedOrganization) ||
-                customers[0]
-              : customers[0];
-
-            if (!targetCustomer) {
-              console.error('No customer found');
-              return;
-            }
-
-            dispatch({
-              type: 'ADD_STORE',
-              payload: { customerId: targetCustomer.id, store }
-            });
-            setIsAddingStore(false);
-          }}
-          customerId={
+          onAdd={handleAddStore}
+          organizationId={
             selectedOrganization
-              ? customers.find((c) => c.company === selectedOrganization)?.id ||
-                customers[0].id
-              : customers[0].id
+              ? storesList.find(
+                  (store) => store.organization?.name === selectedOrganization
+                )?.organizationId || ''
+              : ''
           }
+          organizationName={selectedOrganization || ''}
         />
       )}
     </main>

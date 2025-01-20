@@ -39,7 +39,7 @@ export default function StoreDetailsView({
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center space-x-4 mb-8">
         <button
           onClick={onBack}

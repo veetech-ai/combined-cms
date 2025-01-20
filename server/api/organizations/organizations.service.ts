@@ -45,7 +45,7 @@ export class OrganizationService extends DBService {
         }
       });
 
-      console.log(organization);
+      // console.log(organization);
 
       if (!organization) {
         throw new Error('Organization not found');
