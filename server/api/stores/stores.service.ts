@@ -27,11 +27,13 @@ export class StoreService extends DBService {
     return this.db.store.findMany({
       ...params,
       include: {
-        organization: true,
+        organization: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         users: true
-        // TODO: Include other relations for stores
-        // aisles: true,
-        // products: true
       }
     });
   }

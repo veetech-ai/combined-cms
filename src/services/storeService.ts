@@ -22,13 +22,12 @@ export const storeService = {
     return data;
   },
 
-  async createStore(storeData: Omit<Store, 'id'>, organizationId: string) {
+  async createStore(storeData: Omit<Store, 'id'>) {
     const url = API_CONFIG.ENDPOINTS.STORES;
-    console.log(organizationId)
+    console.log(storeData);
     try {
       const { data } = await apiClient.post<Store>(url, {
-        ...storeData,
-        organizationId
+        ...storeData
       });
 
       return data;
@@ -36,5 +35,18 @@ export const storeService = {
       console.error('Error creating store:', error);
       throw error;
     }
+  },
+
+  async fetchAllStores() {
+    try {
+      const { data } = await apiClient.get<Store[]>(
+        `${API_CONFIG.ENDPOINTS.STORES}/all`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+      throw error;
+    }
   }
 };
+

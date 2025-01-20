@@ -1,4 +1,5 @@
 import { Module } from './module';
+import { Organization } from './organization';
 
 export interface Store {
   id: string;
@@ -17,4 +18,8 @@ export interface Store {
     } | null;
   };
   organizationId: string;
+  organization?: {
+    id: string;
+    name: string;
+  };
 }

@@ -10,6 +10,8 @@ import {
 
 const router = Router();
 
+router.get('/stores/all', checkAccess(ROLES.ADMIN), storeController.getStores);
+
 router.get('/stores', checkAccess(ROLES.ADMIN), storeController.getStoresByUser);
 
 router.post(
