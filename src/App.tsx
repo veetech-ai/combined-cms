@@ -20,6 +20,12 @@ import StoresView from './components/stores/StoresView';
 import { Login } from './components/auth/login';
 import { ROUTES } from './constants/route-names';
 import { useAuthStore } from './stores/auth-store';
+import ClientApp from './components/codeApp/ClientApp';
+// import StorePage from './components/stores/StorePage';
+import DisplayMenus from './components/Menus/DisplayMenus';
+import DisplaysView from './components/displays/DisplaysView';
+
+import KioskApp from './KioskApp/src/main';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated, token } = useAuthStore();
@@ -37,6 +43,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => {
+  const path = window.location.pathname;
+
   useEffect(() => {
     const isAuthenticated = useAuthStore.getState().checkAuth();
     if (!isAuthenticated) {
@@ -44,11 +52,18 @@ const App = () => {
     }
   }, []);
 
+  if (path === '/code') {
+    return <ClientApp />;
+  }
+
   return (
     <Router>
       <CustomerProvider>
         <div className="min-h-screen bg-gray-50">
           <Routes>
+            {/* <Route path="/store/:id" element={<StorePage />} /> */}
+            <Route path="/store/:id" element={<KioskApp />} />
+
             {/* Public Route */}
             <Route path="/login" element={<Login />} />
 
@@ -89,6 +104,8 @@ const MainLayout = () => {
             <Route path={ROUTES.ANALYTICS} element={<AnalyticsView />} />
             <Route path={ROUTES.STORES} element={<StoresView />} />
             <Route path="/menus/:storeId" element={<MenusPage />} />
+            <Route path="/display-menus" element={<DisplayMenus />} />
+            <Route path="/display-views" element={<DisplaysView />} />
             <Route
               path="*"
               element={<Navigate to={ROUTES.DASHBOARD} replace />}

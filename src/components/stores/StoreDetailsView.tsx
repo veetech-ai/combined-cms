@@ -14,14 +14,16 @@ interface StoreDetailsViewProps {
   onModuleToggle: (moduleId: string, enabled: boolean) => void;
 }
 
-export default function StoreDetailsView({ 
-  store, 
+export default function StoreDetailsView({
+  store,
   onBack,
-  onModuleToggle 
+  onModuleToggle
 }: StoreDetailsViewProps) {
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  
-  const selectedModule = store.modules.find(m => m.id === selectedModuleId);
+
+  const selectedModule = store.modules.find((m) => m.id === selectedModuleId);
+
+  console.log(store);
 
   if (selectedModule) {
     return (
@@ -72,11 +74,12 @@ export default function StoreDetailsView({
         </CollapsibleSection>
       </div>
 
-      <CollapsibleSection 
-        title="Store Modules" 
+      <CollapsibleSection
+        title="Store Modules"
         subtitle="Manage your store's active modules and devices"
       >
         <StoreModulesSection
+          store={store}
           modules={store.modules}
           onModuleToggle={onModuleToggle}
           onModuleClick={setSelectedModuleId}
