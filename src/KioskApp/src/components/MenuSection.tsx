@@ -273,7 +273,7 @@ const MenuSection = () => {
             uniqueCategoriesMap.set(category.id, {
               id: category.id,
               name: category.name,
-              sortOrder: CATEGORY_ORDER[category.name]?.order ?? (category.sortOrder + 100)
+              sortOrder: CATEGORY_ORDER[typeof category.name === 'string' ? category.name : category.name.en]?.order ?? (category.sortOrder + 100)
             });
           }
         }
@@ -282,8 +282,8 @@ const MenuSection = () => {
       // Convert to array and sort by our custom order
       const uniqueCategories = Array.from(uniqueCategoriesMap.values())
         .sort((a, b) => {
-          const orderA = CATEGORY_ORDER[a.name]?.order ?? 999;
-          const orderB = CATEGORY_ORDER[b.name]?.order ?? 999;
+          const orderA = CATEGORY_ORDER[typeof a.name === 'string' ? a.name : a.name.en]?.order ?? 999;
+          const orderB = CATEGORY_ORDER[typeof b.name === 'string' ? b.name : b.name.en]?.order ?? 999;
           return orderA - orderB;
         });
 
@@ -402,10 +402,27 @@ const MenuSection = () => {
     }
   };
 
-  useEffect(() => {
-    fetchApiMenuItems();
-  }, []);
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
+  useEffect(() => {
+    const maxRetries = 3;
+    const retryDelay = 2000;
+  
+    const fetchWithRetry = async () => {
+      try {
+        await fetchApiMenuItems();
+      } catch (error) {
+        if (retryAttempt < maxRetries - 1) {
+          console.log(`Retry attempt ${retryAttempt + 1} of ${maxRetries}`);
+          setRetryAttempt(prev => prev + 1);
+          setTimeout(fetchWithRetry, retryDelay);
+        }
+      }
+    };
+  
+    fetchWithRetry();
+  }, [retryAttempt]);
+  
   const handleModifierSave = (instructions: string, quantity: number) => {
     if (selectedItem) {
       addItem({
@@ -423,7 +440,7 @@ const MenuSection = () => {
   // Memoize filtered items with pagination
   const filteredItems = useMemo(() => {
     let items;
-    const categoryKey = selectedCategory.toLowerCase();
+    const categoryKey = typeof selectedCategory === 'string' ? selectedCategory.toLowerCase() : selectedCategory.en.toLowerCase();
     
     if (categoryKey === 'all') {
       // Show all items, don't exclude anything
@@ -434,8 +451,8 @@ const MenuSection = () => {
       items = apiMenuItems.filter(item => {
         const itemCategory = typeof item.category === 'string' 
           ? item.category 
-          : item.category.en;
-        return itemCategory.toLowerCase() === selectedCategory.toLowerCase();
+          : typeof item.category === 'string' ? item.category : (item.category as { en: string }).en;
+        return typeof itemCategory === 'string' && typeof selectedCategory === 'string' && itemCategory.toLowerCase() === selectedCategory.toLowerCase();
       });
     }
 
@@ -676,52 +693,45 @@ const MenuSection = () => {
         {/* Category navigation bar with fixed All and scrollable filters */}
         <div className="p-2 relative z-30">
           <div className="flex items-center gap-2">
-          {/* Fixed All button */}
+            {/* Fixed All button */}
             <button
               onClick={() => setSelectedCategory('All')}
               className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                selectedCategory.toLowerCase() === 'all'
-                  ? 'bg-primary text-white shadow-md'
+                typeof selectedCategory === 'string' && selectedCategory.toLowerCase() === 'all'
+                  ? 'bg-red-600 text-white shadow-md'
                   : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
-              {CATEGORY_ORDER['All'].translations[currentLanguage]}
+              {t('navigation.all')}
             </button>
-          {/* Scrollable categories */}
-          <div className="flex-1 overflow-x-auto hover:scrollbar-thin hover:scrollbar-thumb-gray-400 hover:scrollbar-track-gray-100 scrollbar-none">
-              <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSelectedCategory('Featured')}
-                className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                  selectedCategory === 'Featured'
-                    ? 'bg-primary text-white shadow-md'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                {CATEGORY_ORDER['Featured'].translations[currentLanguage]}
-              </button>
-              {categories
-                .filter(category => category.name !== 'Featured' && category.name !== 'All')
-                .map((category) => {
-                  const categoryKey = typeof category.name === 'string' ? category.name : category.name.en;
-                  //console.log('Rendering category button:', categoryKey);
-                  return (
-                  <button
-                    key={category.id}
-                      onClick={() => {
-                        console.log('Selected category:', categoryKey);
-                        setSelectedCategory(categoryKey);
-                      }}
-                    className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                        selectedCategory === categoryKey
-                        ? 'bg-primary text-white shadow-md'
-                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                    }`}
-                  >
-                      {CATEGORY_ORDER[categoryKey]?.translations[currentLanguage] || categoryKey}
-                  </button>
-                  );
-                })}
+            {/* Scrollable categories with hidden scrollbar */}
+            <div className="flex-1 overflow-x-scroll no-scrollbar">
+              <div className="flex items-center gap-2 min-w-max">
+                <button
+                  onClick={() => setSelectedCategory('Featured')}
+                  className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'Featured'
+                      ? 'bg-red-600 text-white shadow-md'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  }`}
+                >
+                  Featured
+                </button>
+                {categories
+                  .filter(category => category.name !== 'Featured' && category.name !== 'All')
+                  .map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.name)}
+                      className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                        selectedCategory === category.name
+                          ? 'bg-red-600 text-white shadow-md'
+                          : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                      }`}
+                    >
+                      {typeof category.name === 'string' ? category.name : category.name.en}
+                    </button>
+                  ))}
               </div>
             </div>
           </div>
@@ -730,7 +740,7 @@ const MenuSection = () => {
 
       <div 
         ref={parentRef}
-        className="flex-1 overflow-y-auto min-h-0 relative hover:scrollbar-thin hover:scrollbar-thumb-gray-400 hover:scrollbar-track-gray-100 scrollbar-none"
+        className="flex-1 overflow-y-auto min-h-0 relative no-scrollbar"
       >
         {loading && (
           <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
@@ -822,7 +832,7 @@ const MenuSection = () => {
                         ${item.price.toFixed(2)}
                       </p>
                       <button
-                        className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
+                        className="bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAddItem(item);

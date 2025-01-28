@@ -81,6 +81,7 @@ export function CartSection() {
       className="bg-white rounded-lg shadow-sm flex flex-col h-full"
       role="complementary"
       aria-label={t('cart.title')}
+      
     >
       {/* Cart Header */}
       <div className="p-4 border-b">
