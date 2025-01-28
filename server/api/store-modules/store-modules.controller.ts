@@ -52,9 +52,7 @@ export const updateModuleState = asyncHandler(async (req: Request, res: Response
   // Transform the response
   const { module, stats, Devices } = updatedModule;
   const transformedModule = {
-    id: module.id,
-    name: module.name,
-    key: module.key,
+    id: moduleId,
     isEnabled: updatedModule.isEnabled,
     stats: stats || {
       activeDevices: Devices?.length || 0,
