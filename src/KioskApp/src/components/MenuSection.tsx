@@ -686,14 +686,14 @@ const MenuSection = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-4 sticky top-0 bg-white shadow-sm relative z-50">
+       <div className="mb-4 sticky top-0 bg-white shadow-sm relative z-50">
         {selectedItem && (
           <div className="absolute inset-0 bg-black/50 z-40" />
         )}
         {/* Category navigation bar with fixed All and scrollable filters */}
         <div className="p-2 relative z-30">
           <div className="flex items-center gap-2">
-            {/* Fixed All button */}
+          {/* Fixed All button */}
             <button
               onClick={() => setSelectedCategory('All')}
               className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
@@ -701,42 +701,48 @@ const MenuSection = () => {
                   ? 'bg-red-600 text-white shadow-md'
                   : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
-            >
-              {t('navigation.all')}
+            >             
+             {t('navigation.all')}
             </button>
-            {/* Scrollable categories with hidden scrollbar */}
-            <div className="flex-1 overflow-x-scroll no-scrollbar">
+                   {/* Scrollable categories with hidden scrollbar */}
+                   <div className="flex-1 overflow-x-scroll no-scrollbar">
               <div className="flex items-center gap-2 min-w-max">
-                <button
-                  onClick={() => setSelectedCategory('Featured')}
-                  className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === 'Featured'
-                      ? 'bg-red-600 text-white shadow-md'
-                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                  }`}
-                >
-                  Featured
-                </button>
-                {categories
-                  .filter(category => category.name !== 'Featured' && category.name !== 'All')
-                  .map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.name)}
-                      className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                        selectedCategory === category.name
-                          ? 'bg-red-600 text-white shadow-md'
-                          : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                      }`}
-                    >
-                      {typeof category.name === 'string' ? category.name : category.name.en}
-                    </button>
-                  ))}
+              <button
+                onClick={() => setSelectedCategory('Featured')}
+                className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                  selectedCategory === 'Featured'
+                    ? 'bg-red-600 text-white shadow-md'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                }`}
+              >
+                {CATEGORY_ORDER['Featured'].translations[currentLanguage]}
+              </button>
+              {categories
+                .filter(category => category.name !== 'Featured' && category.name !== 'All')
+                .map((category) => {
+                  const categoryKey = typeof category.name === 'string' ? category.name : category.name.en;
+                  return (
+                  <button
+                    key={category.id}
+                      onClick={() => {
+                        setSelectedCategory(categoryKey);
+                      }}
+                    className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                        selectedCategory === categoryKey
+                        ? 'bg-red-600 text-white shadow-md'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    }`}
+                  >
+                      {CATEGORY_ORDER[categoryKey]?.translations[currentLanguage] || categoryKey}
+                  </button>
+                  );
+                })}
               </div>
-            </div>
+              </div>
           </div>
         </div>
-      </div>
+        </div>
+  
 
       <div 
         ref={parentRef}
