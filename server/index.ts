@@ -39,6 +39,7 @@ import authRoutes from './api/auth/auth.route';
 import userRoutes from './api/users/users.routes';
 import organizationRoutes from './api/organizations/organizations.routes';
 import storeRoutes from './api/stores/stores.routes';
+import storeModulesRoutes from './api/store-modules/store-modules.routes';
 import { DBService } from './services/db.service';
 import { prisma } from './db';
 import { PrismaClientInitializationError } from '@prisma/client/runtime/library';
@@ -84,6 +85,7 @@ app.use('/api/v1', ensureValidToken); // Protect all routes under /api
 app.use('/api/v1', userRoutes);
 app.use('/api/v1', organizationRoutes);
 app.use('/api/v1', storeRoutes);
+app.use('/api/v1', storeModulesRoutes);
 
 // not found handler for /api endpoints
 app.use('/api/*', (req, res) => {

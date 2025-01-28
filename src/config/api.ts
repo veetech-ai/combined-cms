@@ -27,5 +27,10 @@ export const API_CONFIG = {
     // Products
     PRODUCT_SEARCH_ANALYTICS: (storeId: string) =>
       `/analytics/stores/${storeId}/products/`,
+
+    // Store Modules
+    STORE_MODULES: '/store-modules',
+    STORE_MODULE_BY_ID: (storeId: string, moduleId: string) => `/store-modules/${storeId}/${moduleId}`,
+    INITIALIZE_STORE_MODULES: (storeId: string) => `/store-modules/${storeId}/initialize`
   },
 };

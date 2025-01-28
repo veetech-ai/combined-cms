@@ -704,7 +704,7 @@ const MenuSection = () => {
                 .filter(category => category.name !== 'Featured' && category.name !== 'All')
                 .map((category) => {
                   const categoryKey = typeof category.name === 'string' ? category.name : category.name.en;
-                  console.log('Rendering category button:', categoryKey);
+                  //console.log('Rendering category button:', categoryKey);
                   return (
                   <button
                     key={category.id}
