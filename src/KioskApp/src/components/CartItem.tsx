@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ModifiersModal } from './ModifiersModal';
 import { useMenuStore } from '../stores/menuStore';
+import { itemImageMap, DEFAULT_IMAGE } from '../utils/imageMap';
 
 interface CartItemProps {
   cartId: string;
@@ -55,31 +56,56 @@ export const CartItem: FC<CartItemProps> = ({
   const { i18n } = useTranslation();
   const currentLanguage = i18n.language as 'en' | 'es';
   const menuItem = useMenuStore(state => state.menuItems.find(item => item.id === id));
+  const [imageError, setImageError] = useState(false);
 
-  const calculateItemTotal = () => {
-    let total = price;
+  // Function to normalize item names for image mapping
+  const normalizeItemName = (name: string) => {
+    return name.trim().toLowerCase().replace(/\s+/g, ' ');
+  };
+
+  // Get the correct image URL
+  const getImageUrl = () => {
+    const normalizedName = normalizeItemName(name.en);
+    const mappedImage = itemImageMap[normalizedName];
+    
+    if (mappedImage) {
+      return mappedImage;
+    }
+    
+    // Log missing image mappings during development
+    console.log('No image mapping found for:', name.en, 'normalized as:', normalizedName);
+    return DEFAULT_IMAGE;
+  };
+  const calculateAddOnsTotal = () => {
+    let addOnsTotal = 0;
 
     // Add add-ons total
     addOns.forEach(addOnId => {
-      total += addOnPrices[addOnId] || 0;
+      addOnsTotal += addOnPrices[addOnId] || 0;
     });
 
     // Add beverages total
     beverages.forEach(bevId => {
-      total += beveragePrices[bevId] || 0;
+      addOnsTotal += beveragePrices[bevId] || 0;
     });
 
     // Add sides total
     sides.forEach(sideId => {
-      total += sidePrices[sideId] || 0;
+      addOnsTotal += sidePrices[sideId] || 0;
     });
 
     // Add desserts total
     desserts.forEach(dessertId => {
-      total += dessertPrices[dessertId] || 0;
+      addOnsTotal += dessertPrices[dessertId] || 0;
     });
 
-    return total * quantity;
+    return addOnsTotal;
+  };
+
+  const calculateItemTotal = () => {
+    const basePrice = price * quantity;
+    const addOnsTotal = calculateAddOnsTotal() * quantity;
+    return basePrice + addOnsTotal;
   };
 
   const getAddOnName = (addOnId: string) => {
@@ -94,59 +120,72 @@ export const CartItem: FC<CartItemProps> = ({
 
   const [showInstructions, setShowInstructions] = useState(false);
   const [showModifiers, setShowModifiers] = useState(false);
+
   const handleModifierSave = (instructions: string, quantity: number) => {
     onUpdateInstructions(cartId, instructions);
     onUpdateQuantity(cartId, quantity);
     setShowModifiers(false);
   };
 
+  // Get the actual menu item image or fall back to the provided imageUrl
+  const actualImageUrl = menuItem?.imageUrl || imageUrl;
+  console.log('actualImageUrl:', actualImageUrl);
+
   return (
     <div className="flex flex-col gap-2 mb-2 p-2 bg-gray-50 rounded-lg shadow-sm" role="listitem">
       <div className="flex items-center gap-2">
         <img 
-          src={imageUrl} 
+          src={getImageUrl()}
           alt={name[currentLanguage]}
           className="w-16 h-16 rounded-md object-cover"
+          onError={(e) => {
+            console.log('Image failed to load for:', name.en, 'Using default image');
+            const img = e.target as HTMLImageElement;
+            img.src = DEFAULT_IMAGE;
+            setImageError(true);
+          }}
         />
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-base text-gray-900 truncate">
             {name[currentLanguage]}
           </h3>
-          <div className="text-gray-700 text-base">
-            <p className="font-semibold">${calculateItemTotal().toFixed(2)}</p>
+          {/* Rest of the component structure remains the same */}
+          <div className="text-gray-700 text-sm">
+            <p className="font-normal">${price.toFixed(2)}</p>
             
-            <div className="text-sm text-gray-600">
-        {/* Display add-ons */}
-        {addOns.map(addOnId => (
-          <div key={addOnId} className="flex justify-between">
-            <span>+ {getAddOnName(addOnId)}</span>
-            <span>${addOnPrices[addOnId].toFixed(2)}</span>
-          </div>
-        ))}
+            <div className="text-sm text-gray-600 mt-1">
+              {addOns.map(addOnId => (
+                <div key={addOnId} className="flex justify-between">
+                  <span>+ {getAddOnName(addOnId)}</span>
+                  <span>${addOnPrices[addOnId].toFixed(2)}</span>
+                </div>
+              ))}
 
-        {/* Display beverages */}
-        {beverages.map(bevId => (
-          <div key={bevId} className="flex justify-between">
-            <span>+ {getBeverageName(bevId)}</span>
-            <span>${beveragePrices[bevId].toFixed(2)}</span>
-          </div>
-        ))}
+              {beverages.map(bevId => (
+                <div key={bevId} className="flex justify-between">
+                  <span>+ {getBeverageName(bevId)}</span>
+                  <span>${beveragePrices[bevId].toFixed(2)}</span>
+                </div>
+              ))}
 
-        {/* Display customizations */}
-        {customizations.map(customization => (
-          <div key={customization} className="text-gray-500">
-            • {customization}
-          </div>
-        ))}
-      </div>
+              {customizations.map(customization => (
+                <div key={customization} className="text-gray-500">
+                  • {customization}
+                </div>
+              ))}
+            </div>
 
-      <div className="font-medium text-right">
-        ItemTotal: ${calculateItemTotal().toFixed(2)}
-      </div>
+            <div className="mt-2 text-right space-y-1">
+              <p className="text-sm text-gray-500">
+                Quantity: {quantity} × ${(price + calculateAddOnsTotal()).toFixed(2)}
+              </p>
+              <p className="font-semibold text-base">
+                Total: ${calculateItemTotal().toFixed(2)}
+              </p>
+            </div>
           </div>
           
-          {/* Quantity controls and remove button */}
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-2">
             <button
               onClick={() => onUpdateQuantity(cartId, quantity - 1)}
               className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
@@ -199,7 +238,7 @@ export const CartItem: FC<CartItemProps> = ({
           name: name,
           price: price,
           category: category || '',
-          imageUrl: imageUrl,
+          imageUrl: getImageUrl(),
           sortOrder: 0,
           addOns: [],
           customizations: [],

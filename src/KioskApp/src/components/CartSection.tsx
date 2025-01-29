@@ -7,7 +7,6 @@ import { FeedbackModal } from './FeedbackModal';
 import { DiscountModal } from './DiscountModal';
 import { useCartStore } from '../stores/cartStore';
 import { useMenuStore } from '../stores/menuStore';
-import { itemImageMap, DEFAULT_IMAGE } from '../utils/imageMap';
 
 export function CartSection() {
   const { t } = useTranslation();
@@ -81,7 +80,6 @@ export function CartSection() {
       className="bg-white rounded-lg shadow-sm flex flex-col h-full"
       role="complementary"
       aria-label={t('cart.title')}
-      
     >
       {/* Cart Header */}
       <div className="p-4 border-b">
@@ -97,7 +95,7 @@ export function CartSection() {
               <CartItem
                 key={item.cartId}
                 {...item}
-                imageUrl={itemImageMap[item.name.en] || DEFAULT_IMAGE}
+                imageUrl={menuItem?.imageUrl || ''} 
                 onUpdateQuantity={updateQuantity}
                 onRemove={removeItem}
                 onUpdateInstructions={updateInstructions}
@@ -177,6 +175,7 @@ export function CartSection() {
         </button>
       </div>
 
+      {/* Modals */}
       <CustomerDetailsModal
         isOpen={showCustomerDetails}
         onClose={() => setShowCustomerDetails(false)}
