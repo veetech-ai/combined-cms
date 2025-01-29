@@ -62,6 +62,7 @@ export function CreateMenuModal({ store, onClose }) {
       setForm({
         name: '',
         location: '',
+        clientName: '',
         description: '',
         organizationId: '',
         storeId: ''

@@ -248,12 +248,8 @@ const MenuSection = () => {
         },
         body: JSON.stringify({"input":{}})
       });
-      
       const data = await response.json() as ApiResponse;
-      
-      // Log the raw API response
-      console.log('API Response:', data);
-      
+
       // Extract unique categories and their sort orders from API response
       const uniqueCategoriesMap = new Map<string, Category>();
       
@@ -278,7 +274,7 @@ const MenuSection = () => {
           }
         }
       });
-
+      
       // Convert to array and sort by our custom order
       const uniqueCategories = Array.from(uniqueCategoriesMap.values())
         .sort((a, b) => {
@@ -292,93 +288,73 @@ const MenuSection = () => {
       // Transform menu items with detailed logging
       const baseItems: MenuItem[] = data.elements
         .filter((item: any) => {
-          // Log items being filtered
-          console.log('Filtering item:', {
-            name: item.name,
-            hidden: item.hidden,
-            available: item.available
-          });
           return !item.hidden && item.available;
         })
         .map((item: any) => {
-          // Get the category from override or API
           const apiCategory = item.categories?.elements?.[0]?.name;
           const overrideCategory = ITEM_CATEGORY_OVERRIDE[item.name];
           const finalCategory = overrideCategory || apiCategory || 'uncategorized';
           
-          // Log category assignment
-          console.log('Category mapping for:', item.name, {
-            apiCategory,
-            overrideCategory,
-            finalCategory
-          });
-          
           return {
-          id: parseInt(item.id.slice(0, 8), 36),
-          name: {
-            en: item.name,
+            id: parseInt(item.id.slice(0, 8), 36),
+            name: {
+              en: item.name,
               es: getSpanishName(item.name),
-          },
-          price: item.price / 100,
+            },
+            price: item.price / 100,
             category: finalCategory,
-          sortOrder: item.categories?.elements?.[0]?.sortOrder || 999,
-          imageUrl: itemImageMap[item.name],
-          addOns: [
-            {
-              id: 'extra-cheese',
-              name: { en: 'Extra Cheese', es: 'Queso Extra' },
-              price: 1.50
-            },
-            {
-              id: 'extra-sauce',
-              name: { en: 'Extra Sauce', es: 'Salsa Extra' },
-              price: 0.75
-            }
-          ],
-          customizations: [
-            {
-              id: 'spicy',
-              name: { en: 'Make it Spicy', es: 'Hacer Picante' }
-            },
-            {
-              id: 'no-onions',
-              name: { en: 'No Onions', es: 'Sin Cebollas' }
-            }
-          ],
-          recommendedBeverages: [
-            {
-              id: 'soda',
-              name: { en: 'Soda', es: 'Refresco' },
-              price: 2.00
-            },
-            {
-              id: 'water',
-              name: { en: 'Water', es: 'Agua' },
-              price: 1.00
-            }
-          ],
-          recommendedSides: [
-            {
-              id: 'fries',
-              name: { en: 'French Fries', es: 'Papas Fritas' },
-              price: 3.00
-            }
-          ],
-          recommendedDesserts: [
-            {
-              id: 'ice-cream',
-              name: { en: 'Ice Cream', es: 'Helado' },
-              price: 2.50
-            }
-          ]
+            sortOrder: item.categories?.elements?.[0]?.sortOrder || 999,
+            imageUrl: itemImageMap[item.name],
+            addOns: [
+              {
+                id: 'extra-cheese',
+                name: { en: 'Extra Cheese', es: 'Queso Extra' },
+                price: 1.50
+              },
+              {
+                id: 'extra-sauce',
+                name: { en: 'Extra Sauce', es: 'Salsa Extra' },
+                price: 0.75
+              }
+            ],
+            customizations: [
+              {
+                id: 'spicy',
+                name: { en: 'Make it Spicy', es: 'Hacer Picante' }
+              },
+              {
+                id: 'no-onions',
+                name: { en: 'No Onions', es: 'Sin Cebollas' }
+              }
+            ],
+            recommendedBeverages: [
+              {
+                id: 'soda',
+                name: { en: 'Soda', es: 'Refresco' },
+                price: 2.00
+              },
+              {
+                id: 'water',
+                name: { en: 'Water', es: 'Agua' },
+                price: 1.00
+              }
+            ],
+            recommendedSides: [
+              {
+                id: 'fries',
+                name: { en: 'French Fries', es: 'Papas Fritas' },
+                price: 3.00
+              }
+            ],
+            recommendedDesserts: [
+              {
+                id: 'ice-cream',
+                name: { en: 'Ice Cream', es: 'Helado' },
+                price: 2.50
+              }
+            ]
           };
         });
-
-      // Log the transformed items
-      console.log('Transformed items:', baseItems.map(item => ({
-        name: item.name.en,
-        category: item.category
-      })));
 
       // Create featured items
       const featuredItems = baseItems
@@ -402,27 +378,10 @@ const MenuSection = () => {
     }
   };
 
-  const [retryAttempt, setRetryAttempt] = useState(0);
-
   useEffect(() => {
-    const maxRetries = 3;
-    const retryDelay = 2000;
-  
-    const fetchWithRetry = async () => {
-      try {
-        await fetchApiMenuItems();
-      } catch (error) {
-        if (retryAttempt < maxRetries - 1) {
-          console.log(`Retry attempt ${retryAttempt + 1} of ${maxRetries}`);
-          setRetryAttempt(prev => prev + 1);
-          setTimeout(fetchWithRetry, retryDelay);
-        }
-      }
-    };
-  
-    fetchWithRetry();
-  }, [retryAttempt]);
-  
+    fetchApiMenuItems();
+  }, []);
+
   const handleModifierSave = (instructions: string, quantity: number) => {
     if (selectedItem) {
       addItem({
@@ -443,7 +402,6 @@ const MenuSection = () => {
     const categoryKey = typeof selectedCategory === 'string' ? selectedCategory.toLowerCase() : selectedCategory.en.toLowerCase();
     
     if (categoryKey === 'all') {
-      // Show all items, don't exclude anything
       items = apiMenuItems;
     } else if (selectedCategory === 'Featured') {
       items = apiMenuItems.filter(item => FEATURED_ITEMS.includes(item.name.en));
@@ -517,7 +475,6 @@ const MenuSection = () => {
         if (first.isIntersecting) {
           setVisibleItems((prev) => {
             const nextValue = prev + ITEMS_PER_PAGE;
-            // Don't limit the max items
             return nextValue;
           });
         }
@@ -544,21 +501,9 @@ const MenuSection = () => {
       const normalizedName = normalizeItemName(item.name.en);
       const imageSrc = itemImageMap[normalizedName];
       
-      // Add special logging for previously excluded items
-      if (PREVIOUSLY_EXCLUDED.includes(item.name.en)) {
-        console.log('Previously excluded item image mapping:', {
-          name: item.name.en,
-          normalizedName,
-          imageSrc,
-          hasImage: !!imageSrc,
-          availableKeys: Object.keys(itemImageMap)
-        });
-      }
-
       if (imageSrc) {
         img.src = imageSrc;
       } else {
-        console.log('No image mapping found for:', item.name.en, 'normalized as:', normalizedName);
         img.src = DEFAULT_IMAGE;
       }
     });
@@ -567,7 +512,6 @@ const MenuSection = () => {
   // Add this effect after the fetchApiMenuItems call
   useEffect(() => {
     if (filteredItems.length > 0) {
-      // Preload first page of images
       preloadImages(filteredItems.slice(0, ITEMS_PER_PAGE));
     }
   }, [filteredItems]);
@@ -664,17 +608,11 @@ const MenuSection = () => {
       "Delivery Fee": "Cargo por Entrega"
     };
 
-    // Log missing translations during development
-    if (!translations[normalizedName]) {
-      console.log(`Missing translation for: ${normalizedName}`);
-    }
-
     return translations[normalizedName] || normalizedName;
   };
 
   // Add this debug logging after fetching items
   useEffect(() => {
-    // Debug log to check image mappings
     if (apiMenuItems.length > 0) {
       console.log('Image mapping check:', apiMenuItems.map(item => ({
         name: item.name.en,
@@ -690,10 +628,8 @@ const MenuSection = () => {
         {selectedItem && (
           <div className="absolute inset-0 bg-black/50 z-40" />
         )}
-        {/* Category navigation bar with fixed All and scrollable filters */}
         <div className="p-2 relative z-30">
           <div className="flex items-center gap-2">
-          {/* Fixed All button */}
             <button
               onClick={() => setSelectedCategory('All')}
               className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
@@ -701,48 +637,44 @@ const MenuSection = () => {
                   ? 'bg-red-600 text-white shadow-md'
                   : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
-            >             
-             {t('navigation.all')}
+            >
+              {CATEGORY_ORDER['All'].translations[currentLanguage]}
             </button>
-                   {/* Scrollable categories with hidden scrollbar */}
-                   <div className="flex-1 overflow-x-scroll no-scrollbar">
+            <div className="flex-1 overflow-x-scroll no-scrollbar">
               <div className="flex items-center gap-2 min-w-max">
-              <button
-                onClick={() => setSelectedCategory('Featured')}
-                className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                  selectedCategory === 'Featured'
-                    ? 'bg-red-600 text-white shadow-md'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                {CATEGORY_ORDER['Featured'].translations[currentLanguage]}
-              </button>
-              {categories
-                .filter(category => category.name !== 'Featured' && category.name !== 'All')
-                .map((category) => {
-                  const categoryKey = typeof category.name === 'string' ? category.name : category.name.en;
-                  return (
-                  <button
-                    key={category.id}
-                      onClick={() => {
-                        setSelectedCategory(categoryKey);
-                      }}
-                    className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                        selectedCategory === categoryKey
-                        ? 'bg-red-600 text-white shadow-md'
-                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                    }`}
-                  >
-                      {CATEGORY_ORDER[categoryKey]?.translations[currentLanguage] || categoryKey}
-                  </button>
-                  );
-                })}
+                <button
+                  onClick={() => setSelectedCategory('Featured')}
+                  className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'Featured'
+                      ? 'bg-red-600 text-white shadow-md'
+                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  }`}
+                >
+                  {CATEGORY_ORDER['Featured'].translations[currentLanguage]}
+                </button>
+                {categories
+                  .filter(category => category.name !== 'Featured' && category.name !== 'All')
+                  .map((category) => {
+                    const categoryKey = typeof category.name === 'string' ? category.name : category.name.en;
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => setSelectedCategory(categoryKey)}
+                        className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                          selectedCategory === categoryKey
+                          ? 'bg-red-600 text-white shadow-md'
+                          : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                        }`}
+                      >
+                        {CATEGORY_ORDER[categoryKey]?.translations[currentLanguage] || categoryKey}
+                      </button>
+                    );
+                  })}
               </div>
-              </div>
+            </div>
           </div>
         </div>
-        </div>
-  
+      </div>
 
       <div 
         ref={parentRef}
@@ -798,65 +730,53 @@ const MenuSection = () => {
                     {rowItems.map((item) => (
                       <div
                         key={`${item.id}-${item.category}`}
-                className="bg-white rounded-lg relative group shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden h-72"
-              >
-                <div
-                  className="w-full h-full flex flex-col text-left relative cursor-pointer"
-                  onClick={() => handleAddItem(item)}
-                >
-                  <img
-                    loading="lazy"
-                    src={(() => {
-                      const normalizedName = normalizeItemName(item.name.en);
-                      const imageSrc = itemImageMap[normalizedName];
-                      
-                      // Log image mapping for previously excluded items
-                      if (PREVIOUSLY_EXCLUDED.includes(item.name.en)) {
-                        console.log('Rendering previously excluded item:', {
-                          name: item.name.en,
-                          normalizedName,
-                          imageSrc,
-                          imageMapKeys: Object.keys(itemImageMap)
-                        });
-                      }
-                      return imageSrc || DEFAULT_IMAGE;
-                    })()}
-                    alt={item.name[currentLanguage]}
-                    className="w-full h-40 object-cover"
-                    onError={(e) => {
-                      console.log('Image failed to load for:', item.name.en, 'Using default image');
-                      const img = e.target as HTMLImageElement;
-                      img.src = DEFAULT_IMAGE;
-                    }}
-                  />
-                  <div className="p-3 flex flex-col flex-1">
-                    <h3 className="font-medium text-neutral-800 text-lg h-12 line-clamp-2 mb-2">
-                      {capitalizeFirstLetter(item.name[currentLanguage])}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                      <p className="text-primary font-bold text-lg">
-                        ${item.price.toFixed(2)}
-                      </p>
-                      <button
-                        className="bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddItem(item);
-                        }}
+                        className="bg-white rounded-lg relative group shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden h-72"
                       >
-                        + Add
-                      </button>
-                    </div>
+                        <div
+                          className="w-full h-full flex flex-col text-left relative cursor-pointer"
+                          onClick={() => handleAddItem(item)}
+                        >
+                          <img
+                            loading="lazy"
+                            src={(() => {
+                              const normalizedName = normalizeItemName(item.name.en);
+                              const imageSrc = itemImageMap[normalizedName];
+                              return imageSrc || DEFAULT_IMAGE;
+                            })()}
+                            alt={item.name[currentLanguage]}
+                            className="w-full h-40 object-cover"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.src = DEFAULT_IMAGE;
+                            }}
+                          />
+                          <div className="p-3 flex flex-col flex-1">
+                            <h3 className="font-medium text-neutral-800 text-lg h-12 line-clamp-2 mb-2">
+                              {capitalizeFirstLetter(item.name[currentLanguage])}
+                            </h3>
+                            <div className="flex items-center justify-between">
+                              <p className="text-primary font-bold text-lg">
+                                ${item.price.toFixed(2)}
+                              </p>
+                              <button
+                                className="bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddItem(item);
+                                }}
+                              >
+                                + Add
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </div>
-            ))}
-        </div>
                 );
               })}
             </div>
             
-            {/* Load more trigger */}
             {visibleItems < (selectedCategory === 'all' 
               ? apiMenuItems.length 
               : apiMenuItems.filter(item => item.category === selectedCategory).length) && (

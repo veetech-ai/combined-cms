@@ -31,6 +31,10 @@ export const API_CONFIG = {
     // Store Modules
     STORE_MODULES: '/store-modules',
     STORE_MODULE_BY_ID: (storeId: string, moduleId: string) => `/store-modules/${storeId}/${moduleId}`,
-    INITIALIZE_STORE_MODULES: (storeId: string) => `/store-modules/${storeId}/initialize`
+    INITIALIZE_STORE_MODULES: (storeId: string) => `/store-modules/${storeId}/initialize`,
+
+    // Displays
+    DISPLAYS: '/displays',
+    DISPLAY_BY_ID: (id: string) => `/displays/${id}`
   },
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface ToggleSwitchProps {
   enabled: boolean;
@@ -6,8 +6,13 @@ interface ToggleSwitchProps {
   size?: 'sm' | 'md';
 }
 
-export default function ToggleSwitch({ enabled, onChange, size = 'md' }: ToggleSwitchProps) {
-  const baseClasses = "relative inline-flex items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2";
+export default function ToggleSwitch({
+  enabled,
+  onChange,
+  size = 'md'
+}: ToggleSwitchProps) {
+  const baseClasses =
+    'relative inline-flex items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
   const sizeClasses = size === 'sm' ? 'h-5 w-9' : 'h-6 w-11';
   
   return (

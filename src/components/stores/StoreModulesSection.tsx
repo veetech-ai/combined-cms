@@ -208,7 +208,7 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
           <div
             key={module.id}
             className={`border border-gray-200 rounded-lg p-6 ${
-              module.isEnabled 
+              module.isEnabled
                 ? 'cursor-pointer hover:shadow-md transition-shadow'
                 : ''
             }`}
