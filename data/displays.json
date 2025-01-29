@@ -58,5 +58,15 @@
     "status": "Online",
     "lastSeen": "2025-01-29T09:24:58.328Z",
     "hexCode": "0FED0857"
+  },
+  {
+    "id": "b67130ac-5501-4321-8b66-d8f25f884ab7",
+    "name": "Danish",
+    "location": "Pending Setup",
+    "store": "Default Store",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-01-29T13:12:13.468Z",
+    "hexCode": "6C596C8E"
   }
 ]
