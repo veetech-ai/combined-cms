@@ -17,9 +17,14 @@ interface CartItemProps {
   category?: string;
   id: number;
   addOns?: string[];
-  addOnPrices?: {
-    [key: string]: number;
-  };
+  customizations?: string[];
+  beverages?: string[];
+  sides?: string[];
+  desserts?: string[];
+  addOnPrices: { [key: string]: number };
+  beveragePrices: { [key: string]: number };
+  sidePrices: { [key: string]: number };
+  dessertPrices: { [key: string]: number };
   onUpdateQuantity: (cartId: string, quantity: number) => void;
   onRemove: (cartId: string) => void;
   onUpdateInstructions: (cartId: string, instructions: string) => void;
@@ -27,25 +32,68 @@ interface CartItemProps {
 
 export const CartItem: FC<CartItemProps> = ({ 
   cartId,
-  name, 
-  price, 
-  quantity, 
+  name,
+  price,
+  quantity,
   imageUrl,
   instructions,
   category,
   id,
   addOns = [],
-  addOnPrices = {},
-  onUpdateQuantity, 
+  customizations = [],
+  beverages = [],
+  sides = [],
+  desserts = [],
+  addOnPrices,
+  beveragePrices,
+  sidePrices,
+  dessertPrices,
+  onUpdateQuantity,
   onRemove,
   onUpdateInstructions
 }) => {
   const { i18n } = useTranslation();
   const currentLanguage = i18n.language as 'en' | 'es';
-  const [showInstructions, setShowInstructions] = useState(false);
-  const [showModifiers, setShowModifiers] = useState(false);
   const menuItem = useMenuStore(state => state.menuItems.find(item => item.id === id));
 
+  const calculateItemTotal = () => {
+    let total = price;
+
+    // Add add-ons total
+    addOns.forEach(addOnId => {
+      total += addOnPrices[addOnId] || 0;
+    });
+
+    // Add beverages total
+    beverages.forEach(bevId => {
+      total += beveragePrices[bevId] || 0;
+    });
+
+    // Add sides total
+    sides.forEach(sideId => {
+      total += sidePrices[sideId] || 0;
+    });
+
+    // Add desserts total
+    desserts.forEach(dessertId => {
+      total += dessertPrices[dessertId] || 0;
+    });
+
+    return total * quantity;
+  };
+
+  const getAddOnName = (addOnId: string) => {
+    const addOn = menuItem?.addOns?.find(a => a.id === addOnId);
+    return addOn?.name[currentLanguage] || addOnId;
+  };
+
+  const getBeverageName = (bevId: string) => {
+    const beverage = menuItem?.recommendedBeverages?.find(b => b.id === bevId);
+    return beverage?.name[currentLanguage] || bevId;
+  };
+
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [showModifiers, setShowModifiers] = useState(false);
   const handleModifierSave = (instructions: string, quantity: number) => {
     onUpdateInstructions(cartId, instructions);
     onUpdateQuantity(cartId, quantity);
@@ -59,54 +107,63 @@ export const CartItem: FC<CartItemProps> = ({
           src={imageUrl} 
           alt={name[currentLanguage]}
           className="w-16 h-16 rounded-md object-cover"
-          loading="lazy"
         />
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-base text-gray-900 truncate">
             {name[currentLanguage]}
           </h3>
           <div className="text-gray-700 text-base">
-            <p className="font-semibold">
-              ${(price + addOns.reduce((sum, addOnId) => sum + (addOnPrices[addOnId] || 0), 0)).toFixed(2)}
-            </p>
-            {addOns.map(addOnId => (
-              <p key={addOnId} className="text-sm text-gray-500">
-                + ${addOnPrices[addOnId]?.toFixed(2)} {addOnId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-              </p>
-            ))}
+            <p className="font-semibold">${calculateItemTotal().toFixed(2)}</p>
+            
+            <div className="text-sm text-gray-600">
+        {/* Display add-ons */}
+        {addOns.map(addOnId => (
+          <div key={addOnId} className="flex justify-between">
+            <span>+ {getAddOnName(addOnId)}</span>
+            <span>${addOnPrices[addOnId].toFixed(2)}</span>
           </div>
+        ))}
+
+        {/* Display beverages */}
+        {beverages.map(bevId => (
+          <div key={bevId} className="flex justify-between">
+            <span>+ {getBeverageName(bevId)}</span>
+            <span>${beveragePrices[bevId].toFixed(2)}</span>
+          </div>
+        ))}
+
+        {/* Display customizations */}
+        {customizations.map(customization => (
+          <div key={customization} className="text-gray-500">
+            • {customization}
+          </div>
+        ))}
+      </div>
+
+      <div className="font-medium text-right">
+        ItemTotal: ${calculateItemTotal().toFixed(2)}
+      </div>
+          </div>
+          
+          {/* Quantity controls and remove button */}
           <div className="flex items-center gap-2 mt-1">
             <button
               onClick={() => onUpdateQuantity(cartId, quantity - 1)}
-              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
+              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
             >
               <span className="text-lg">−</span>
             </button>
-            <span className="w-8 text-center font-medium">
-              {quantity}
-            </span>
+            <span className="w-8 text-center font-medium">{quantity}</span>
             <button
               onClick={() => onUpdateQuantity(cartId, quantity + 1)}
-              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
+              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
             >
               <span className="text-lg">+</span>
             </button>
-            {instructions && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowModifiers(true)}
-                  className="ml-2 w-8 h-8 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center"
-                  title="Edit item"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-              </div>
-            )}
+            
             <button
               onClick={() => onRemove(cartId)}
-              className="ml-auto text-red-500 hover:text-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none rounded-full p-1 transition"
+              className="ml-auto text-red-500 hover:text-red-700"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

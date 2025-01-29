@@ -114,6 +114,7 @@ export function ModifiersModal({
     // Add selected add-ons
     selectedAddOns.forEach(addOnId => {
       const addOn = item.addOns?.find(a => a.id === addOnId);
+      console.log(addOn);
       if (addOn) total += addOn.price;
     });
 
@@ -122,7 +123,7 @@ export function ModifiersModal({
       const bev = item.recommendedBeverages?.find(b => b.id === bevId);
       if (bev) total += bev.price;
     });
-
+    console.log(total);
     // Add selected sides
     selectedSides.forEach(sideId => {
       const side = item.recommendedSides?.find(s => s.id === sideId);
@@ -134,7 +135,6 @@ export function ModifiersModal({
       const dessert = item.recommendedDesserts?.find(d => d.id === dessertId);
       if (dessert) total += dessert.price;
     });
-
     return total * quantity;
   };
 
