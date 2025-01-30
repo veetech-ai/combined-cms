@@ -71,3 +71,36 @@ export interface Category {
   id: string;
   name: CategoryName;
 }
+
+export interface CartItem {
+  id: number;
+  name: {
+    en: string;
+    es: string;
+  };
+  price: number;
+  quantity: number;
+  instructions?: string;
+  cloverId?: string;
+}
+
+export interface CloverApiResponse {
+  id: string;
+  orderCart: {
+    id: string;
+    lineItems: Array<{
+      id: string;
+      item: {
+        id: string;
+      };
+      price: number;
+      unitQty: number;
+      note?: string;
+    }>;
+    total: number;
+    currency: string;
+  };
+  createdTime: number;
+  modifiedTime: number;
+  status: string;
+}
