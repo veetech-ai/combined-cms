@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCustomerStore } from '../stores/customerStore';
-import { createOrder } from '../api/orders';
 import { useCartStore } from '../stores/cartStore';
 import { toast } from 'react-hot-toast';
 import { CardPayment } from './payments/CardPayment';
@@ -20,15 +19,13 @@ export function PaymentModal({ isOpen, onClose, onComplete, customerName, total 
   const { t } = useTranslation();
   const [step, setStep] = useState<'method' | 'card' | 'cash' | 'confirmation'>('method');
   const { customer } = useCustomerStore();
-  const { items, phoneDiscount, discountCode, clearCart } = useCartStore();
+  const { clearCart } = useCartStore();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [orderNumber, setOrderNumber] = useState<string>('');
 
   useEffect(() => {
     if (!isOpen) {
       setStep('method');
       setIsProcessing(false);
-      setOrderNumber('');
     }
   }, [isOpen]);
 
@@ -40,28 +37,23 @@ export function PaymentModal({ isOpen, onClose, onComplete, customerName, total 
 
     setIsProcessing(true);
     try {
-      const orderData = {
-        customer_id: customer.id,
-        items: items.map(item => ({
-          menu_item_id: item.id,
-          quantity: item.quantity,
-          price: item.price,
-          instructions: item.instructions
-        })),
-        phone_discount: phoneDiscount,
-        coupon_code: discountCode,
-        payment_method: paymentMethod
-      };
-
-      const order = await createOrder(orderData);
-      setOrderNumber(order.order_number);
+      // Here you would typically process the payment
+      // For now, we'll just simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       setStep('confirmation');
       clearCart();
+      
+      // Show success message
+      toast.success('Payment processed successfully!');
+      
+      // Complete the payment flow after a delay
       setTimeout(() => {
         onComplete();
       }, 2000);
     } catch (error) {
-      toast.error('Failed to create order. Please try again.');
+      console.error('Payment processing failed:', error);
+      toast.error('Failed to process payment. Please try again.');
     } finally {
       setIsProcessing(false);
     }

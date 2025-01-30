@@ -1,104 +1,60 @@
-import { rateLimiter } from './rateLimiter';
-import { handleAPIError, APIError } from './errorHandler';
+import { API_CONFIG, DEFAULT_HEADERS } from '../config/api';
 
-type RequestOptions = RequestInit & {
-  endpoint: string;
-  skipRateLimit?: boolean;
-};
-
-class APIClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
-
-  private async handleResponse(response: Response) {
-    const contentType = response.headers.get('content-type');
-    const isJson = contentType?.includes('application/json');
-    const data = isJson ? await response.json() : await response.text();
-
-    if (!response.ok) {
-      throw new APIError(
-        data.message || 'An error occurred',
-        response.status,
-        data.code
-      );
-    }
-
-    return data;
-  }
-
-  async request<T>(options: RequestOptions): Promise<T> {
-    const { endpoint, skipRateLimit = false, ...init } = options;
-
-    if (!skipRateLimit) {
-      await rateLimiter.waitForToken(endpoint);
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        ...init,
-        headers: {
-          'Content-Type': 'application/json',
-          ...init.headers,
-        },
-      });
-
-      // Handle rate limit headers if present
-      const rateLimit = {
-        limit: response.headers.get('X-RateLimit-Limit'),
-        remaining: response.headers.get('X-RateLimit-Remaining'),
-        reset: response.headers.get('X-RateLimit-Reset'),
-      };
-
-      if (rateLimit.remaining === '0') {
-        throw new APIError(
-          'Rate limit exceeded',
-          429,
-          'RATE_LIMIT_EXCEEDED'
-        );
-      }
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      return handleAPIError(error);
-    }
-  }
-
-  async get<T>(endpoint: string, options: Omit<RequestOptions, 'endpoint' | 'method'> = {}): Promise<T> {
-    return this.request<T>({
-      ...options,
-      endpoint,
-      method: 'GET',
-    });
-  }
-
-  async post<T>(endpoint: string, data: any, options: Omit<RequestOptions, 'endpoint' | 'method'> = {}): Promise<T> {
-    return this.request<T>({
-      ...options,
-      endpoint,
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async put<T>(endpoint: string, data: any, options: Omit<RequestOptions, 'endpoint' | 'method'> = {}): Promise<T> {
-    return this.request<T>({
-      ...options,
-      endpoint,
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async delete<T>(endpoint: string, options: Omit<RequestOptions, 'endpoint' | 'method'> = {}): Promise<T> {
-    return this.request<T>({
-      ...options,
-      endpoint,
-      method: 'DELETE',
-    });
+class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
   }
 }
 
-export const apiClient = new APIClient((import.meta as any).env.VITE_API_URL);
+interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+}
+
+class ApiClient {
+  private baseUrl: string;
+  private storeId: string;
+  private headers: HeadersInit;
+
+  constructor() {
+    this.baseUrl = API_CONFIG.BASE_URL;
+    this.storeId = API_CONFIG.STORE_ID;
+    this.headers = DEFAULT_HEADERS;
+  }
+
+  private async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new ApiError(response.status, errorData.message || `HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async post<T>(endpoint: string, data: any): Promise<T> {
+    try {
+      console.log(`Making POST request to: ${this.baseUrl}${endpoint}`);
+      console.log('Request data:', data);
+
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(data)
+      });
+
+      return this.handleResponse<T>(response);
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
+  }
+
+  // Customer endpoints
+  async findOrCreateCustomer(name: string, phone: string): Promise<ApiResponse<any>> {
+    const endpoint = API_CONFIG.ENDPOINTS.CUSTOMERS.FIND_OR_CREATE(this.storeId);
+    return this.post(endpoint, { name, phone });
+  }
+}
+
+export const apiClient = new ApiClient();
+export type { ApiResponse, ApiError };
