@@ -1,32 +1,34 @@
 import apiClient from './apiClient';
-import { Display } from '../types/display';
+import { API_CONFIG } from '../config/api';
+
+export interface Display {
+  id: string;
+  name: string;
+  location: string;
+  store: string;
+  organization: string;
+  status: string;
+  lastSeen: string;
+  hexCode: string;
+}
 
 export const displayService = {
-  async getDisplays(params?: { storeId?: string; moduleId?: string }) {
-    const { data } = await apiClient.get<Display[]>('/api/displays', { params });
+  async getDisplays() {
+    const { data } = await apiClient.get<Display[]>(`${API_CONFIG.ENDPOINTS.DISPLAYS}`);
     return data;
   },
 
-  async createDisplay(displayData: {
-    name: string;
-    hexCode: string;
-    storeId: string;
-    moduleId: string;
-  }) {
-    const { data } = await apiClient.post<Display>('/api/displays', displayData);
+  async addDisplay(display: Display) {
+    const { data } = await apiClient.post<Display>(`${API_CONFIG.ENDPOINTS.DISPLAYS}`, display);
     return data;
   },
 
-  async updateDisplay(id: string, displayData: {
-    name?: string;
-    hexCode?: string;
-    status?: string;
-  }) {
-    const { data } = await apiClient.put<Display>(`/api/displays/${id}`, displayData);
+  async updateDisplay(id: string, display: Partial<Display>) {
+    const { data } = await apiClient.put<Display>(`${API_CONFIG.ENDPOINTS.DISPLAYS}/${id}`, display);
     return data;
   },
 
   async deleteDisplay(id: string) {
-    await apiClient.delete(`/api/displays/${id}`);
+    await apiClient.delete(`${API_CONFIG.ENDPOINTS.DISPLAYS}/${id}`);
   }
 }; 

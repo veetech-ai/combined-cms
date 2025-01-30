@@ -40,6 +40,7 @@ import userRoutes from './api/users/users.routes';
 import organizationRoutes from './api/organizations/organizations.routes';
 import storeRoutes from './api/stores/stores.routes';
 import storeModulesRoutes from './api/store-modules/store-modules.routes';
+import displayRoutes from './api/displays/displays.routes';
 import { DBService } from './services/db.service';
 import { prisma } from './db';
 import { PrismaClientInitializationError } from '@prisma/client/runtime/library';
@@ -86,6 +87,7 @@ app.use('/api/v1', userRoutes);
 app.use('/api/v1', organizationRoutes);
 app.use('/api/v1', storeRoutes);
 app.use('/api/v1', storeModulesRoutes);
+app.use('/api/v1', displayRoutes);
 
 // not found handler for /api endpoints
 app.use('/api/*', (req, res) => {
@@ -138,7 +140,9 @@ io.on('connection', (socket) => {
   // Handle disconnect
   socket.on('disconnect', () => {
     console.log('user disconnected');
+    socket.emit('redirect', { url: '/login' });
   });
+
 });
 
 server.listen(config.port, async () => {

@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import { X, Monitor, Text } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { displayService, Display } from '../../services/displayService';
 
 interface Props {
   store: any;
   onClose: () => void;
-  onSubmit: (newMenu: any) => void;
+  onSubmit: (newDisplay: Display) => void;
 }
 
 export function OnboardClientModal({ store, onClose, onSubmit }: Props) {
@@ -16,28 +18,41 @@ export function OnboardClientModal({ store, onClose, onSubmit }: Props) {
   const [displayName, setDisplayName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    if (!hexCode || hexCode.length !== 8) {
-      toast.error('Please enter a valid 8-character hex code.');
-      return;
+    try {
+      if (!hexCode || hexCode.length !== 8) {
+        toast.error('Please enter a valid 8-character hex code.');
+        return;
+      }
+
+      const validationCode = localStorage.getItem('hexaCode');
+      const cleanedHexString = validationCode && validationCode.replace(/\s+/g, '');
+      if (hexCode !== cleanedHexString) {
+        toast.error('Hex code mismatch');
+        return;
+      }
+
+      const newDisplay: Display = {
+        id: uuidv4(),
+        name: displayName || `Display ${hexCode}`,
+        location: 'Pending Setup',
+        store: store?.name || 'Default Store',
+        organization: 'Default Organization',
+        status: 'Online',
+        lastSeen: new Date().toISOString(),
+        hexCode: hexCode
+      };
+
+      await onSubmit(newDisplay);
+      onClose();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to onboard display');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const newMenu = {
-      id: uuidv4(),
-      name: displayName || `Display ${hexCode}`,
-      location: 'Pending Setup',
-      store: store?.name || 'Default Store',
-      organization: 'Default Organization',
-      status: 'Offline',
-      lastSeen: new Date().toLocaleString()
-    };
-
-    onSubmit(newMenu);
-    toast.success('Display onboarded successfully!');
-    navigate('/display-views');
-    onClose();
   };
 
   return (
@@ -105,7 +120,7 @@ export function OnboardClientModal({ store, onClose, onSubmit }: Props) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+              className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Onboarding...' : 'Onboard Display'}
             </button>

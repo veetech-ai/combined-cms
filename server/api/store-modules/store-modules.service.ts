@@ -16,16 +16,20 @@ export class StoreModuleService extends DBService {
     });
   }
 
-  async updateModuleState(storeId: string, moduleId: string, isEnabled: boolean) {
+  async updateModuleState(
+    storeId: string,
+    moduleId: string,
+    isEnabled: boolean
+  ) {
     const status = isEnabled ? ModuleStatus.APPROVED : ModuleStatus.DISABLED;
-    
+
     const defaultStats = {
       activeDevices: 0,
       activeUsers: 0,
       lastUpdated: new Date().toISOString()
     };
 
-    return this.db.storeModule.upsert({
+    const result = await this.db.storeModule.upsert({
       where: {
         storeId_moduleId: {
           storeId,
@@ -35,22 +39,34 @@ export class StoreModuleService extends DBService {
       update: {
         isEnabled,
         status,
-        stats: isEnabled ? defaultStats : {}
+        stats: isEnabled ? defaultStats : null
       },
       create: {
         storeId,
         moduleId,
         isEnabled,
         status,
-        stats: isEnabled ? defaultStats : {}
+        stats: isEnabled ? defaultStats : null
       }
     });
+
+    // Defensive check for the result
+    if (!result) {
+      throw new ApiError(404, 'Module update failed or module not found');
+    }
+
+    // Assuming `result` has the module data
+    return {
+      module: result,
+      stats: result.stats || defaultStats,
+      Devices: [] // Replace with actual query if needed
+    };
   }
 
   async initializeStoreModules(storeId: string) {
     const modules = await this.db.module.findMany();
-    
-    const storeModules = modules.map(module => ({
+
+    const storeModules = modules.map((module) => ({
       storeId,
       moduleId: module.id,
       isEnabled: false,
@@ -96,4 +112,4 @@ export class StoreModuleService extends DBService {
       }
     });
   }
-} 
+}

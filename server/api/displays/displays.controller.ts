@@ -1,54 +1,90 @@
 import { Request, Response } from 'express';
-import { DisplayService } from './displays.service';
-import { prisma } from '../../db';
+import fs from 'fs/promises';
+import path from 'path';
 import { asyncHandler } from '../../util/asyn-handler';
 import { ApiError } from '../../util/api.error';
 
-const displayService = new DisplayService(prisma);
+const DISPLAYS_FILE = path.join(process.cwd(), 'data', 'displays.json');
+
+// Ensure the data directory exists
+async function ensureDataDir() {
+  const dir = path.dirname(DISPLAYS_FILE);
+  await fs.mkdir(dir, { recursive: true });
+}
+
+// Read displays from file
+async function readDisplays() {
+  try {
+    await ensureDataDir();
+    const data = await fs.readFile(DISPLAYS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    // If file doesn't exist, return empty array
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return [];
+    }
+    throw error;
+  }
+}
+
+// Write displays to file
+async function writeDisplays(displays: any[]) {
+  await ensureDataDir();
+  await fs.writeFile(DISPLAYS_FILE, JSON.stringify(displays, null, 2));
+}
 
 export const getDisplays = asyncHandler(async (req: Request, res: Response) => {
-  const { storeId, moduleId } = req.query;
-  
-  const where: any = {};
-  if (storeId) where.storeId = storeId;
-  if (moduleId) where.moduleId = moduleId;
-
-  const displays = await displayService.getDisplays({ where });
+  const displays = await readDisplays();
   res.json(displays);
 });
 
-export const createDisplay = asyncHandler(async (req: Request, res: Response) => {
-  const { name, hexCode, storeId, moduleId } = req.body;
-
-  if (!name || !hexCode || !storeId || !moduleId) {
-    throw new ApiError(400, 'Missing required fields');
+export const addDisplay = asyncHandler(async (req: Request, res: Response) => {
+  const newDisplay = req.body;
+  
+  if (!newDisplay.id || !newDisplay.hexCode) {
+    throw new ApiError(400, 'Display ID and hex code are required');
   }
 
-  const display = await displayService.createDisplay({
-    name,
-    hexCode: hexCode.toUpperCase(),
-    store: { connect: { id: storeId } },
-    module: { connect: { id: moduleId } }
-  });
+  const displays = await readDisplays();
+  
+  // Check if display with same hex code already exists
+  if (displays.some((d: any) => d.hexCode === newDisplay.hexCode)) {
+    throw new ApiError(400, 'Display with this hex code already exists');
+  }
 
-  res.status(201).json(display);
+  displays.push(newDisplay);
+  await writeDisplays(displays);
+  
+  res.status(201).json(newDisplay);
 });
 
 export const updateDisplay = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, hexCode, status } = req.body;
+  const updateData = req.body;
 
-  const updateData: any = {};
-  if (name) updateData.name = name;
-  if (hexCode) updateData.hexCode = hexCode.toUpperCase();
-  if (status) updateData.status = status;
+  const displays = await readDisplays();
+  const index = displays.findIndex((d: any) => d.id === id);
+  
+  if (index === -1) {
+    throw new ApiError(404, 'Display not found');
+  }
 
-  const display = await displayService.updateDisplay(id, updateData);
-  res.json(display);
+  displays[index] = { ...displays[index], ...updateData };
+  await writeDisplays(displays);
+  
+  res.json(displays[index]);
 });
 
 export const deleteDisplay = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  await displayService.deleteDisplay(id);
+
+  const displays = await readDisplays();
+  const filteredDisplays = displays.filter((d: any) => d.id !== id);
+  
+  if (displays.length === filteredDisplays.length) {
+    throw new ApiError(404, 'Display not found');
+  }
+
+  await writeDisplays(filteredDisplays);
   res.status(204).send();
 }); 

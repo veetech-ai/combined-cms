@@ -7,7 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { useWebSocket } from './hooks/useWebSocket';
 import Maxikhana from '../images/maxikhana.png';
 
-export function App() {
+export function KioskApp() {
   // const { loadMenuItems } = useMenuStore();
   const wsUrl = useMemo(() => {
     try {
