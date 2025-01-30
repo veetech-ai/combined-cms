@@ -4,19 +4,25 @@ import { useTranslation } from 'react-i18next';
 import { useCartStore } from '../stores/cartStore';
 import { createCloverOrder } from '../api/clover';
 import { toast } from 'react-hot-toast';
+import QRCode from './QRCode'; // Import QRCode component
 
 interface CustomerDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string, phone: string) => void;
+  onSubmit: (name: string, phone: string, orderId: string) => void; // Updated to include orderId
 }
 
-export function CustomerDetailsModal({ isOpen, onClose, onSubmit }: CustomerDetailsModalProps) {
+export function CustomerDetailsModal({
+  isOpen,
+  onClose,
+  onSubmit
+}: CustomerDetailsModalProps) {
   const { t } = useTranslation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { items } = useCartStore();
+  const [orderId, setOrderId] = useState<string | null>(null); // State to hold order ID
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -52,21 +58,24 @@ export function CustomerDetailsModal({ isOpen, onClose, onSubmit }: CustomerDeta
       const orderNote = `Customer: ${name} | Phone: ${phone}`;
       console.log('Creating Clover order with items:', items);
       const order = await createCloverOrder(items, orderNote);
-      
+
       if (!order) {
         throw new Error('Failed to create order in Clover');
       }
 
       console.log('Order created successfully:', order);
+      setOrderId(order.id); // Set the order ID from the response
       toast.success('Order created successfully!');
 
       // Proceed with payment flow
-      onSubmit(name, phone);
+      onSubmit(name, phone, order.id); // Pass order ID to onSubmit
       setName('');
       setPhone('');
     } catch (error) {
       console.error('Error during checkout:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to process checkout');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to process checkout'
+      );
       return;
     } finally {
       setIsSubmitting(false);
@@ -90,11 +99,23 @@ export function CustomerDetailsModal({ isOpen, onClose, onSubmit }: CustomerDeta
           >
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-orange-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                <svg
+                  className="w-8 h-8 text-orange-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold mb-2">{t('cart.almostThere')}</h2>
+              <h2 className="text-xl font-bold mb-2">
+                {t('cart.almostThere')}
+              </h2>
               <p className="text-gray-600 text-sm mb-4">
                 {t('cart.phoneNotification')}
               </p>
@@ -102,7 +123,10 @@ export function CustomerDetailsModal({ isOpen, onClose, onSubmit }: CustomerDeta
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   {t('cart.name')}
                 </label>
                 <input
@@ -116,7 +140,10 @@ export function CustomerDetailsModal({ isOpen, onClose, onSubmit }: CustomerDeta
                 />
               </div>
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   {t('cart.phone')}
                 </label>
                 <input
@@ -155,8 +182,18 @@ export function CustomerDetailsModal({ isOpen, onClose, onSubmit }: CustomerDeta
                 ) : (
                   <>
                     {t('cart.continueToPayment')}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   </>
                 )}

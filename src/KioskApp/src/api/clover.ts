@@ -26,7 +26,10 @@ interface CloverOrderRequest {
   };
 }
 
-export const createCloverOrder = async (items: CartItem[], orderNote: string = 'Web Order') => {
+export const createCloverOrder = async (
+  items: CartItem[],
+  orderNote: string = 'Web Order'
+) => {
   try {
     // Transform cart items to Clover format
     const lineItems: CloverLineItem[] = items.map((item) => ({
@@ -51,17 +54,23 @@ export const createCloverOrder = async (items: CartItem[], orderNote: string = '
       }
     };
 
-    console.log('Sending order to Clover:', JSON.stringify(orderRequest, null, 2));
+    console.log(
+      'Sending order to Clover:',
+      JSON.stringify(orderRequest, null, 2)
+    );
 
-    const response = await fetch(`${CLOVER_API_BASE}/merchants/${MERCHANT_ID}/atomic_order/orders`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${AUTH_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(orderRequest),
-      mode: 'cors'
-    });
+    const response = await fetch(
+      `${CLOVER_API_BASE}/merchants/${MERCHANT_ID}/atomic_order/orders`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${AUTH_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderRequest),
+        mode: 'cors'
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -71,6 +80,7 @@ export const createCloverOrder = async (items: CartItem[], orderNote: string = '
 
     const data = await response.json();
     console.log('Clover API Response:', data);
+
     return data;
   } catch (error) {
     console.error('Error creating Clover order:', error);
