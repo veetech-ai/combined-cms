@@ -166,8 +166,8 @@ export function CartSection() {
           disabled={items.length === 0 || total < 0.01}
           className={`w-full py-3 text-base font-semibold rounded-lg transition-all duration-300 ${
             items.length > 0 && total >= 0.01
-              ? 'bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl' 
-              : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+              ? 'bg-red-600 text-white shadow-md'
+              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
           }`}
         >
           {items.length === 0 ? t('cart.cartEmpty') : 

@@ -98,5 +98,15 @@
     "status": "Online",
     "lastSeen": "2025-01-30T12:38:46.963Z",
     "hexCode": "F01BD0E8"
+  },
+  {
+    "id": "d46dca63-a81c-40b8-9029-c7d8039aacb0",
+    "name": "Arqam",
+    "location": "Pending Setup",
+    "store": "Arqam",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-01-30T14:44:37.098Z",
+    "hexCode": "DC81D7A4"
   }
 ]
