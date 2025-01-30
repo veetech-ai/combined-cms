@@ -159,14 +159,21 @@ export const refreshToken = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
+  try {
+    const refreshToken = req.cookies.refreshToken;
 
-  if (refreshToken) {
-    // Encrypt incoming refresh token for deletion
-    const encryptedRefreshToken = encryptToken(refreshToken);
-    await authService.deleteRefreshToken(encryptedRefreshToken);
+    if (refreshToken) {
+      // Encrypt incoming refresh token for deletion
+      const encryptedRefreshToken = encryptToken(refreshToken);
+      await authService.deleteRefreshToken(encryptedRefreshToken);
+    }
+
+    res.clearCookie('refreshToken');
+    res.json({ message: 'Logged out' });
+  } catch (error) {
+    console.log(error.response?.data?.message || error.message);
+    const errorMessage =
+      error.response?.data?.message || error.message || 'Invalid refresh token';
+    res.status(401).json({ message: errorMessage });
   }
-
-  res.clearCookie('refreshToken');
-  res.json({ message: 'Logged out' });
 };

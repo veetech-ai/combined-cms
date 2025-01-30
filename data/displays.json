@@ -88,5 +88,15 @@
     "status": "Online",
     "lastSeen": "2025-01-30T09:26:50.463Z",
     "hexCode": "EB0EE875"
+  },
+  {
+    "id": "942843fb-b93b-4731-8069-5dcc5b98f884",
+    "name": "D'stest",
+    "location": "Pending Setup",
+    "store": "pihof",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-01-30T12:38:46.963Z",
+    "hexCode": "F01BD0E8"
   }
 ]
