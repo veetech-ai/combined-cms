@@ -66,7 +66,7 @@ async function seedUsers() {
 			},
 			create: {
 				...rest,
-				password: hashedPassword,
+		password: hashedPassword,
 				role,
 				status
 			}

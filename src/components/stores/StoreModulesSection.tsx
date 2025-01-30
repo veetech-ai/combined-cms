@@ -4,7 +4,8 @@ import { Monitor, Store, Coffee, Gift } from 'lucide-react';
 import { Module, ModuleStatus } from '../../types/module';
 import ToggleSwitch from '../common/ToggleSwitch';
 import { storeModuleService } from '../../services/storeModuleService';
-import { toast } from 'react-hot-toast';
+import { toast, Toaster } from 'react-hot-toast';
+import { displayService } from '../../services/displayService';
 
 interface StoreModulesSectionProps {
   store: {
@@ -13,6 +14,17 @@ interface StoreModulesSectionProps {
   };
   onModuleClick: (moduleId: string) => void;
 }
+
+// Define the order of modules
+const moduleOrder = [
+  'venu',      // Digital Menu Board
+  'kiosk',     // Kiosk System
+  'kitchen',   // Order Display System
+  'rewards',   // Rewards Program
+  'feedback',  // Customer Feedback
+  'inventory', // Inventory Management
+  'analytics'  // Analytics Dashboard
+];
 
 const moduleIcons = {
   venu: Monitor,
@@ -66,70 +78,45 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
   const [isLoading, setIsLoading] = useState(true);
   const [pendingToggles, setPendingToggles] = useState<Record<string, boolean>>({});
   const [lastToggleTime, setLastToggleTime] = useState<Record<string, number>>({});
+  const [kioskActiveDevices, setKioskActiveDevices] = useState<number>(0);
 
   useEffect(() => {
     if (store.id) {
       loadStoreModules();
+      loadKioskDevices();
     }
   }, [store.id]);
+
+  const loadKioskDevices = async () => {
+    try {
+      const data = await displayService.getDisplays();
+      // Count only online displays for this store
+      const activeDisplays = data.filter(
+        display => display.store === store.name && display.status === 'Online'
+      ).length;
+      setKioskActiveDevices(activeDisplays);
+    } catch (error) {
+      console.error('Failed to load kiosk devices:', error);
+    }
+  };
 
   const loadStoreModules = async () => {
     try {
       const data = await storeModuleService.getStoreModules(store.id);
-      setModules(data);
+      // Sort modules based on the defined order
+      const sortedModules = [...data].sort((a, b) => {
+        const indexA = moduleOrder.indexOf(a.key);
+        const indexB = moduleOrder.indexOf(b.key);
+        // If module key not found in order, put it at the end
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+      setModules(sortedModules);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to load store modules');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const updateBackend = async (moduleId: string, newState: boolean) => {
-    try {
-      const response = await storeModuleService.updateModuleState(
-        store.id,
-        moduleId,
-        newState
-      );
-      
-      const transformedModule: Module = {
-        id: response.module.id,
-        name: response.module.name,
-        key: response.module.key,
-        isEnabled: response.isEnabled,
-        status: response.status as ModuleStatus,
-        stats: response.stats || undefined,
-        createdAt: response.createdAt,
-        updatedAt: response.updatedAt
-      };
-
-      setModules(prevModules =>
-        prevModules.map(m =>
-          m.id === moduleId ? transformedModule : m
-        )
-      );
-      
-      setPendingToggles(prev => {
-        const newPending = { ...prev };
-        delete newPending[moduleId];
-        return newPending;
-      });
-      
-      toast.success(`Module ${newState ? 'enabled' : 'disabled'} successfully`);
-    } catch (error) {
-      toast.error('Failed to update module state');
-      
-      setModules(prevModules =>
-        prevModules.map(m =>
-          m.id === moduleId ? { ...m, isEnabled: !newState } : m
-        )
-      );
-      
-      setPendingToggles(prev => {
-        const newPending = { ...prev };
-        delete newPending[moduleId];
-        return newPending;
-      });
     }
   };
 
@@ -138,7 +125,7 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
     const lastToggle = lastToggleTime[moduleId] || 0;
     const timeSinceLastToggle = now - lastToggle;
     
-    if (timeSinceLastToggle < 1000) {
+    if (timeSinceLastToggle < 1000 || pendingToggles[moduleId]) {
       return;
     }
     
@@ -149,20 +136,38 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
       [moduleId]: now
     }));
     
-    setModules(prevModules =>
-      prevModules.map(m =>
-        m.id === moduleId ? { ...m, isEnabled: newState } : m
-      )
-    );
-    
     setPendingToggles(prev => ({
       ...prev,
       [moduleId]: true
     }));
-    
-    setTimeout(() => {
-      updateBackend(moduleId, newState);
-    }, 500);
+
+    try {
+      await storeModuleService.updateModuleState(
+        store.id,
+        moduleId,
+        newState
+      );
+      
+      // Reload all modules to get the latest state
+      await loadStoreModules();
+      
+      toast.success(`Module ${newState ? 'enabled' : 'disabled'} successfully`);
+    } catch (error) {
+      // Revert the UI state on error
+      setModules(prevModules =>
+        prevModules.map(m =>
+          m.id === moduleId ? { ...m, isEnabled: currentState } : m
+        )
+      );
+      
+      toast.error('Failed to update module state');
+    } finally {
+      setPendingToggles(prev => {
+        const newPending = { ...prev };
+        delete newPending[moduleId];
+        return newPending;
+      });
+    }
   };
 
   const handleInitialize = async () => {
@@ -204,11 +209,16 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
         const Icon = moduleIcons[module.key as keyof typeof moduleIcons] || Store;
         const isPending = pendingToggles[module.id];
 
+        // Get active devices count based on module type
+        const activeDevices = module.key === 'kiosk' 
+          ? kioskActiveDevices 
+          : module.stats?.activeDevices || 0;
+
         return (
           <div
             key={module.id}
             className={`border border-gray-200 rounded-lg p-6 ${
-              module.isEnabled 
+              module.isEnabled
                 ? 'cursor-pointer hover:shadow-md transition-shadow'
                 : ''
             }`}
@@ -253,14 +263,14 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
               </div>
             </div>
 
-            {module.isEnabled && module.stats && (
+            {module.isEnabled && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50/50 p-4 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700">
                     Active Devices
                   </h4>
                   <p className="text-2xl font-bold mt-1">
-                    {module.stats.activeDevices?.toLocaleString() || '0'}
+                    {activeDevices.toLocaleString()}
                   </p>
                 </div>
                 <div className="bg-gray-50/50 p-4 rounded-lg">
@@ -268,7 +278,7 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
                     Last Updated
                   </h4>
                   <p className="text-sm font-medium mt-1">
-                    {module.stats.lastUpdated
+                    {module.stats?.lastUpdated
                       ? new Date(module.stats.lastUpdated).toLocaleString()
                       : 'Never'}
                   </p>
@@ -278,6 +288,8 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
           </div>
         );
       })}
+
+      <Toaster />
     </div>
   );
 };

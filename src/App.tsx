@@ -60,12 +60,12 @@ const App = () => {
     <Router>
       <CustomerProvider>
         <div className="min-h-screen bg-gray-50">
-        <Routes>
-            {/* <Route path="/store/:id" element={<StorePage />} /> */}
-            <Route path="/store/:id" element={<KioskApp />} />
-
+          <Routes>
             {/* Public Route */}
             <Route path="/login" element={<Login />} />
+
+            {/* <Route path="/store/:id" element={<StorePage />} /> */}
+            <Route path="/kiosk/:id" element={<KioskApp />} />
 
             {/* Protected Routes */}
             <Route

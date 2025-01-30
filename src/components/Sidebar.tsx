@@ -18,7 +18,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', view: 'dashboard' as const },
   { icon: UserCircle, label: 'Customers', path: '/customers', view: 'customers' as const },
   { icon: Store, label: 'Stores', path: '/stores', view: 'stores' as const },
-  { icon: Boxes, label: 'Modules', path: '/modules', view: 'modules' as const },
+  //{ icon: Boxes, label: 'Modules', path: '/modules', view: 'modules' as const },
   { icon: CreditCard, label: 'POS Integrations', path: '/pos', view: 'pos' as const },
   { icon: BarChart2, label: 'Analytics', path: '/analytics', view: 'analytics' as const },
 ];
