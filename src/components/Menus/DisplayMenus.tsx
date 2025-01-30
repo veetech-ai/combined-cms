@@ -87,7 +87,7 @@ export const DisplayMenus = () => {
   };
 
   const openDisplayView = (hexCode: string) => {
-    window.open(`${VITE_HOST_URL}/store/${hexCode}`, '_blank');
+    window.open(`${VITE_HOST_URL}/kiosk/${hexCode}`, '_blank');
   };
   
   if (isLoading) {

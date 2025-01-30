@@ -4,7 +4,7 @@ import { Monitor, Store, Coffee, Gift } from 'lucide-react';
 import { Module, ModuleStatus } from '../../types/module';
 import ToggleSwitch from '../common/ToggleSwitch';
 import { storeModuleService } from '../../services/storeModuleService';
-import { toast } from 'react-hot-toast';
+import { toast, Toaster } from 'react-hot-toast';
 
 interface StoreModulesSectionProps {
   store: {
@@ -84,61 +84,12 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
     }
   };
 
-  const updateBackend = async (moduleId: string, newState: boolean) => {
-    try {
-      const response = await storeModuleService.updateModuleState(
-        store.id,
-        moduleId,
-        newState
-      );
-      
-      const transformedModule: Module = {
-        id: response.module.id,
-        name: response.module.name,
-        key: response.module.key,
-        isEnabled: response.isEnabled,
-        status: response.status as ModuleStatus,
-        stats: response.stats || undefined,
-        createdAt: response.createdAt,
-        updatedAt: response.updatedAt
-      };
-
-      setModules(prevModules =>
-        prevModules.map(m =>
-          m.id === moduleId ? transformedModule : m
-        )
-      );
-      
-      setPendingToggles(prev => {
-        const newPending = { ...prev };
-        delete newPending[moduleId];
-        return newPending;
-      });
-      
-      toast.success(`Module ${newState ? 'enabled' : 'disabled'} successfully`);
-    } catch (error) {
-      toast.error('Failed to update module state');
-      
-      setModules(prevModules =>
-        prevModules.map(m =>
-          m.id === moduleId ? { ...m, isEnabled: !newState } : m
-        )
-      );
-      
-      setPendingToggles(prev => {
-        const newPending = { ...prev };
-        delete newPending[moduleId];
-        return newPending;
-      });
-    }
-  };
-
   const handleToggle = async (moduleId: string, currentState: boolean) => {
     const now = Date.now();
     const lastToggle = lastToggleTime[moduleId] || 0;
     const timeSinceLastToggle = now - lastToggle;
     
-    if (timeSinceLastToggle < 1000) {
+    if (timeSinceLastToggle < 1000 || pendingToggles[moduleId]) {
       return;
     }
     
@@ -149,20 +100,38 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
       [moduleId]: now
     }));
     
-    setModules(prevModules =>
-      prevModules.map(m =>
-        m.id === moduleId ? { ...m, isEnabled: newState } : m
-      )
-    );
-    
     setPendingToggles(prev => ({
       ...prev,
       [moduleId]: true
     }));
-    
-    setTimeout(() => {
-      updateBackend(moduleId, newState);
-    }, 500);
+
+    try {
+      await storeModuleService.updateModuleState(
+        store.id,
+        moduleId,
+        newState
+      );
+      
+      // Reload all modules to get the latest state
+      await loadStoreModules();
+      
+      toast.success(`Module ${newState ? 'enabled' : 'disabled'} successfully`);
+    } catch (error) {
+      // Revert the UI state on error
+      setModules(prevModules =>
+        prevModules.map(m =>
+          m.id === moduleId ? { ...m, isEnabled: currentState } : m
+        )
+      );
+      
+      toast.error('Failed to update module state');
+    } finally {
+      setPendingToggles(prev => {
+        const newPending = { ...prev };
+        delete newPending[moduleId];
+        return newPending;
+      });
+    }
   };
 
   const handleInitialize = async () => {
@@ -278,6 +247,8 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
           </div>
         );
       })}
+
+      <Toaster />
     </div>
   );
 };

@@ -14,7 +14,9 @@ export default function ToggleSwitch({
   const baseClasses =
     'relative inline-flex items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
   const sizeClasses = size === 'sm' ? 'h-5 w-9' : 'h-6 w-11';
-  
+
+  // console.log(enabled);
+
   return (
     <button
       type="button"
