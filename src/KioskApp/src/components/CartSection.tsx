@@ -10,7 +10,7 @@ import { useMenuStore } from '../stores/menuStore';
 
 export function CartSection() {
   const { t } = useTranslation();
-  const { 
+  const {
     items,
     customerName,
     removeItem,
@@ -24,7 +24,7 @@ export function CartSection() {
     isEligibleForPhoneDiscount
   } = useCartStore();
 
-  const menuItems = useMenuStore(state => state.menuItems);
+  const menuItems = useMenuStore((state) => state.menuItems);
   const [discountCode, setLocalDiscountCode] = useState('');
 
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
@@ -33,11 +33,15 @@ export function CartSection() {
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
   const [error, setError] = useState('');
 
-  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } = getDiscountedTotal();
+  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } =
+    getDiscountedTotal();
 
-  const handleCustomerSubmit = (name: string, phone: string) => {
+  const [orderDetails, setOrderDetails] = useState();
+
+  const handleCustomerSubmit = (name: string, phone: string, order) => {
     setCustomerInfo(name, phone);
     setShowCustomerDetails(false);
+    setOrderDetails(order);
 
     if (isEligibleForPhoneDiscount(phone)) {
       setShowDiscountDialog(true);
@@ -76,26 +80,28 @@ export function CartSection() {
   };
 
   return (
-    <div 
+    <div
       className="bg-white rounded-lg shadow-sm flex flex-col h-full"
       role="complementary"
       aria-label={t('cart.title')}
     >
       {/* Cart Header */}
       <div className="p-4 border-b">
-        <h2 className="text-lg font-bold text-neutral-800">{t('cart.title')}</h2>
+        <h2 className="text-lg font-bold text-neutral-800">
+          {t('cart.title')}
+        </h2>
       </div>
 
       {/* Cart Items - Scrollable Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-4">
         <div className="space-y-2">
           {items.map((item) => {
-            const menuItem = menuItems.find(i => i.id === item.id);
+            const menuItem = menuItems.find((i) => i.id === item.id);
             return (
               <CartItem
                 key={item.cartId}
                 {...item}
-                imageUrl={menuItem?.imageUrl || ''} 
+                imageUrl={menuItem?.imageUrl || ''}
                 onUpdateQuantity={updateQuantity}
                 onRemove={removeItem}
                 onUpdateInstructions={updateInstructions}
@@ -106,7 +112,9 @@ export function CartSection() {
           {items.length === 0 && (
             <div className="text-center py-8">
               <p className="text-neutral-400">{t('cart.empty')}</p>
-              <p className="text-sm text-neutral-400 mt-2">{t('cart.addItems')}</p>
+              <p className="text-sm text-neutral-400 mt-2">
+                {t('cart.addItems')}
+              </p>
             </div>
           )}
         </div>
@@ -122,7 +130,10 @@ export function CartSection() {
       {/* Cart Footer */}
       <div className="p-4 border-t bg-neutral-50">
         <div className="mb-4">
-          <label htmlFor="discountCode" className="block text-sm font-medium text-neutral-600 mb-1">
+          <label
+            htmlFor="discountCode"
+            className="block text-sm font-medium text-neutral-600 mb-1"
+          >
             {t('cart.discountCode')}
           </label>
           <input
@@ -170,8 +181,11 @@ export function CartSection() {
               : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
           }`}
         >
-          {items.length === 0 ? t('cart.cartEmpty') : 
-           total < 0.01 ? t('cart.invalidAmount') : t('cart.checkout')}
+          {items.length === 0
+            ? t('cart.cartEmpty')
+            : total < 0.01
+            ? t('cart.invalidAmount')
+            : t('cart.checkout')}
         </button>
       </div>
 
@@ -187,12 +201,13 @@ export function CartSection() {
         onResponse={handleDiscountResponse}
       />
 
-      <PaymentModal 
+      <PaymentModal
         isOpen={showPaymentDialog}
         onClose={() => setShowPaymentDialog(false)}
         onComplete={handlePaymentComplete}
         customerName={customerName}
         total={total}
+        orderDetail={orderDetails}
       />
 
       <FeedbackModal

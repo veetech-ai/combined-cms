@@ -6,7 +6,7 @@ import { useCartStore } from '../stores/cartStore';
 import { toast } from 'react-hot-toast';
 import { CardPayment } from './payments/CardPayment';
 import { CashPayment } from './payments/CashPayment';
-import QRCodeComponent from './QRCode';
+import QRCode from './QRCode';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ interface PaymentModalProps {
   onComplete: () => void;
   customerName: string;
   total: number;
+  orderDetail: [];
 }
 
 export function PaymentModal({
@@ -21,7 +22,8 @@ export function PaymentModal({
   onClose,
   onComplete,
   customerName,
-  total
+  total,
+  orderDetail
 }: PaymentModalProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState<
@@ -179,11 +181,12 @@ export function PaymentModal({
             )}
 
             {step === 'QR' && (
-              <QRCodeComponent
+              <QRCode
                 isOpen={isOpen}
                 onClose={onClose}
                 amount={total}
                 onBack={() => setStep('method')}
+                orderDetail={orderDetail}
               />
             )}
 

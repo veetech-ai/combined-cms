@@ -4,12 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useCartStore } from '../stores/cartStore';
 import { createCloverOrder } from '../api/clover';
 import { toast } from 'react-hot-toast';
-import QRCode from './QRCode'; // Import QRCode component
 
 interface CustomerDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string, phone: string, orderId: string) => void; // Updated to include orderId
+  onSubmit: (name: string, phone: string) => void;
 }
 
 export function CustomerDetailsModal({
@@ -22,7 +21,6 @@ export function CustomerDetailsModal({
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { items } = useCartStore();
-  const [orderId, setOrderId] = useState<string | null>(null); // State to hold order ID
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -31,7 +29,10 @@ export function CustomerDetailsModal({
     if (numericValue.length > 0) {
       formattedValue = numericValue.match(/.{1,3}/g)?.join('-') || numericValue;
       if (numericValue.length > 3) {
-        formattedValue = `(${formattedValue.slice(0, 3)}) ${formattedValue.slice(4)}`;
+        formattedValue = `(${formattedValue.slice(
+          0,
+          3
+        )}) ${formattedValue.slice(4)}`;
       }
     }
     setPhone(formattedValue);
@@ -64,11 +65,10 @@ export function CustomerDetailsModal({
       }
 
       console.log('Order created successfully:', order);
-      setOrderId(order.id); // Set the order ID from the response
       toast.success('Order created successfully!');
 
       // Proceed with payment flow
-      onSubmit(name, phone, order.id); // Pass order ID to onSubmit
+      onSubmit(name, phone, order);
       setName('');
       setPhone('');
     } catch (error) {
