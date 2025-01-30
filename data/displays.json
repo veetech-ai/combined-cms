@@ -68,5 +68,25 @@
     "status": "Online",
     "lastSeen": "2025-01-29T13:12:13.468Z",
     "hexCode": "6C596C8E"
+  },
+  {
+    "id": "ceb77d33-9db6-4824-a93e-cc1b86530df5",
+    "name": "Hafiz",
+    "location": "Pending Setup",
+    "store": "Default Store",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-01-30T09:14:45.891Z",
+    "hexCode": "99B9ECF7"
+  },
+  {
+    "id": "23d7e38a-a8f0-455d-8829-20a18d60f901",
+    "name": "New test",
+    "location": "Pending Setup",
+    "store": "MexiKhana",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-01-30T09:26:50.463Z",
+    "hexCode": "EB0EE875"
   }
 ]

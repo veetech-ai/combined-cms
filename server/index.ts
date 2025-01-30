@@ -140,7 +140,9 @@ io.on('connection', (socket) => {
   // Handle disconnect
   socket.on('disconnect', () => {
     console.log('user disconnected');
+    socket.emit('redirect', { url: '/login' });
   });
+
 });
 
 server.listen(config.port, async () => {

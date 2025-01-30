@@ -19,6 +19,13 @@ import { displayService, Display } from '../../services/displayService';
 // Add environment variable
 const VITE_HOST_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173';
 
+interface LocationState {
+  store: {
+    id: string;
+    name: string;
+  };
+}
+
 interface Menu {
   id: string;
   name: string;
@@ -51,19 +58,28 @@ const initialMenus: Menu[] = [
 ];
 
 export const DisplayMenus = () => {
+  const location = useLocation();
+  const { store } = (location.state as LocationState) || {};
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [displays, setDisplays] = useState<Display[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!store) {
+      // Redirect or show error if no store information is available
+      toast.error('No store information provided');
+      return;
+    }
     loadDisplays();
-  }, []);
+  }, [store]);
 
   const loadDisplays = async () => {
     try {
       setIsLoading(true);
       const data = await displayService.getDisplays();
-      setDisplays(data);
+      // Filter displays for the current store
+      const storeDisplays = data.filter(display => display.store === store.name);
+      setDisplays(storeDisplays);
     } catch (error: any) {
       toast.error('Failed to load displays');
     } finally {
@@ -73,13 +89,18 @@ export const DisplayMenus = () => {
 
   const handleDisplaySubmit = async (newDisplay: Display) => {
     try {
-      await displayService.addDisplay(newDisplay);
-      setDisplays(prevDisplays => [...prevDisplays, newDisplay]); // Update local state immediately
+      // Set the store information in the new display
+      const displayWithStore = {
+        ...newDisplay,
+        store: store.name
+      };
+      await displayService.addDisplay(displayWithStore);
+      setDisplays(prevDisplays => [...prevDisplays, displayWithStore]);
       toast.success('Display added successfully');
       setIsOnboardingOpen(false);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to add display');
-      throw error; // Propagate error to modal
+      throw error;
     }
   };
   const OpenHexdisplay =() => {

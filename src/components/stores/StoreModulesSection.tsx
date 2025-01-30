@@ -5,6 +5,7 @@ import { Module, ModuleStatus } from '../../types/module';
 import ToggleSwitch from '../common/ToggleSwitch';
 import { storeModuleService } from '../../services/storeModuleService';
 import { toast, Toaster } from 'react-hot-toast';
+import { displayService } from '../../services/displayService';
 
 interface StoreModulesSectionProps {
   store: {
@@ -13,6 +14,17 @@ interface StoreModulesSectionProps {
   };
   onModuleClick: (moduleId: string) => void;
 }
+
+// Define the order of modules
+const moduleOrder = [
+  'venu',      // Digital Menu Board
+  'kiosk',     // Kiosk System
+  'kitchen',   // Order Display System
+  'rewards',   // Rewards Program
+  'feedback',  // Customer Feedback
+  'inventory', // Inventory Management
+  'analytics'  // Analytics Dashboard
+];
 
 const moduleIcons = {
   venu: Monitor,
@@ -66,17 +78,41 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
   const [isLoading, setIsLoading] = useState(true);
   const [pendingToggles, setPendingToggles] = useState<Record<string, boolean>>({});
   const [lastToggleTime, setLastToggleTime] = useState<Record<string, number>>({});
+  const [kioskActiveDevices, setKioskActiveDevices] = useState<number>(0);
 
   useEffect(() => {
     if (store.id) {
       loadStoreModules();
+      loadKioskDevices();
     }
   }, [store.id]);
+
+  const loadKioskDevices = async () => {
+    try {
+      const data = await displayService.getDisplays();
+      // Count only online displays for this store
+      const activeDisplays = data.filter(
+        display => display.store === store.name && display.status === 'Online'
+      ).length;
+      setKioskActiveDevices(activeDisplays);
+    } catch (error) {
+      console.error('Failed to load kiosk devices:', error);
+    }
+  };
 
   const loadStoreModules = async () => {
     try {
       const data = await storeModuleService.getStoreModules(store.id);
-      setModules(data);
+      // Sort modules based on the defined order
+      const sortedModules = [...data].sort((a, b) => {
+        const indexA = moduleOrder.indexOf(a.key);
+        const indexB = moduleOrder.indexOf(b.key);
+        // If module key not found in order, put it at the end
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+      setModules(sortedModules);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to load store modules');
     } finally {
@@ -173,6 +209,11 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
         const Icon = moduleIcons[module.key as keyof typeof moduleIcons] || Store;
         const isPending = pendingToggles[module.id];
 
+        // Get active devices count based on module type
+        const activeDevices = module.key === 'kiosk' 
+          ? kioskActiveDevices 
+          : module.stats?.activeDevices || 0;
+
         return (
           <div
             key={module.id}
@@ -222,14 +263,14 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
               </div>
             </div>
 
-            {module.isEnabled && module.stats && (
+            {module.isEnabled && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50/50 p-4 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700">
                     Active Devices
                   </h4>
                   <p className="text-2xl font-bold mt-1">
-                    {module.stats.activeDevices?.toLocaleString() || '0'}
+                    {activeDevices.toLocaleString()}
                   </p>
                 </div>
                 <div className="bg-gray-50/50 p-4 rounded-lg">
@@ -237,7 +278,7 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
                     Last Updated
                   </h4>
                   <p className="text-sm font-medium mt-1">
-                    {module.stats.lastUpdated
+                    {module.stats?.lastUpdated
                       ? new Date(module.stats.lastUpdated).toLocaleString()
                       : 'Never'}
                   </p>
