@@ -3,7 +3,7 @@ export const translations = {
     common: {
       loading: 'Loading...',
       error: 'An error occurred',
-      retry: 'Retry',
+      retry: 'Retry'
     },
     navigation: {
       all: 'All',
@@ -35,7 +35,8 @@ export const translations = {
       phone: 'Phone Number',
       enterPhone: '(XXX) XXX-XXXX',
       almostThere: 'Almost there!',
-      phoneNotification: "We'll send you a text message with your order number and notify you when your food is ready for pickup.",
+      phoneNotification:
+        "We'll send you a text message with your order number and notify you when your food is ready for pickup.",
       continueToPayment: 'Continue to Payment'
     },
     modifiers: {
@@ -53,7 +54,8 @@ export const translations = {
       contactMe: 'Contact me',
       cancelOrder: 'Cancel the entire order',
       addToCart: 'Add to cart',
-      priceNote: 'Prices and items may vary by location. Additional charges may apply.',
+      priceNote:
+        'Prices and items may vary by location. Additional charges may apply.',
       quantity: 'Quantity',
       editInstructions: 'Edit Instructions',
       additionalNotes: 'Additional Notes',
@@ -81,9 +83,9 @@ export const translations = {
     payment: {
       selectMethod: 'Select Payment Method',
       cash: 'Cash Payment',
-      card: 'Card Payment',
+      card: 'QR Payment',
       cashDescription: 'Pay at the counter with cash',
-      cardDescription: 'Pay with your credit or debit card',
+      cardDescription: 'Scan QR code, to pay with your phone',
       amount: 'Amount to Pay',
       back: 'Back',
       cancel: 'Cancel',
@@ -95,7 +97,7 @@ export const translations = {
       proceedToCounter: 'Please proceed to the counter for payment',
       sendingOrder: 'Sending Order Details',
       pleaseWait: 'Please wait a moment',
-      cardPayment: 'Card Payment',
+      cardPayment: 'QR Payment',
       tapCard: 'Please tap, insert, or swipe your card',
       simulateCard: 'Simulate Card Payment',
       doNotRemove: 'Please do not remove your card',
@@ -134,7 +136,7 @@ export const translations = {
     common: {
       loading: 'Cargando...',
       error: 'Ocurrió un error',
-      retry: 'Reintentar',
+      retry: 'Reintentar'
     },
     navigation: {
       all: 'Todo',
@@ -166,7 +168,8 @@ export const translations = {
       phone: 'Número de Teléfono',
       enterPhone: '(XXX) XXX-XXXX',
       almostThere: '¡Casi listo!',
-      phoneNotification: 'Te enviaremos un mensaje de texto con tu número de orden y te notificaremos cuando tu comida esté lista.',
+      phoneNotification:
+        'Te enviaremos un mensaje de texto con tu número de orden y te notificaremos cuando tu comida esté lista.',
       continueToPayment: 'Continuar al Pago'
     },
     modifiers: {
@@ -184,7 +187,8 @@ export const translations = {
       contactMe: 'Contactarme',
       cancelOrder: 'Cancelar toda la orden',
       addToCart: 'Agregar al carrito',
-      priceNote: 'Los precios y artículos pueden variar según la ubicación. Pueden aplicarse cargos adicionales.',
+      priceNote:
+        'Los precios y artículos pueden variar según la ubicación. Pueden aplicarse cargos adicionales.',
       editInstructions: 'Editar Instrucciones',
       additionalNotes: 'Notas Adicionales',
       notesPlaceholder: '¿Alguna solicitud especial?',

@@ -108,5 +108,15 @@
     "status": "Online",
     "lastSeen": "2025-01-30T14:44:37.098Z",
     "hexCode": "DC81D7A4"
+  },
+  {
+    "id": "e2cde9bc-b2ef-4f89-82ad-29c9e1e23a15",
+    "name": "Mexikhana - Test",
+    "location": "Pending Setup",
+    "store": "G 11",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-01-30T19:08:13.108Z",
+    "hexCode": "8DDEA473"
   }
 ]
