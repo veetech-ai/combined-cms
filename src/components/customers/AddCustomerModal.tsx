@@ -3,7 +3,7 @@ import { X, Plus, Trash2, UserCircle, Camera } from 'lucide-react';
 import { Customer, Store } from '../../types/customer';
 import { DEFAULT_MODULES } from '../../types/module';
 import { DEFAULT_POS_INTEGRATION } from '../../types/pos';
-import { toast } from 'react-hot-toast';
+import { toast, Toaster } from 'react-hot-toast';
 import { uploadImage } from '../../services/imageService';
 
 interface AddCustomerModalProps {
@@ -40,9 +40,11 @@ const defaultStore: Omit<Store, 'id'> = {
   }
 };
 
-const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=0D8ABC&color=fff';
+const DEFAULT_AVATAR =
+  'https://ui-avatars.com/api/?background=0D8ABC&color=fff';
 
 export default function AddCustomerModal({
+  customers,
   isOpen,
   onClose,
   onAdd
@@ -59,7 +61,7 @@ export default function AddCustomerModal({
       try {
         setIsUploading(true);
         setUploadError(null);
-        
+
         // Show preview immediately
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -69,11 +71,11 @@ export default function AddCustomerModal({
 
         // Upload the file
         const imageUrl = await uploadImage(file);
-        setFormData(prev => ({ ...prev, logo: imageUrl }));
+        setFormData((prev) => ({ ...prev, logo: imageUrl }));
       } catch (error) {
         console.error('Error uploading image:', error);
         setUploadError('Failed to upload image. Using default avatar.');
-        setFormData(prev => ({ ...prev, logo: DEFAULT_AVATAR }));
+        setFormData((prev) => ({ ...prev, logo: DEFAULT_AVATAR }));
       } finally {
         setIsUploading(false);
       }
@@ -115,6 +117,24 @@ export default function AddCustomerModal({
     modules: DEFAULT_MODULES
   });
 
+  const validateStep = () => {
+    if (currentStep === 1) {
+      const emailExists = customers.some(
+        (element) => element.email === formData.email
+      );
+      if (emailExists) {
+        toast.error('Email already exists');
+        return false;
+      }
+    }
+
+    setCurrentStep((prev) => prev + 1);
+  };
+
+  const handleNextStep = async () => {
+    validateStep();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentStep < 2) {
@@ -130,7 +150,7 @@ export default function AddCustomerModal({
         phone: formData.phone,
         logo: formData.logo || DEFAULT_AVATAR,
         website: formData.website,
-        
+
         billing_address: {
           street: formData.billingAddress.street,
           city: formData.billingAddress.city,
@@ -138,21 +158,21 @@ export default function AddCustomerModal({
           zipCode: formData.billingAddress.zipCode,
           country: formData.billingAddress.country
         },
-        
+
         primary_contact: {
           name: formData.primaryContact.name,
           email: formData.primaryContact.email,
           phone: formData.primaryContact.phone,
           role: formData.primaryContact.role
         },
-        
+
         subscription: {
           plan: formData.subscription.plan.toUpperCase(),
           status: formData.subscription.status.toUpperCase(),
           startDate: formData.subscription.startDate,
           renewalDate: formData.subscription.renewalDate
         },
-        
+
         pos_integration: {
           type: 'NONE',
           provider: null,
@@ -165,7 +185,7 @@ export default function AddCustomerModal({
       };
 
       await onAdd(organizationData);
-      
+
       setFormData({
         name: '',
         email: '',
@@ -195,7 +215,7 @@ export default function AddCustomerModal({
         stores: [],
         modules: DEFAULT_MODULES
       });
-      
+
       setCurrentStep(1);
       onClose();
     } catch (error) {
@@ -228,7 +248,7 @@ export default function AddCustomerModal({
           {currentStep === 1 && (
             <div className="space-y-4">
               <h3 className="text-lg font-medium mb-4">Customer Information</h3>
-              
+
               <div className="flex items-center space-x-6 mb-6">
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100">
@@ -237,9 +257,9 @@ export default function AddCustomerModal({
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       </div>
                     ) : avatarPreview ? (
-                      <img 
-                        src={avatarPreview} 
-                        alt="Avatar preview" 
+                      <img
+                        src={avatarPreview}
+                        alt="Avatar preview"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -248,8 +268,8 @@ export default function AddCustomerModal({
                       </div>
                     )}
                   </div>
-                  <label 
-                    htmlFor="avatar-upload" 
+                  <label
+                    htmlFor="avatar-upload"
                     className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
                   >
                     <Camera size={16} />
@@ -264,7 +284,9 @@ export default function AddCustomerModal({
                   />
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700">Company Logo</h4>
+                  <h4 className="text-sm font-medium text-gray-700">
+                    Company Logo
+                  </h4>
                   <p className="text-sm text-gray-500 mt-1">
                     Upload a company logo or profile picture
                   </p>
@@ -590,15 +612,28 @@ export default function AddCustomerModal({
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              {currentStep === 2 ? 'Add Customer' : 'Next'}
-            </button>
+            {currentStep === 1 && (
+              <button
+                type="button"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={handleNextStep}
+              >
+                Next
+              </button>
+            )}
+            {currentStep === 2 && (
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Add Customer
+              </button>
+            )}
           </div>
         </form>
       </div>
+
+      <Toaster />
     </div>
   );
 }
