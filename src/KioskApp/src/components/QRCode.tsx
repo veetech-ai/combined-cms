@@ -53,11 +53,11 @@ export default function QRCode({
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
         <div className="flex flex-col items-center">
-          <div className="bg-red-100 p-4 rounded-full mb-4">
-            <span className="text-red-500 text-3xl">📱</span>
+          <div className="bg-black p-4 rounded-full mb-4">
+            <span className="text-black text-3xl">📱</span>
           </div>
           <h2 className="text-lg font-semibold">Scan to Pay</h2>
-          <p className="text-red-500 font-semibold text-xl">
+          <p className="text-black font-semibold text-xl">
             Amount to Pay: ${amount.toFixed(2)}
           </p>
           <div className="bg-gray-100 p-4 rounded-lg mt-4 relative flex items-center justify-center">
@@ -67,7 +67,7 @@ export default function QRCode({
               alt="QR Code"
               className="w-40 h-40"
             />
-            <Loader2 className="absolute top-2 right-2 text-red-500 animate-spin" />
+            <Loader2 className="absolute top-2 right-2 text-black animate-spin" />
           </div>
           <p className="text-gray-500 mt-2">Time Remaining: {timeLeft}s</p>
           <p className="text-gray-500 text-sm">

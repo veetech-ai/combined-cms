@@ -344,7 +344,7 @@ export function ModifiersModal({
                 </div>
                 <button
                   onClick={handleSave}
-                  className="flex-1 ml-4 h-12 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors font-medium text-base"
+                  className="flex-1 ml-4 h-12 bg-black text-white rounded-lg hover:bg-black transition-colors font-medium text-base"
                 >
                   {t('modifiers.addToCart')} - ${calculateTotal().toFixed(2)}
                 </button>

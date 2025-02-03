@@ -1,59 +1,34 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Timer } from './ui/Timer';
+import { BackButton } from './ui/BackButton';
 
 interface FeedbackModalProps {
   isOpen: boolean;
   onComplete: () => void;
+  onStartOver: () => void;
 }
 
-export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
+export function FeedbackModal({ isOpen, onComplete, onStartOver }: FeedbackModalProps) {
   const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  const [countdown, setCountdown] = useState(10);
   const [showThankYou, setShowThankYou] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout>();
 
-  const resetState = useCallback(() => {
+  const resetState = () => {
     setRating(0);
     setHoveredRating(0);
     setSelectedFeatures([]);
-    setCountdown(10);
     setShowThankYou(false);
-  }, []);
+  };
 
   useEffect(() => {
     if (!isOpen) {
       resetState();
     }
-  }, [isOpen, resetState]);
-
-  useEffect(() => {
-    if (showThankYou) {
-      let isActive = true;
-      timerRef.current = setInterval(() => {
-        if (isActive) {
-          setCountdown(prev => {
-            if (prev <= 1) {
-              clearInterval(timerRef.current);
-              onComplete();
-              return 10;
-            }
-            return prev - 1;
-          });
-          }
-      }, 1000);
-
-      return () => {
-        isActive = false;
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-        }
-      };
-    }
-  }, [showThankYou, onComplete]);
+  }, [isOpen]);
 
   const features = [
     { id: 'order', label: t('feedback.easyOrder') },
@@ -64,13 +39,6 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
 
   const handleSubmit = () => {
     setShowThankYou(true);
-  };
-
-  const handleStartNewOrder = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    onComplete();
   };
 
   const toggleFeature = (id: string) => {
@@ -91,7 +59,7 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
 
   const StarIcon = ({ filled }: { filled: boolean }) => (
     <svg
-      className={`w-12 h-12 transition-colors ${
+      className={`w-16 h-16 transition-colors ${
         filled ? 'text-yellow-400' : 'text-gray-300'
       }`}
       fill="currentColor"
@@ -105,24 +73,17 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-        >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-          >
+        <div className="fixed inset-0 bg-white flex flex-col h-screen">
+          <div className="flex items-center p-4">
+            <BackButton onClick={onStartOver} />
+          </div>
+
+          <div className="flex-1 p-4">
             {!showThankYou ? (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-center">{t('feedback.howWasExperience')}</h2>
+              <div className="max-w-md mx-auto">
+                <h2 className="text-2xl mb-8">{t('feedback.howWasExperience')}</h2>
                 
-                <div className="mb-8">
-                  <p className="text-lg mb-4 text-center">{t('feedback.rateExperience')}</p>
+                <div className="mb-12">
                   <div className="flex gap-4 justify-center" role="group" aria-label={t('feedback.ratingStars')}>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -130,7 +91,7 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
                         onClick={() => setRating(star)}
                         onMouseEnter={() => setHoveredRating(star)}
                         onMouseLeave={() => setHoveredRating(0)}
-                        className="p-2 rounded-full hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="p-2 rounded-full hover:bg-gray-100 transition focus:outline-none"
                         aria-label={t('feedback.rateStars', { stars: star })}
                       >
                         <StarIcon filled={hoveredRating ? star <= hoveredRating : star <= rating} />
@@ -142,8 +103,8 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
                   </p>
                 </div>
 
-                <div className="mb-6">
-                  <p className="text-lg mb-4 text-center">{t('feedback.whatDidYouLike')}</p>
+                <div className="mb-12">
+                  <h3 className="text-xl mb-6">{t('feedback.whatDidYouLike')}</h3>
                   <div className="space-y-2">
                     {features.map((feature) => (
                       <button
@@ -151,8 +112,8 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
                         onClick={() => toggleFeature(feature.id)}
                         className={`w-full p-3 rounded-lg transition text-lg ${
                           selectedFeatures.includes(feature.id)
-                            ? 'bg-orange-500 text-white'
-                            : 'bg-gray-100 hover:bg-gray-200'
+                            ? 'bg-black text-white'
+                            : 'bg-gray-100 hover:bg-gray-200 text-black'
                         }`}
                       >
                         {feature.label}
@@ -164,9 +125,9 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
                 <button
                   onClick={handleSubmit}
                   disabled={!rating}
-                  className={`w-full py-3 text-lg font-semibold rounded-lg transition ${
+                  className={`w-full py-4 text-lg font-medium transition ${
                     rating
-                      ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                      ? 'bg-black hover:bg-gray-900 text-white'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
@@ -174,11 +135,11 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
                 </button>
               </div>
             ) : (
-              <div className="text-center">
+              <div className="max-w-md mx-auto text-center">
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 1, repeat: Infinity }}
-                  className="w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center mb-4"
+                  className="w-32 h-32 mx-auto bg-[#E2E2E2] rounded-full flex items-center justify-center mb-8"
                 >
                   <svg className="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -187,20 +148,21 @@ export function FeedbackModal({ isOpen, onComplete }: FeedbackModalProps) {
                 <h3 className="text-xl font-bold mb-2">{t('feedback.thankYou')}</h3>
                 <p className="text-gray-600">{t('feedback.helpImprove')}</p>
                 <div className="mt-6 space-y-4">
-                  <p className="text-sm text-gray-500">
-                    {t('feedback.autoReturn', { seconds: countdown })}
-                  </p>
                   <button
-                    onClick={handleStartNewOrder}
-                    className="w-full bg-orange-500 text-white rounded-lg py-3 text-lg hover:bg-orange-600 transition"
+                    onClick={onStartOver}
+                    className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-900 transition"
                   >
                     {t('feedback.startNewOrder')}
                   </button>
                 </div>
               </div>
             )}
-          </motion.div>
-        </motion.div>
+          </div>
+
+          <div className="absolute top-4 right-4">
+            <Timer seconds={30} onComplete={onComplete} onStartOver={onStartOver} />
+          </div>
+        </div>
       )}
     </AnimatePresence>
   );

@@ -98,5 +98,15 @@
     "status": "Online",
     "lastSeen": "2025-01-30T12:38:46.963Z",
     "hexCode": "F01BD0E8"
+  },
+  {
+    "id": "e2cdd34b-a968-4430-920f-21884c54c61a",
+    "name": "Tablet",
+    "location": "Pending Setup",
+    "store": "Arqam",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-01-31T17:45:27.354Z",
+    "hexCode": "3BB862A2"
   }
 ]

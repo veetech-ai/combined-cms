@@ -8,7 +8,11 @@ import { DiscountModal } from './DiscountModal';
 import { useCartStore } from '../stores/cartStore';
 import { useMenuStore } from '../stores/menuStore';
 
-export function CartSection() {
+interface CartSectionProps {
+  onStartOver: () => void;
+}
+
+export function CartSection({ onStartOver }: CartSectionProps) {
   const { t } = useTranslation();
   const {
     items,
@@ -38,11 +42,11 @@ export function CartSection() {
 
   const [orderDetails, setOrderDetails] = useState();
 
-  const handleCustomerSubmit = (name: string, phone: string, order) => {
+  const handleCustomerSubmit = (name: string, phone: string, order: any) => {
     setCustomerInfo(name, phone);
     setShowCustomerDetails(false);
     setOrderDetails(order);
-
+  
     if (isEligibleForPhoneDiscount(phone)) {
       setShowDiscountDialog(true);
     } else {
@@ -122,8 +126,8 @@ export function CartSection() {
 
       {/* Error Message */}
       {error && (
-        <div className="px-4 py-2 bg-red-50">
-          <p className="text-red-500 text-sm">{error}</p>
+        <div className="px-4 py-2 bg-black">
+          <p className="text-white text-sm">{error}</p>
         </div>
       )}
 
@@ -177,7 +181,7 @@ export function CartSection() {
           disabled={items.length === 0 || total < 0.01}
           className={`w-full py-3 text-base font-semibold rounded-lg transition-all duration-300 ${
             items.length > 0 && total >= 0.01
-              ? 'bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl'
+              ? 'bg-black hover:bg-primary/90 text-white shadow-lg hover:shadow-xl'
               : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
           }`}
         >
@@ -193,6 +197,7 @@ export function CartSection() {
       <CustomerDetailsModal
         isOpen={showCustomerDetails}
         onClose={() => setShowCustomerDetails(false)}
+        onStartOver={onStartOver}
         onSubmit={handleCustomerSubmit}
       />
 
@@ -207,12 +212,15 @@ export function CartSection() {
         onComplete={handlePaymentComplete}
         customerName={customerName}
         total={total}
-        orderDetail={orderDetails}
+        orderDetails={orderDetails}
+        onStartOver={onStartOver}
+        
       />
 
       <FeedbackModal
         isOpen={showFeedbackDialog}
         onComplete={handleFeedbackComplete}
+        onStartOver={onStartOver}
       />
     </div>
   );

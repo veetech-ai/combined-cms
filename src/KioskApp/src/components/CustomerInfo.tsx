@@ -45,7 +45,7 @@ export function CustomerInfo({
         onChange={(e) => onDiscountChange(e.target.value)}
         className="w-full p-1 border rounded text-sm"
       />
-      {error && <p className="text-red-500 text-xs">{error}</p>}
+      {error && <p className="text-black text-xs">{error}</p>}
     </div>
   );
 }
