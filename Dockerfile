@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Install bash
+RUN apk add --no-cache bash
+
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
@@ -11,9 +14,9 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE 3000
+EXPOSE 4000
 
 ENV NODE_ENV=production
 
 
-CMD ["bash", "-c", "npm run db:migrate:deploy && npm run db:seed:production && npm start"]
+CMD ["bash", "-c", "npm run db:migrate && npm run db:seed:production && npm start"]
