@@ -22,14 +22,14 @@ export default function StoresView() {
     dispatch
   } = useCustomer();
 
-  const [storesList, setStoresList] = useState([]);
+  const [storesList, setStoresList] = useState<Store[]>([]);
 
   const token = localStorage.getItem('access_token');
 
-  // Add a function to fetch stores
+  // Add a function to fetch stores baseURL: API_CONFIG.BASE_URL + API_CONFIG.VERSION,
   const fetchStores = async () => {
     try {
-      //Hardcoded
+      //Hardcoded change it to dynamic
       const resp = await axios.get('http://localhost:4000/api/v1/stores/all', {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -115,11 +115,11 @@ export default function StoresView() {
   if (selectedStore) {
     return (
       <StoreDetailsView
-        store={selectedStore}
-        onBack={() => setSelectedStore(null)}
-        onModuleToggle={(moduleId, enabled) =>
-          handleModuleToggle(selectedStore.id, moduleId, enabled)
-        }
+      store={selectedStore}
+      onBack={() => setSelectedStore(null)}
+      onModuleToggle={(moduleId: string, enabled: boolean) =>
+        handleModuleToggle(selectedStore.id, moduleId, enabled)
+      }
       />
     );
   }
@@ -150,7 +150,7 @@ export default function StoresView() {
                 key={orgName}
                 onClick={() =>
                   setSelectedOrganization(
-                    selectedOrganization === orgName ? '' : orgName
+                    selectedOrganization === orgName ? '' : orgName || ''
                   )
                 }
                 className={`relative inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-full border-2 transition-all ${

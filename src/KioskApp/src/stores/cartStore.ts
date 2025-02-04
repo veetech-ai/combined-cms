@@ -10,17 +10,26 @@ interface CartItem {
     es: string;
   };
   price: number;
-  addOnPrices?: {
-    [key: string]: number;
-  };
   quantity: number;
+  imageUrl: string;
   instructions?: string;
   addOns?: string[];
   customizations?: string[];
   beverages?: string[];
   sides?: string[];
   desserts?: string[];
-  unavailablePreference?: string;
+  addOnPrices: {
+    [key: string]: number;
+  };
+  beveragePrices: {
+    [key: string]: number;
+  };
+  sidePrices: {
+    [key: string]: number;
+  };
+  dessertPrices: {
+    [key: string]: number;
+  };
 }
 
 interface CartStore {
@@ -33,6 +42,7 @@ interface CartStore {
     id: number; 
     name: { en: string; es: string; }; 
     price: number; 
+    imageUrl: string;
     instructions?: string; 
     quantity: number;
     addOns?: string[];
@@ -80,56 +90,85 @@ export const useCartStore = create<CartStore>()(
       phoneDiscount: false,
 
       addItem: (item) => {
-        // Generate a unique cart ID that includes timestamp and a random string
         const cartId = `${item.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-        // Validate add-ons limits
-        if (item.addOns && !get().validateAddOns(item.category || '', item.addOns)) {
-          return;
-        }
-
-        // Calculate add-on prices
+        
+        // Initialize price maps
         const addOnPrices: { [key: string]: number } = {};
-        if (item.addOns?.length) {
-          item.addOns.forEach(addOnId => {
+        const beveragePrices: { [key: string]: number } = {};
+        const sidePrices: { [key: string]: number } = {};
+        const dessertPrices: { [key: string]: number } = {};
+      
+        // Parse the instructions JSON if it exists
+        let parsedInstructions;
+        try {
+          parsedInstructions = item.instructions ? JSON.parse(item.instructions) : {};
+        } catch (e) {
+          parsedInstructions = {};
+        }
+      
+        // Calculate add-on prices
+        if (parsedInstructions.addOns?.length) {
+          parsedInstructions.addOns.forEach((addOnId: string) => {
             switch (addOnId) {
-              case 'cheese':
-                addOnPrices[addOnId] = 1.00;
+              case 'extra-cheese':
+                addOnPrices[addOnId] = 1.50;
                 break;
-              case 'bacon':
-                addOnPrices[addOnId] = 2.00;
+              case 'extra-sauce':
+                addOnPrices[addOnId] = 0.75;
                 break;
-              case 'double-protein':
-                addOnPrices[addOnId] = 3.00;
-                break;
-              default:
-                addOnPrices[addOnId] = 1.00;
             }
           });
         }
-
-        // Validate recommended items limits
-        if (item.beverages && item.beverages.length > MAX_BEVERAGES) {
-          toast.error(`Maximum ${MAX_BEVERAGES} beverages allowed`);
-          return;
+      
+        // Calculate beverage prices
+        if (parsedInstructions.beverages?.length) {
+          parsedInstructions.beverages.forEach((bevId: string) => {
+            switch (bevId) {
+              case 'soda':
+                beveragePrices[bevId] = 2.00;
+                break;
+              case 'water':
+                beveragePrices[bevId] = 1.00;
+                break;
+            }
+          });
         }
-        if (item.sides && item.sides.length > MAX_SIDES) {
-          toast.error(`Maximum ${MAX_SIDES} sides allowed`);
-          return;
+      
+        // Calculate side prices
+        if (parsedInstructions.sides?.length) {
+          parsedInstructions.sides.forEach((sideId: string) => {
+            if (sideId === 'fries') {
+              sidePrices[sideId] = 3.00;
+            }
+          });
         }
-
-        set((state) => {
-          // Generate a unique cart ID for this item
-          const cartId = `${item.id}-${Date.now()}`;
-          return { 
-            items: [...state.items, { 
-              ...item, 
-              addOnPrices,
-              cartId,
-              quantity: item.quantity || 1
-            }] 
-          };
-        });
+      
+        // Calculate dessert prices
+        if (parsedInstructions.desserts?.length) {
+          parsedInstructions.desserts.forEach((dessertId: string) => {
+            if (dessertId === 'ice-cream') {
+              dessertPrices[dessertId] = 2.50;
+            }
+          });
+        }
+      
+        set((state) => ({
+          items: [...state.items, {
+            ...item,
+            cartId,
+            imageUrl: item.imageUrl,
+            addOns: parsedInstructions.addOns || [],
+            customizations: parsedInstructions.customizations || [],
+            beverages: parsedInstructions.beverages || [],
+            sides: parsedInstructions.sides || [],
+            desserts: parsedInstructions.desserts || [],
+            quantity: parsedInstructions.quantity || item.quantity || 1,
+            addOnPrices,
+            beveragePrices,
+            sidePrices,
+            dessertPrices
+          }]
+        }));
       },
 
       removeItem: (cartId) => {
@@ -171,25 +210,34 @@ export const useCartStore = create<CartStore>()(
       }),
 
       getTotal: () => {
+        console.log('Calculating total...');
         const state = get();
         return state.items.reduce((sum, item) => {
-          let itemTotal = item.price || 0;
-          
-          // Add add-ons prices
+          let itemTotal = item.price;
+      
+          // Add add-on prices
           if (item.addOns?.length) {
-            itemTotal += item.addOns.reduce((addOnSum, addOnId) => {
-              return addOnSum + (item.addOnPrices?.[addOnId] || 0);
-            }, 0);
+            itemTotal += item.addOns.reduce((addOnSum, addOnId) => 
+              addOnSum + (item.addOnPrices[addOnId] || 0), 0);
           }
-
-          // Add recommended items prices
+      
+          // Add beverage prices
           if (item.beverages?.length) {
-            itemTotal += item.beverages.length * 2.99; // Example price
+            itemTotal += item.beverages.reduce((bevSum, bevId) => 
+              bevSum + (item.beveragePrices[bevId] || 0), 0);
           }
+      
+          // Add side prices
           if (item.sides?.length) {
-            itemTotal += item.sides.length * 3.99; // Example price
+            itemTotal += item.sides.reduce((sideSum, sideId) => 
+              sideSum + (item.sidePrices[sideId] || 0), 0);
           }
-          
+      
+          // Add dessert prices
+          if (item.desserts?.length) {
+            itemTotal += item.desserts.reduce((dessertSum, dessertId) => 
+              dessertSum + (item.dessertPrices[dessertId] || 0), 0);
+          }
           return sum + (itemTotal * item.quantity);
         }, 0);
       },

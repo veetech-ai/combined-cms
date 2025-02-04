@@ -3,10 +3,28 @@ version: '3.8'
 services:
   app:
     build: .
+    container_name: combined_cms_app
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - '${APP_PORT:-4000}:4000'
     environment:
-      # Add environment variables here if needed
+      - NODE_ENV=production
+      - SERVER_PORT=${APP_PORT:-4000}
+      - DB_HOST=postgres
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSL=${DB_SSL:-false}
+      - DATABASE_URL=${DATABASE_URL}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - CORS_CREDENTIALS=${CORS_CREDENTIALS:-true}
+      - JWT_ACCESS_TOKEN_SECRET=${JWT_ACCESS_TOKEN_SECRET}
+      - JWT_REFRESH_TOKEN_SECRET=${JWT_REFRESH_TOKEN_SECRET}
+      - JWT_ACCESS_TOKEN_EXPIRY=${JWT_ACCESS_TOKEN_EXPIRY}
+      - JWT_REFRESH_TOKEN_EXPIRY=${JWT_REFRESH_TOKEN_EXPIRY}
+      - JWT_REFRESH_THRESHOLD_MS=${JWT_REFRESH_THRESHOLD_MS}
+      - VITE_HOST_URL=${VITE_HOST_URL}
+    # Add environment variables here if needed
     volumes:
       - ./server/uploads:/usr/src/app/server/uploads
       - ./server/data:/usr/src/app/server/data
@@ -23,17 +41,28 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "${DB_PORT}:5432"
+      - '${DB_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER}']
       interval: 10s
       timeout: 5s
       retries: 5
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    ports:
+      - '${ADMINER_PORT:-8080}:8080'
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+    restart: unless-stopped
 
 volumes:
   postgres_data:
