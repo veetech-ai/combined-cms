@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { KioskApp } from './App';
+
+import { KioskApp } from "./components/KioskApp";
 import './index.css';
 import './i18n/i18n'; // Import i18n configuration
 

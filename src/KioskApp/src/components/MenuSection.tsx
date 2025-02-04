@@ -665,68 +665,66 @@ const MenuSection = () => {
 
   return (
     <div className="flex flex-col h-full">
+      
       <div className="mb-4 sticky top-0 bg-white shadow-sm relative z-50">
-        {selectedItem && <div className="absolute inset-0 bg-black/50 z-40" />}
-        <div className="p-2 relative z-30">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSelectedCategory('All')}
-              className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                typeof selectedCategory === 'string' &&
-                selectedCategory.toLowerCase() === 'all'
-                  ? 'bg-red-600 text-white shadow-md'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-              }`}
-            >
-              {CATEGORY_ORDER['All'].translations[currentLanguage]}
-            </button>
-            <div className="flex-1 overflow-x-scroll no-scrollbar">
-              <div className="flex items-center gap-2 min-w-max">
+        {selectedItem && (
+          <div className="absolute inset-0 bg-black/50 z-40" />
+        )}
+        {!loading && !error && (
+          <>
+            <div className="p-2 relative z-30">
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setSelectedCategory('Featured')}
+                  onClick={() => setSelectedCategory('All')}
                   className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === 'Featured'
-                      ? 'bg-red-600 text-white shadow-md'
+                    typeof selectedCategory === 'string' && selectedCategory.toLowerCase() === 'all'
+                      ? 'bg-black text-white shadow-md'
                       : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                   }`}
                 >
-                  {CATEGORY_ORDER['Featured'].translations[currentLanguage]}
+                  {CATEGORY_ORDER['All'].translations[currentLanguage]}
                 </button>
-                {categories
-                  .filter(
-                    (category) =>
-                      category.name !== 'Featured' && category.name !== 'All'
-                  )
-                  .map((category) => {
-                    const categoryKey =
-                      typeof category.name === 'string'
-                        ? category.name
-                        : category.name.en;
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(categoryKey)}
-                        className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                          selectedCategory === categoryKey
-                            ? 'bg-red-600 text-white shadow-md'
-                            : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                        }`}
-                      >
-                        {CATEGORY_ORDER[categoryKey]?.translations[
-                          currentLanguage
-                        ] || categoryKey}
-                      </button>
-                    );
-                  })}
+                <div className="flex-1 overflow-x-scroll no-scrollbar categories-scroll-container">
+                  <div className="flex items-center gap-2 min-w-max">
+                    <button
+                      onClick={() => setSelectedCategory('Featured')}
+                      className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                        selectedCategory === 'Featured'
+                          ? 'bg-black text-white shadow-md'
+                          : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                      }`}
+                    >
+                      {CATEGORY_ORDER['Featured'].translations[currentLanguage]}
+                    </button>
+                    {categories
+                      .filter(category => category.name !== 'Featured' && category.name !== 'All')
+                      .map((category) => {
+                        const categoryKey = typeof category.name === 'string' ? category.name : category.name.en;
+                        return (
+                          <button
+                            key={category.id}
+                            onClick={() => setSelectedCategory(categoryKey)}
+                            className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
+                              selectedCategory === categoryKey
+                              ? 'bg-black text-white shadow-md'
+                              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                            }`}
+                          >
+                            {CATEGORY_ORDER[categoryKey]?.translations[currentLanguage] || categoryKey}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       <div
         ref={parentRef}
-        className="flex-1 overflow-y-auto min-h-0 relative no-scrollbar"
+        className="flex-1 overflow-y-auto min-h-0 relative no-scrollbar menu-scrollable"
       >
         {loading && (
           <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
@@ -738,11 +736,11 @@ const MenuSection = () => {
         )}
 
         {error && (
-          <div className="p-4 bg-red-50 rounded-lg text-center mb-4">
-            <p className="text-red-500 mb-2">{error}</p>
+          <div className="p-4 bg-black rounded-lg text-center mb-4">
+            <p className="text-black mb-2">{error}</p>
             <button
               onClick={() => fetchApiMenuItems()}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+              className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black transition"
             >
               {t('navigation.retry')}
             </button>
@@ -814,7 +812,7 @@ const MenuSection = () => {
                                 ${item.price.toFixed(2)}
                               </p>
                               <button
-                                className="bg-red-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
+                                className="bg-black text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-black transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleAddItem(item);

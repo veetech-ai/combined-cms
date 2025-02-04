@@ -1,207 +1,168 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useCartStore } from '../stores/cartStore';
-import { createCloverOrder } from '../api/clover';
+import React, { useState, useEffect } from 'react';
+import { useCustomerStore } from '../stores/customerStore';
 import { toast } from 'react-hot-toast';
+import { Timer } from './ui/Timer';
+import { BackButton } from './ui/BackButton';
 
 interface CustomerDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string, phone: string) => void;
+  onSubmit: (name: string, phone: string, order: any) => void;
+  onStartOver: () => void;
 }
 
-export function CustomerDetailsModal({
-  isOpen,
-  onClose,
-  onSubmit
-}: CustomerDetailsModalProps) {
-  const { t } = useTranslation();
+type Step = 'name' | 'phone';
+
+export function CustomerDetailsModal({ isOpen, onClose, onSubmit, onStartOver }: CustomerDetailsModalProps) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { items } = useCartStore();
+  const [step, setStep] = useState<Step>('name');
+  const { findOrCreate, isLoading } = useCustomerStore();
+
+  useEffect(() => {
+    if (step === 'phone') {
+      const cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.length === 10 && /^[2-9]\d{9}$/.test(cleanPhone)) {
+        handlePhoneSubmit();
+      }
+    }
+  }, [phone, step]);
+
+  const handleNameSubmit = () => {
+    if (!name.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+    setStep('phone');
+  };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = value.replace(/\D/g, '');
+
     let formattedValue = '';
-    if (numericValue.length > 0) {
-      formattedValue = numericValue.match(/.{1,3}/g)?.join('-') || numericValue;
-      if (numericValue.length > 3) {
-        formattedValue = `(${formattedValue.slice(
-          0,
-          3
-        )}) ${formattedValue.slice(4)}`;
-      }
+    if (numericValue.length <= 3) {
+      formattedValue = numericValue;
+    } else if (numericValue.length <= 6) {
+      formattedValue = `(${numericValue.slice(0, 3)}) ${numericValue.slice(3)}`;
+    } else {
+      formattedValue = `(${numericValue.slice(0, 3)}) ${numericValue.slice(
+        3,
+        6
+      )}-${numericValue.slice(6, 10)}`;
     }
-    setPhone(formattedValue);
+
+    if (numericValue.length >= 1 && !/[2-9]/.test(numericValue[0])) {
+      return;
+    }
+
+    if (numericValue.length <= 10) {
+      setPhone(formattedValue);
+    }
   };
 
-  const handleSubmit = async () => {
-    if (!name.trim()) {
-      toast.error(t('errors.nameRequired'));
-      return;
-    }
-    if (!phone.trim() || phone.replace(/\D/g, '').length < 10) {
-      toast.error(t('errors.invalidPhone'));
-      return;
-    }
+  const handlePhoneSubmit = async () => {
+    const cleanPhone = phone.replace(/\D/g, '');
 
-    if (items.length === 0) {
-      toast.error(t('errors.emptyCart'));
-      return;
-    }
-
-    setIsSubmitting(true);
     try {
-      // Create order directly in Clover
-      const orderNote = `Customer: ${name} | Phone: ${phone}`;
-      console.log('Creating Clover order with items:', items);
-      const order = await createCloverOrder(items, orderNote);
-
-      if (!order) {
-        throw new Error('Failed to create order in Clover');
-      }
-
-      console.log('Order created successfully:', order);
-      toast.success('Order created successfully!');
-
-      // Proceed with payment flow
-      onSubmit(name, phone, order);
+      // const customer = await findOrCreate(name, cleanPhone);
+      // Create a basic order object with customer details
+      const orderDetails = {
+        customerName: name,
+        customerPhone: phone,
+        timestamp: new Date().toISOString()
+      };
+      onSubmit(name, phone, orderDetails);
       setName('');
       setPhone('');
+      setStep('name');
     } catch (error) {
-      console.error('Error during checkout:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to process checkout'
-      );
-      return;
-    } finally {
-      setIsSubmitting(false);
+      toast.error(error instanceof Error ? error.message : 'Failed to save customer data');
+    }
+  };
+
+  const handleBack = () => {
+    if (step === 'phone') {
+      setStep('name');
+    } else {
+      onClose();
     }
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-        >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-          >
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-orange-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-orange-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold mb-2">
-                {t('cart.almostThere')}
-              </h2>
-              <p className="text-gray-600 text-sm mb-4">
-                {t('cart.phoneNotification')}
-              </p>
-            </div>
+    isOpen && (
+      <div className="fixed inset-0 bg-white flex flex-col h-screen">
+        <div className="flex items-center p-4">
+          <BackButton onClick={handleBack} />
+        </div>
 
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t('cart.name')}
-                </label>
+        <div className="flex-1 p-4">
+          <div className="max-w-md mx-auto space-y-6">
+            {step === 'name' ? (
+              <>
+                <h2 className="text-2xl mb-8">What's your name?</h2>
                 <input
-                  id="name"
                   type="text"
-                  placeholder={t('cart.enterName')}
+                  placeholder="Your name"
+                  pattern="[A-Za-z ]+"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
-                  disabled={isSubmitting}
+                  className="w-full p-0 text-4xl font-light border-0 focus:outline-none focus:ring-0 bg-transparent"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && name.trim()) {
+                      handleNameSubmit();
+                    }
+                  }}
                 />
-              </div>
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t('cart.phone')}
-                </label>
+                <p className="text-base text-gray-600 mt-4">
+                  We will call your name when your order is ready
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl mb-8">What's your phone number?</h2>
                 <input
-                  id="phone"
                   type="tel"
                   inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder={t('cart.enterPhone')}
+                  placeholder="(XXX) XXX-XXXX"
                   value={phone}
                   onChange={handlePhoneChange}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                  className="w-full p-0 text-4xl font-light border-0 focus:outline-none focus:ring-0 bg-transparent"
+                  autoFocus
                   maxLength={14}
-                  disabled={isSubmitting}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && phone.replace(/\D/g, '').length === 10) {
+                      handlePhoneSubmit();
+                    }
+                  }}
                 />
-              </div>
-            </div>
+                <p className="text-base text-gray-600 mt-4">
+                  We will also text you when your order is ready
+                </p>
+              </>
+            )}
+          </div>
+        </div>
 
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded transition"
-                disabled={isSubmitting}
-              >
-                {t('cart.cancel')}
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {t('common.processing')}
-                  </>
-                ) : (
-                  <>
-                    {t('cart.continueToPayment')}
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </>
-                )}
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        <div className="p-4 border-t border-gray-200">
+          <button
+            onClick={step === 'name' ? handleNameSubmit : handlePhoneSubmit}
+            disabled={
+              (step === 'name' && !name.trim()) ||
+              (step === 'phone' && !/^[2-9]\d{9}$/.test(phone.replace(/\D/g, ''))) ||
+              isLoading
+            }
+            className="w-full bg-black text-white py-4 text-lg font-medium rounded-none disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+
+        <div className="absolute top-4 right-4">
+          <Timer seconds={30} onComplete={onClose} onStartOver={onStartOver} />
+        </div>
+      </div>
+    )
   );
 }
