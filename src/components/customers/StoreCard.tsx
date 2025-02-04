@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MapPin, Phone, ChevronRight } from 'lucide-react';
 import { Store } from '../../types/store';
 import ModulesList from './ModulesList';
@@ -14,6 +14,7 @@ export default function StoreCard({
   onClick,
   onModuleToggle
 }: StoreCardProps) {
+  
   return (
     <div
       className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
