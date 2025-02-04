@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCartStore } from '../stores/cartStore';
 import { ModifiersModal } from './ModifiersModal';
@@ -8,140 +14,145 @@ import { itemImageMap, DEFAULT_IMAGE } from '../utils/imageMap';
 
 // Add a constant for featured items
 const FEATURED_ITEMS = [
-  "Chicken Karahi Loaded Fries",
-  "Beef Nihari Loaded Fries",
-  "Daal Rice Bowl",
-  "Chicken Karahi Rice Bowl",
-  "Beef Keema Rice Bowl"
+  'Chicken Karahi Loaded Fries',
+  'Beef Nihari Loaded Fries',
+  'Daal Rice Bowl',
+  'Chicken Karahi Rice Bowl',
+  'Beef Keema Rice Bowl'
 ];
 
 // Add category mapping for specific items
 const ITEM_CATEGORY_OVERRIDE: Record<string, string> = {
   // Breakfast Items
-  "Reg Kebab": "Breakfast",
-  "Bun Kebab": "Breakfast",
-  "Breakfast Burrito": "Breakfast",
+  'Reg Kebab': 'Breakfast',
+  'Bun Kebab': 'Breakfast',
+  'Breakfast Burrito': 'Breakfast',
 
   // Burritos
-  "Aloo Burrito": "Burritos",
-  "Chicken Karahi Burrito": "Burritos",
-  "Beef Nihari Burrito": "Burritos",
-  "Beef Keema Burrito": "Burritos",
-  "Weekend Special Burrito": "Burritos",
+  'Aloo Burrito': 'Burritos',
+  'Chicken Karahi Burrito': 'Burritos',
+  'Beef Nihari Burrito': 'Burritos',
+  'Beef Keema Burrito': 'Burritos',
+  'Weekend Special Burrito': 'Burritos',
 
   // Quesadillas
-  "Beef Keema Quesadilla": "Quesadillas",
-  "Chicken Karahi Quesadilla": "Quesadillas",
-  "Chicken Karachi Quesadilla": "Quesadillas",
-  "Cheese Quesadilla": "Quesadillas",
-  "Cheeese Quesadilla": "Quesadillas",
-  "Beef Nihari Quesadilla": "Quesadillas",
-  "Aloo Quesadilla": "Quesadillas",
+  'Beef Keema Quesadilla': 'Quesadillas',
+  'Chicken Karahi Quesadilla': 'Quesadillas',
+  'Chicken Karachi Quesadilla': 'Quesadillas',
+  'Cheese Quesadilla': 'Quesadillas',
+  'Cheeese Quesadilla': 'Quesadillas',
+  'Beef Nihari Quesadilla': 'Quesadillas',
+  'Aloo Quesadilla': 'Quesadillas',
 
   // Tacos
-  "Aloo Tacos": "Tacos",
-  "Chicken Karahi Tacos": "Tacos",
-  "Beef Nihari Tacos": "Tacos",
-  "Beef Keema Tacos": "Tacos",
+  'Aloo Tacos': 'Tacos',
+  'Chicken Karahi Tacos': 'Tacos',
+  'Beef Nihari Tacos': 'Tacos',
+  'Beef Keema Tacos': 'Tacos',
 
   // Rice Bowls
-  "Daal Rice Bowl": "Rice Bowls",
-  "Chicken Karahi Rice Bowl": "Rice Bowls",
-  "Beef Nihari Rice Bowl": "Rice Bowls",
-  "Beef Keema Rice Bowl": "Rice Bowls",
-  "Weekend Special Rice Bowl": "Rice Bowls",
+  'Daal Rice Bowl': 'Rice Bowls',
+  'Chicken Karahi Rice Bowl': 'Rice Bowls',
+  'Beef Nihari Rice Bowl': 'Rice Bowls',
+  'Beef Keema Rice Bowl': 'Rice Bowls',
+  'Weekend Special Rice Bowl': 'Rice Bowls',
 
   // Traditional Items
-  "Yellow Daal (Traditional)": "Traditional",
-  "Beef Nihari (Traditional)": "Traditional",
-  "Chicken Karahi (Traditional)": "Traditional",
+  'Yellow Daal (Traditional)': 'Traditional',
+  'Beef Nihari (Traditional)': 'Traditional',
+  'Chicken Karahi (Traditional)': 'Traditional',
 
   // Side Items
-  "Side Daal": "Side Items",
-  "Side Fries": "Side Items",
-  "Side Naan": "Side Items",
-  "Side Nihari Soup": "Side Items",
-  "Side Nihari Soup w/ Beef": "Side Items",
+  'Side Daal': 'Side Items',
+  'Side Fries': 'Side Items',
+  'Side Naan': 'Side Items',
+  'Side Nihari Soup': 'Side Items',
+  'Side Nihari Soup w/ Beef': 'Side Items',
 
   // Drinks
-  "Jarritos": "Drinks",
-  "Can": "Drinks",
-  "Sprite Bottle": "Drinks",
-  "Water": "Drinks",
-  "Rooh Afzah": "Drinks",
-  "Scangwi": "Drinks",
-  "Dood Soda": "Drinks",
-  "Chai": "Drinks",
+  Jarritos: 'Drinks',
+  Can: 'Drinks',
+  'Sprite Bottle': 'Drinks',
+  Water: 'Drinks',
+  'Rooh Afzah': 'Drinks',
+  Scangwi: 'Drinks',
+  'Dood Soda': 'Drinks',
+  Chai: 'Drinks',
 
   // Desserts
-  "Gulab Jamun": "Desserts",
+  'Gulab Jamun': 'Desserts',
 
   // Weekend Special
-  "Weekend Special - Pink Kashmiri Chai": "Weekend Special",
-  "Weekend Special - Samosa": "Weekend Special",
+  'Weekend Special - Pink Kashmiri Chai': 'Weekend Special',
+  'Weekend Special - Samosa': 'Weekend Special',
 
   // Other
-  "Gift Card": "Other",
-  "Delivery Fee": "Other"
+  'Gift Card': 'Other',
+  'Delivery Fee': 'Other'
 };
 
 // Add type for category names
-type CategoryName = {
-  en: string;
-  es: string;
-} | string;  // Allow both translated and simple string formats
+type CategoryName =
+  | {
+      en: string;
+      es: string;
+    }
+  | string; // Allow both translated and simple string formats
 
 // Add this constant for category order
-const CATEGORY_ORDER: Record<string, { order: number; translations: { en: string; es: string } }> = {
-  'All': { 
+const CATEGORY_ORDER: Record<
+  string,
+  { order: number; translations: { en: string; es: string } }
+> = {
+  All: {
     order: -2,
     translations: { en: 'All', es: 'Todo' }
   },
-  'Featured': { 
+  Featured: {
     order: -1,
     translations: { en: 'Featured', es: 'Destacado' }
   },
-  'Breakfast': { 
+  Breakfast: {
     order: 1,
     translations: { en: 'Breakfast', es: 'Desayuno' }
   },
-  'Tacos': { 
+  Tacos: {
     order: 2,
     translations: { en: 'Tacos', es: 'Tacos' }
   },
-  'Rice Bowls': { 
+  'Rice Bowls': {
     order: 3,
     translations: { en: 'Rice Bowls', es: 'Tazones de Arroz' }
   },
-  'Burritos': { 
+  Burritos: {
     order: 4,
     translations: { en: 'Burritos', es: 'Burritos' }
   },
-  'Quesadillas': { 
+  Quesadillas: {
     order: 5,
     translations: { en: 'Quesadillas', es: 'Quesadillas' }
   },
-  'Loaded Fries': { 
+  'Loaded Fries': {
     order: 6,
     translations: { en: 'Loaded Fries', es: 'Papas Cargadas' }
   },
-  'Traditional': { 
+  Traditional: {
     order: 7,
     translations: { en: 'Traditional', es: 'Tradicional' }
   },
-  'Drinks': { 
+  Drinks: {
     order: 8,
     translations: { en: 'Drinks', es: 'Bebidas' }
   },
-  'Desserts': { 
+  Desserts: {
     order: 9,
     translations: { en: 'Desserts', es: 'Postres' }
   },
-  'Side Items': { 
+  'Side Items': {
     order: 10,
     translations: { en: 'Side Items', es: 'Complementos' }
   },
-  'Weekend Special': { 
+  'Weekend Special': {
     order: 11,
     translations: { en: 'Weekend Special', es: 'Especial de Fin de Semana' }
   }
@@ -180,10 +191,10 @@ const sortByCategory = (items: MenuItem[], categories: Category[]) => {
   return [...items].sort((a, b) => {
     const categoryA = a.category as string;
     const categoryB = b.category as string;
-    
+
     const orderA = CATEGORY_ORDER[categoryA]?.order ?? 999;
     const orderB = CATEGORY_ORDER[categoryB]?.order ?? 999;
-    
+
     if (orderA === orderB) {
       return a.name.en.localeCompare(b.name.en);
     }
@@ -203,13 +214,13 @@ const SIMPLIFIED_MODAL_CATEGORIES = [
 
 // Add this list to track previously excluded items
 const PREVIOUSLY_EXCLUDED = [
-  "Yellow Daal (Traditional)",
-  "Chicken Karahi (Traditional)",
-  "Beef Nihari Rice Bowl",
-  "Beef Nihari (Traditional)",
-  "Side Nihari Soup w/ Beef",
-  "Can",
-  "Aloo Quesadilla"
+  'Yellow Daal (Traditional)',
+  'Chicken Karahi (Traditional)',
+  'Beef Nihari Rice Bowl',
+  'Beef Nihari (Traditional)',
+  'Side Nihari Soup w/ Beef',
+  'Can',
+  'Aloo Quesadilla'
 ];
 
 // Add a helper function to normalize item names for image mapping
@@ -244,15 +255,15 @@ const MenuSection = () => {
           'Content-Type': 'application/json',
           'x-fastn-space-id': '2cade1a6-133a-4344-86bf-c3b6f2bbfbe1',
           'x-fastn-space-tenantid': 'veetech_customer2',
-          'stage': 'DRAFT',
+          stage: 'DRAFT'
         },
-        body: JSON.stringify({"input":{}})
+        body: JSON.stringify({ input: {} })
       });
-      const data = await response.json() as ApiResponse;
+      const data = (await response.json()) as ApiResponse;
 
       // Extract unique categories and their sort orders from API response
       const uniqueCategoriesMap = new Map<string, Category>();
-      
+
       // Add Featured category first
       uniqueCategoriesMap.set('featured', {
         id: 'featured',
@@ -269,22 +280,32 @@ const MenuSection = () => {
             uniqueCategoriesMap.set(category.id, {
               id: category.id,
               name: category.name,
-              sortOrder: CATEGORY_ORDER[typeof category.name === 'string' ? category.name : category.name.en]?.order ?? (category.sortOrder + 100)
+              sortOrder:
+                CATEGORY_ORDER[
+                  typeof category.name === 'string'
+                    ? category.name
+                    : category.name.en
+                ]?.order ?? category.sortOrder + 100
             });
           }
         }
       });
-      
+
       // Convert to array and sort by our custom order
-      const uniqueCategories = Array.from(uniqueCategoriesMap.values())
-        .sort((a, b) => {
-          const orderA = CATEGORY_ORDER[typeof a.name === 'string' ? a.name : a.name.en]?.order ?? 999;
-          const orderB = CATEGORY_ORDER[typeof b.name === 'string' ? b.name : b.name.en]?.order ?? 999;
+      const uniqueCategories = Array.from(uniqueCategoriesMap.values()).sort(
+        (a, b) => {
+          const orderA =
+            CATEGORY_ORDER[typeof a.name === 'string' ? a.name : a.name.en]
+              ?.order ?? 999;
+          const orderB =
+            CATEGORY_ORDER[typeof b.name === 'string' ? b.name : b.name.en]
+              ?.order ?? 999;
           return orderA - orderB;
-        });
+        }
+      );
 
       setCategories(uniqueCategories);
-      
+
       // Transform menu items with detailed logging
       const baseItems: MenuItem[] = data.elements
         .filter((item: any) => {
@@ -293,13 +314,14 @@ const MenuSection = () => {
         .map((item: any) => {
           const apiCategory = item.categories?.elements?.[0]?.name;
           const overrideCategory = ITEM_CATEGORY_OVERRIDE[item.name];
-          const finalCategory = overrideCategory || apiCategory || 'uncategorized';
-          
+          const finalCategory =
+            overrideCategory || apiCategory || 'uncategorized';
+
           return {
             id: parseInt(item.id.slice(0, 8), 36),
             name: {
               en: item.name,
-              es: getSpanishName(item.name),
+              es: getSpanishName(item.name)
             },
             price: item.price / 100,
             category: finalCategory,
@@ -309,7 +331,7 @@ const MenuSection = () => {
               {
                 id: 'extra-cheese',
                 name: { en: 'Extra Cheese', es: 'Queso Extra' },
-                price: 1.50
+                price: 1.5
               },
               {
                 id: 'extra-sauce',
@@ -331,26 +353,26 @@ const MenuSection = () => {
               {
                 id: 'soda',
                 name: { en: 'Soda', es: 'Refresco' },
-                price: 2.00
+                price: 2.0
               },
               {
                 id: 'water',
                 name: { en: 'Water', es: 'Agua' },
-                price: 1.00
+                price: 1.0
               }
             ],
             recommendedSides: [
               {
                 id: 'fries',
                 name: { en: 'French Fries', es: 'Papas Fritas' },
-                price: 3.00
+                price: 3.0
               }
             ],
             recommendedDesserts: [
               {
                 id: 'ice-cream',
                 name: { en: 'Ice Cream', es: 'Helado' },
-                price: 2.50
+                price: 2.5
               }
             ]
           };
@@ -358,16 +380,19 @@ const MenuSection = () => {
 
       // Create featured items
       const featuredItems = baseItems
-        .filter(item => FEATURED_ITEMS.includes(item.name.en))
-        .map(item => ({
+        .filter((item) => FEATURED_ITEMS.includes(item.name.en))
+        .map((item) => ({
           ...item,
           isFeatured: true // Add flag to track featured items
         }));
 
       // Combine items and sort by category order
-      const allItems = [...featuredItems, ...baseItems.filter(item => !FEATURED_ITEMS.includes(item.name.en))];
+      const allItems = [
+        ...featuredItems,
+        ...baseItems.filter((item) => !FEATURED_ITEMS.includes(item.name.en))
+      ];
       const sortedItems = sortByCategory(allItems, uniqueCategories);
-      
+
       setApiMenuItems(sortedItems);
       setError(null);
     } catch (err) {
@@ -399,18 +424,30 @@ const MenuSection = () => {
   // Memoize filtered items with pagination
   const filteredItems = useMemo(() => {
     let items;
-    const categoryKey = typeof selectedCategory === 'string' ? selectedCategory.toLowerCase() : selectedCategory.en.toLowerCase();
-    
+    const categoryKey =
+      typeof selectedCategory === 'string'
+        ? selectedCategory.toLowerCase()
+        : selectedCategory.en.toLowerCase();
+
     if (categoryKey === 'all') {
       items = apiMenuItems;
     } else if (selectedCategory === 'Featured') {
-      items = apiMenuItems.filter(item => FEATURED_ITEMS.includes(item.name.en));
+      items = apiMenuItems.filter((item) =>
+        FEATURED_ITEMS.includes(item.name.en)
+      );
     } else {
-      items = apiMenuItems.filter(item => {
-        const itemCategory = typeof item.category === 'string' 
-          ? item.category 
-          : typeof item.category === 'string' ? item.category : (item.category as { en: string }).en;
-        return typeof itemCategory === 'string' && typeof selectedCategory === 'string' && itemCategory.toLowerCase() === selectedCategory.toLowerCase();
+      items = apiMenuItems.filter((item) => {
+        const itemCategory =
+          typeof item.category === 'string'
+            ? item.category
+            : typeof item.category === 'string'
+            ? item.category
+            : (item.category as { en: string }).en;
+        return (
+          typeof itemCategory === 'string' &&
+          typeof selectedCategory === 'string' &&
+          itemCategory.toLowerCase() === selectedCategory.toLowerCase()
+        );
       });
     }
 
@@ -423,8 +460,8 @@ const MenuSection = () => {
   // Calculate row count based on screen size
   const getColumnCount = () => {
     if (window.innerWidth >= 1024) return 4; // lg
-    if (window.innerWidth >= 768) return 3;  // md
-    if (window.innerWidth >= 640) return 3;  // sm
+    if (window.innerWidth >= 768) return 3; // md
+    if (window.innerWidth >= 640) return 3; // sm
     return 2; // default
   };
 
@@ -443,12 +480,12 @@ const MenuSection = () => {
 
   // Fix the parentRef declaration
   const parentRef = useRef<HTMLDivElement>(null);
-  
+
   const virtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => parentRef.current,
     estimateSize: useCallback(() => 288, []),
-    overscan: 10, // Increase overscan to show more items
+    overscan: 10 // Increase overscan to show more items
   });
 
   const handleAddItem = useCallback((item: MenuItem) => {
@@ -463,7 +500,7 @@ const MenuSection = () => {
   const capitalizeFirstLetter = (string: string) => {
     return string
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 
@@ -496,11 +533,11 @@ const MenuSection = () => {
 
   // Update the preloadImages function to highlight previously excluded items
   const preloadImages = (items: MenuItem[]) => {
-    items.forEach(item => {
+    items.forEach((item) => {
       const img = new Image();
       const normalizedName = normalizeItemName(item.name.en);
       const imageSrc = itemImageMap[normalizedName];
-      
+
       if (imageSrc) {
         img.src = imageSrc;
       } else {
@@ -533,79 +570,80 @@ const MenuSection = () => {
   // Add a helper function to get Spanish translations
   const getSpanishName = (englishName: string) => {
     const normalizedName = englishName.trim();
-    
+
     const translations: Record<string, string> = {
       // Breakfast
-      "Reg Kebab": "Kebab Regular",
-      "Bun Kebab": "Kebab en Pan",
-      "Breakfast Burrito": "Burrito de Desayuno",
+      'Reg Kebab': 'Kebab Regular',
+      'Bun Kebab': 'Kebab en Pan',
+      'Breakfast Burrito': 'Burrito de Desayuno',
 
       // Burritos
-      "Aloo Burrito": "Burrito de Papa",
-      "Chicken Karahi Burrito": "Burrito de Pollo Karahi",
-      "Beef Nihari Burrito": "Burrito de Nihari de Res",
-      "Beef Keema Burrito": "Burrito de Keema de Res",
-      "Weekend Special Burrito": "Burrito Especial de Fin de Semana",
+      'Aloo Burrito': 'Burrito de Papa',
+      'Chicken Karahi Burrito': 'Burrito de Pollo Karahi',
+      'Beef Nihari Burrito': 'Burrito de Nihari de Res',
+      'Beef Keema Burrito': 'Burrito de Keema de Res',
+      'Weekend Special Burrito': 'Burrito Especial de Fin de Semana',
 
       // Quesadillas
-      "Beef Keema Quesadilla": "Quesadilla de Keema de Res",
-      "Chicken Karahi Quesadilla": "Quesadilla de Pollo Karahi",
-      "Chicken Karachi Quesadilla": "Quesadilla de Pollo Karachi",
-      "Cheese Quesadilla": "Quesadilla de Queso",
-      "Cheeese Quesadilla": "Quesadilla de Queso",
-      "Beef Nihari Quesadilla": "Quesadilla de Nihari de Res",
-      "Aloo Quesadilla": "Quesadilla de Papa",
+      'Beef Keema Quesadilla': 'Quesadilla de Keema de Res',
+      'Chicken Karahi Quesadilla': 'Quesadilla de Pollo Karahi',
+      'Chicken Karachi Quesadilla': 'Quesadilla de Pollo Karachi',
+      'Cheese Quesadilla': 'Quesadilla de Queso',
+      'Cheeese Quesadilla': 'Quesadilla de Queso',
+      'Beef Nihari Quesadilla': 'Quesadilla de Nihari de Res',
+      'Aloo Quesadilla': 'Quesadilla de Papa',
 
       // Tacos
-      "Aloo Tacos": "Tacos de Papa",
-      "Chicken Karahi Tacos": "Tacos de Pollo Karahi",
-      "Beef Nihari Tacos": "Tacos de Nihari de Res",
-      "Beef Keema Tacos": "Tacos de Keema de Res",
+      'Aloo Tacos': 'Tacos de Papa',
+      'Chicken Karahi Tacos': 'Tacos de Pollo Karahi',
+      'Beef Nihari Tacos': 'Tacos de Nihari de Res',
+      'Beef Keema Tacos': 'Tacos de Keema de Res',
 
       // Rice Bowls
-      "Daal Rice Bowl": "Tazón de Arroz con Daal",
-      "Chicken Karahi Rice Bowl": "Tazón de Arroz con Pollo Karahi",
-      "Beef Nihari Rice Bowl": "Tazón de Arroz con Nihari de Res",
-      "Beef Keema Rice Bowl": "Tazón de Arroz con Keema de Res",
-      "Weekend Special Rice Bowl": "Tazón de Arroz Especial de Fin de Semana",
+      'Daal Rice Bowl': 'Tazón de Arroz con Daal',
+      'Chicken Karahi Rice Bowl': 'Tazón de Arroz con Pollo Karahi',
+      'Beef Nihari Rice Bowl': 'Tazón de Arroz con Nihari de Res',
+      'Beef Keema Rice Bowl': 'Tazón de Arroz con Keema de Res',
+      'Weekend Special Rice Bowl': 'Tazón de Arroz Especial de Fin de Semana',
 
       // Loaded Fries
-      "Chicken Karahi Loaded Fries": "Papas Cargadas con Pollo Karahi",
-      "Beef Nihari Loaded Fries": "Papas Cargadas con Nihari de Res",
-      "Beef Keema Loaded Fries": "Papas Cargadas con Keema de Res",
+      'Chicken Karahi Loaded Fries': 'Papas Cargadas con Pollo Karahi',
+      'Beef Nihari Loaded Fries': 'Papas Cargadas con Nihari de Res',
+      'Beef Keema Loaded Fries': 'Papas Cargadas con Keema de Res',
 
       // Traditional Items
-      "Yellow Daal (Traditional)": "Daal Amarillo (Tradicional)",
-      "Beef Nihari (Traditional)": "Nihari de Res (Tradicional)",
-      "Chicken Karahi (Traditional)": "Pollo Karahi (Tradicional)",
+      'Yellow Daal (Traditional)': 'Daal Amarillo (Tradicional)',
+      'Beef Nihari (Traditional)': 'Nihari de Res (Tradicional)',
+      'Chicken Karahi (Traditional)': 'Pollo Karahi (Tradicional)',
 
       // Side Items
-      "Side Daal": "Daal de Acompañamiento",
-      "Side Fries": "Papas Fritas de Acompañamiento",
-      "Side Naan": "Naan de Acompañamiento",
-      "Side Nihari Soup": "Sopa Nihari de Acompañamiento",
-      "Side Nihari Soup w/ Beef": "Sopa Nihari con Res de Acompañamiento",
+      'Side Daal': 'Daal de Acompañamiento',
+      'Side Fries': 'Papas Fritas de Acompañamiento',
+      'Side Naan': 'Naan de Acompañamiento',
+      'Side Nihari Soup': 'Sopa Nihari de Acompañamiento',
+      'Side Nihari Soup w/ Beef': 'Sopa Nihari con Res de Acompañamiento',
 
       // Weekend Specials
-      "Weekend Special - Pink Kashmiri Chai": "Chai Rosado de Cachemira - Especial de Fin de Semana",
-      "Weekend Special - Samosa": "Samosa - Especial de Fin de Semana",
+      'Weekend Special - Pink Kashmiri Chai':
+        'Chai Rosado de Cachemira - Especial de Fin de Semana',
+      'Weekend Special - Samosa': 'Samosa - Especial de Fin de Semana',
 
       // Drinks
-      "Jarritos": "Jarritos",
-      "Can": "Lata",
-      "Sprite Bottle": "Botella de Sprite",
-      "Water": "Agua",
-      "Rooh Afzah": "Rooh Afzah",
-      "Scangwi": "Scangwi",
-      "Dood Soda": "Soda de Leche",
-      "Chai": "Té",
+      Jarritos: 'Jarritos',
+      Can: 'Lata',
+      'Sprite Bottle': 'Botella de Sprite',
+      Water: 'Agua',
+      'Rooh Afzah': 'Rooh Afzah',
+      Scangwi: 'Scangwi',
+      'Dood Soda': 'Soda de Leche',
+      Chai: 'Té',
 
       // Desserts
-      "Gulab Jamun": "Gulab Jamun",
+      'Gulab Jamun': 'Gulab Jamun',
 
       // Other
-      "Gift Card": "Tarjeta de Regalo",
-      "Delivery Fee": "Cargo por Entrega"
+      'Gift Card': 'Tarjeta de Regalo',
+      'Delivery Fee': 'Cargo por Entrega'
     };
 
     return translations[normalizedName] || normalizedName;
@@ -614,11 +652,14 @@ const MenuSection = () => {
   // Add this debug logging after fetching items
   useEffect(() => {
     if (apiMenuItems.length > 0) {
-      console.log('Image mapping check:', apiMenuItems.map(item => ({
-        name: item.name.en,
-        hasImage: !!itemImageMap[item.name.en.trim()],
-        imagePath: itemImageMap[item.name.en.trim()] || 'no image'
-      })));
+      console.log(
+        'Image mapping check:',
+        apiMenuItems.map((item) => ({
+          name: item.name.en,
+          hasImage: !!itemImageMap[item.name.en.trim()],
+          imagePath: itemImageMap[item.name.en.trim()] || 'no image'
+        }))
+      );
     }
   }, [apiMenuItems]);
 
@@ -681,7 +722,7 @@ const MenuSection = () => {
         )}
       </div>
 
-      <div 
+      <div
         ref={parentRef}
         className="flex-1 overflow-y-auto min-h-0 relative no-scrollbar menu-scrollable"
       >
@@ -712,12 +753,15 @@ const MenuSection = () => {
               style={{
                 height: `${virtualizer.getTotalSize()}px`,
                 width: '100%',
-                position: 'relative',
+                position: 'relative'
               }}
             >
               {virtualizer.getVirtualItems().map((virtualRow) => {
                 const startIndex = virtualRow.index * columnCount;
-                const rowItems = filteredItems.slice(startIndex, startIndex + columnCount);
+                const rowItems = filteredItems.slice(
+                  startIndex,
+                  startIndex + columnCount
+                );
 
                 return (
                   <div
@@ -728,7 +772,7 @@ const MenuSection = () => {
                       left: 0,
                       width: '100%',
                       height: '288px',
-                      transform: `translateY(${virtualRow.start}px)`,
+                      transform: `translateY(${virtualRow.start}px)`
                     }}
                     className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3 pb-4"
                   >
@@ -744,7 +788,9 @@ const MenuSection = () => {
                           <img
                             loading="lazy"
                             src={(() => {
-                              const normalizedName = normalizeItemName(item.name.en);
+                              const normalizedName = normalizeItemName(
+                                item.name.en
+                              );
                               const imageSrc = itemImageMap[normalizedName];
                               return imageSrc || DEFAULT_IMAGE;
                             })()}
@@ -757,7 +803,9 @@ const MenuSection = () => {
                           />
                           <div className="p-3 flex flex-col flex-1">
                             <h3 className="font-medium text-neutral-800 text-lg h-12 line-clamp-2 mb-2">
-                              {capitalizeFirstLetter(item.name[currentLanguage])}
+                              {capitalizeFirstLetter(
+                                item.name[currentLanguage]
+                              )}
                             </h3>
                             <div className="flex items-center justify-between">
                               <p className="text-primary font-bold text-lg">
@@ -781,14 +829,14 @@ const MenuSection = () => {
                 );
               })}
             </div>
-            
-            {visibleItems < (selectedCategory === 'all' 
-              ? apiMenuItems.length 
-              : apiMenuItems.filter(item => item.category === selectedCategory).length) && (
-              <div 
-                ref={loadMoreRef}
-                className="py-4 text-center"
-              >
+
+            {visibleItems <
+              (selectedCategory === 'all'
+                ? apiMenuItems.length
+                : apiMenuItems.filter(
+                    (item) => item.category === selectedCategory
+                  ).length) && (
+              <div ref={loadMoreRef} className="py-4 text-center">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
               </div>
             )}
@@ -796,45 +844,47 @@ const MenuSection = () => {
         )}
       </div>
 
-      {selectedItem && !SIMPLIFIED_MODAL_CATEGORIES.includes(selectedItem.category) && (
-        <ModifiersModal
-          isOpen={showModifiers}
-          onClose={() => {
-            setShowModifiers(false);
-            setSelectedItem(null);
-          }}
-          onSave={handleModifierSave}
-          item={selectedItem}
-          category={selectedItem.category}
-        />
-      )}
+      {selectedItem &&
+        !SIMPLIFIED_MODAL_CATEGORIES.includes(selectedItem.category) && (
+          <ModifiersModal
+            isOpen={showModifiers}
+            onClose={() => {
+              setShowModifiers(false);
+              setSelectedItem(null);
+            }}
+            onSave={handleModifierSave}
+            item={selectedItem}
+            category={selectedItem.category}
+          />
+        )}
 
-      {selectedItem && SIMPLIFIED_MODAL_CATEGORIES.includes(selectedItem.category) && (
-        <SimplifiedModal
-          isOpen={showSimplifiedModal}
-          onClose={() => {
-            setShowSimplifiedModal(false);
-            setSelectedItem(null);
-          }}
-          onSave={handleSimplifiedModalSave}
-          item={selectedItem}
-        />
-      )}
+      {selectedItem &&
+        SIMPLIFIED_MODAL_CATEGORIES.includes(selectedItem.category) && (
+          <SimplifiedModal
+            isOpen={showSimplifiedModal}
+            onClose={() => {
+              setShowSimplifiedModal(false);
+              setSelectedItem(null);
+            }}
+            onSave={handleSimplifiedModalSave}
+            item={selectedItem}
+          />
+        )}
     </div>
   );
 };
 
 // Add SimplifiedModal component
-const SimplifiedModal = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  item 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onSave: (quantity: number) => void; 
-  item: MenuItem; 
+const SimplifiedModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  item
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (quantity: number) => void;
+  item: MenuItem;
 }) => {
   const [quantity, setQuantity] = useState(1);
   const { t } = useTranslation();
@@ -847,7 +897,11 @@ const SimplifiedModal = ({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${isOpen ? '' : 'hidden'}`}>
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center ${
+        isOpen ? '' : 'hidden'
+      }`}
+    >
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-lg w-full max-w-md mx-4 shadow-xl">
         <div className="p-6">
@@ -881,7 +935,7 @@ const SimplifiedModal = ({
             </button>
             <button
               onClick={() => onSave(quantity)}
-              className="flex-1 px-6 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90"
+              className="flex-1 px-6 py-3 rounded-lg bg-red-600 text-white font-medium hover:bg-red-500"
             >
               {t('modifiers.addToCart')}
             </button>

@@ -116,6 +116,7 @@ export default function CustomersView() {
       )}
 
       <AddCustomerModal
+        customers={organizations}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAdd={handleAddCustomer}
