@@ -15,6 +15,7 @@ import { organizationService } from '../../services/organizationService';
 import { toast } from 'react-hot-toast';
 import AddStoreModal from '../stores/AddStoreModal';
 import { storeService } from '../../services/storeService';
+import { Store } from '../../types/store';
 
 const DEFAULT_AVATAR =
   'https://ui-avatars.com/api/?background=0D8ABC&color=fff';
@@ -43,16 +44,20 @@ export default function CustomerDetailsView({
   const [error, setError] = useState<string | null>(null);
   const [isAddingStore, setIsAddingStore] = useState(false);
 
-  const fetchOrganizationDetails = async () => {
+  const fetchOrganizationDetails = async (skipDelay = false) => {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Only add delay for initial load
+      if (!skipDelay) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      
       const data = await organizationService.getOrganizationById(customerId);
       setOrganization(data);
     } catch (err) {
-      setError(
-        'Unable to load organization details. Please try again later.'
-      );
+      setError('Unable to load organization details. Please try again later.');
       toast.error('Failed to load organization details');
     } finally {
       setIsLoading(false);
@@ -69,15 +74,45 @@ export default function CustomerDetailsView({
 
   const handleAddStore = async (storeData: Omit<Store, 'id'>) => {
     try {
-      await storeService.createStore(storeData);
+      setIsLoading(true);
       
-      await fetchOrganizationDetails();
+      // Structure payload according to your API requirements
+      const storePayload = {
+        name: storeData.name,
+        location: storeData.location,
+        phone: storeData.phone,
+        organizationId: organization?.id,
+        address: storeData.address,
+        modules: storeData.modules || [],
+        operatingHours: storeData.operatingHours || {}
+      };
+
+      // Create store
+      await storeService.createStore(storePayload);
       
+      // Immediately fetch fresh data without delay
+      const fetchLatestData = async () => {
+        try {
+          const updatedOrg = await organizationService.getOrganizationById(customerId);
+          setOrganization(updatedOrg);
+        } catch (err) {
+          console.error('Error fetching updated organization:', err);
+          // Don't show error toast here since store was created successfully
+        }
+      };
+
+      // Close modal first for better UX
       setIsAddingStore(false);
       toast.success('Store added successfully');
+      
+      // Then fetch latest data
+      await fetchLatestData();
+      
     } catch (error) {
       console.error('Error adding store:', error);
       toast.error('Failed to add store');
+    } finally {
+      setIsLoading(false);
     }
   };
 
