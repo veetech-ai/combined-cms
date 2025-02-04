@@ -64,8 +64,6 @@ export default function AddCustomerModal({
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
-  const [attemptedNextStep, setAttemptedNextStep] = useState(false);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,11 +93,11 @@ export default function AddCustomerModal({
   };
 
   const [formData, setFormData] = useState({
+    // Customer Details
     name: '',
     email: '',
     company: '',
     phone: '',
-    logo: '',
     billingAddress: {
       street: '',
       city: '',
@@ -107,21 +105,25 @@ export default function AddCustomerModal({
       zipCode: '',
       country: ''
     },
+    // Primary Contact
     primaryContact: {
       name: '',
       email: '',
       phone: '',
-      role: 'admin' as CustomerRole // Default role
+      role: ''
     },
+    // Subscription
     subscription: {
-      plan: 'basic' as const, // Updated to match Customer type
-      status: 'inactive' as const, // Updated to match Customer type
+      plan: 'BASIC' as const,
+      status: 'PENDING' as const,
       startDate: new Date().toISOString(),
       renewalDate: new Date(
         Date.now() + 365 * 24 * 60 * 60 * 1000
       ).toISOString()
     },
+    // Empty stores array - stores will be added separately
     stores: [],
+    // Default modules
     modules: DEFAULT_MODULES
   });
 
@@ -143,96 +145,6 @@ export default function AddCustomerModal({
     validateStep();
   };
 
-  // Validation functions
-  const validateStep1 = () => {
-    const requiredFields = [
-      'name',
-      'email',
-      'company',
-      'phone',
-      'billingAddress.street',
-      'billingAddress.city',
-      'billingAddress.state',
-      'billingAddress.zipCode',
-      'billingAddress.country'
-    ];
-
-    const isEmpty = (value: string) => !value.trim();
-
-    return requiredFields.every((field) => {
-      const value = field.includes('.')
-        ? field.split('.').reduce((obj, key) => obj[key], formData as any)
-        : formData[field as keyof typeof formData];
-      return !isEmpty(value as string);
-    });
-  };
-
-  const validateStep2 = () => {
-    const requiredFields = [
-      'primaryContact.name',
-      'primaryContact.email',
-      'primaryContact.phone'
-    ];
-
-    const isEmpty = (value: string) => !value.trim();
-
-    return requiredFields.every((field) => {
-      const value = field
-        .split('.')
-        .reduce((obj, key) => obj[key], formData as any);
-      return !isEmpty(value as string);
-    });
-  };
-
-  // Handle field touch
-  const handleFieldTouch = (fieldName: string) => {
-    setTouchedFields((prev) => new Set(prev).add(fieldName));
-  };
-
-  // Check if field should show error
-  const shouldShowError = (fieldName: string) => {
-    return (
-      (touchedFields.has(fieldName) || attemptedNextStep) &&
-      !formData[fieldName as keyof typeof formData]
-    );
-  };
-
-  const handleNext = () => {
-    setAttemptedNextStep(true);
-    if (currentStep === 1 && validateStep1()) {
-      setCurrentStep(2);
-      setAttemptedNextStep(false);
-    } else {
-      // Mark all fields as touched to show errors
-      const allFields = [
-        'name',
-        'email',
-        'company',
-        'phone',
-        'billingAddress.street',
-        'billingAddress.city',
-        'billingAddress.state',
-        'billingAddress.zipCode',
-        'billingAddress.country'
-      ];
-      setTouchedFields(new Set(allFields));
-    }
-  };
-
-  // Input class generator
-  const getInputClassName = (fieldName: string, value: string) => {
-    const baseClasses =
-      'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2';
-    const shouldShowFieldError =
-      (touchedFields.has(fieldName) || attemptedNextStep) && !value;
-
-    return `${baseClasses} ${
-      shouldShowFieldError
-        ? 'border-red-500 focus:ring-red-500'
-        : 'border-gray-200 focus:ring-blue-500'
-    }`;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentStep < 2) {
@@ -247,6 +159,7 @@ export default function AddCustomerModal({
         company: formData.company,
         phone: formData.phone,
         logo: formData.logo || DEFAULT_AVATAR,
+        website: formData.website,
 
         billing_address: {
           street: formData.billingAddress.street,
@@ -260,12 +173,12 @@ export default function AddCustomerModal({
           name: formData.primaryContact.name,
           email: formData.primaryContact.email,
           phone: formData.primaryContact.phone,
-          role: formData.primaryContact.role // This will now be correctly typed
+          role: formData.primaryContact.role
         },
 
         subscription: {
-          plan: formData.subscription.plan,
-          status: formData.subscription.status,
+          plan: formData.subscription.plan.toUpperCase(),
+          status: formData.subscription.status.toUpperCase(),
           startDate: formData.subscription.startDate,
           renewalDate: formData.subscription.renewalDate
         },
@@ -288,7 +201,6 @@ export default function AddCustomerModal({
         email: '',
         company: '',
         phone: '',
-        logo: '',
         billingAddress: {
           street: '',
           city: '',
@@ -300,11 +212,11 @@ export default function AddCustomerModal({
           name: '',
           email: '',
           phone: '',
-          role: 'admin'
+          role: ''
         },
         subscription: {
-          plan: 'basic',
-          status: 'inactive',
+          plan: 'BASIC',
+          status: 'PENDING',
           startDate: new Date().toISOString(),
           renewalDate: new Date(
             Date.now() + 365 * 24 * 60 * 60 * 1000
@@ -397,7 +309,7 @@ export default function AddCustomerModal({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer Name <span className="text-red-500">*</span>
+                    Customer Name
                   </label>
                   <input
                     type="text"
@@ -406,19 +318,13 @@ export default function AddCustomerModal({
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    onBlur={() => handleFieldTouch('name')}
-                    className={getInputClassName('name', formData.name)}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {shouldShowError('name') && (
-                    <p className="text-red-500 text-sm mt-1">
-                      This field is required
-                    </p>
-                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Company Name <span className="text-red-500">*</span>
+                    Company Name
                   </label>
                   <input
                     type="text"
@@ -427,19 +333,13 @@ export default function AddCustomerModal({
                     onChange={(e) =>
                       setFormData({ ...formData, company: e.target.value })
                     }
-                    onBlur={() => handleFieldTouch('company')}
-                    className={getInputClassName('company', formData.company)}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {shouldShowError('company') && (
-                    <p className="text-red-500 text-sm mt-1">
-                      This field is required
-                    </p>
-                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address <span className="text-red-500">*</span>
+                    Email Address
                   </label>
                   <input
                     type="email"
@@ -448,36 +348,23 @@ export default function AddCustomerModal({
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    onBlur={() => handleFieldTouch('email')}
-                    className={getInputClassName('email', formData.email)}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {shouldShowError('email') && (
-                    <p className="text-red-500 text-sm mt-1">
-                      This field is required
-                    </p>
-                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number <span className="text-red-500">*</span>
+                    Phone Number
                   </label>
                   <input
                     type="tel"
                     required
-                    placeholder="(XXX) XXX-XXXX"
                     value={formData.phone}
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    onBlur={() => handleFieldTouch('phone')}
-                    className={getInputClassName('phone', formData.phone)}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {shouldShowError('phone') && (
-                    <p className="text-red-500 text-sm mt-1">
-                      This field is required
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -486,7 +373,7 @@ export default function AddCustomerModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Street Address <span className="text-red-500">*</span>
+                      Street Address
                     </label>
                     <input
                       type="text"
@@ -501,22 +388,13 @@ export default function AddCustomerModal({
                           }
                         })
                       }
-                      onBlur={() => handleFieldTouch('billingAddress.street')}
-                      className={getInputClassName(
-                        'billingAddress.street',
-                        formData.billingAddress.street
-                      )}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {shouldShowError('billingAddress.street') && (
-                      <p className="text-red-500 text-sm mt-1">
-                        This field is required
-                      </p>
-                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      City <span className="text-red-500">*</span>
+                      City
                     </label>
                     <input
                       type="text"
@@ -531,22 +409,13 @@ export default function AddCustomerModal({
                           }
                         })
                       }
-                      onBlur={() => handleFieldTouch('billingAddress.city')}
-                      className={getInputClassName(
-                        'billingAddress.city',
-                        formData.billingAddress.city
-                      )}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {shouldShowError('billingAddress.city') && (
-                      <p className="text-red-500 text-sm mt-1">
-                        This field is required
-                      </p>
-                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      State <span className="text-red-500">*</span>
+                      State
                     </label>
                     <input
                       type="text"
@@ -561,22 +430,13 @@ export default function AddCustomerModal({
                           }
                         })
                       }
-                      onBlur={() => handleFieldTouch('billingAddress.state')}
-                      className={getInputClassName(
-                        'billingAddress.state',
-                        formData.billingAddress.state
-                      )}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {shouldShowError('billingAddress.state') && (
-                      <p className="text-red-500 text-sm mt-1">
-                        This field is required
-                      </p>
-                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ZIP Code <span className="text-red-500">*</span>
+                      ZIP Code
                     </label>
                     <input
                       type="text"
@@ -591,22 +451,13 @@ export default function AddCustomerModal({
                           }
                         })
                       }
-                      onBlur={() => handleFieldTouch('billingAddress.zipCode')}
-                      className={getInputClassName(
-                        'billingAddress.zipCode',
-                        formData.billingAddress.zipCode
-                      )}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {shouldShowError('billingAddress.zipCode') && (
-                      <p className="text-red-500 text-sm mt-1">
-                        This field is required
-                      </p>
-                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Country <span className="text-red-500">*</span>
+                      Country
                     </label>
                     <input
                       type="text"
@@ -621,17 +472,8 @@ export default function AddCustomerModal({
                           }
                         })
                       }
-                      onBlur={() => handleFieldTouch('billingAddress.country')}
-                      className={getInputClassName(
-                        'billingAddress.country',
-                        formData.billingAddress.country
-                      )}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {shouldShowError('billingAddress.country') && (
-                      <p className="text-red-500 text-sm mt-1">
-                        This field is required
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -647,7 +489,7 @@ export default function AddCustomerModal({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Name <span className="text-red-500">*</span>
+                    Contact Name
                   </label>
                   <input
                     type="text"
@@ -662,22 +504,13 @@ export default function AddCustomerModal({
                         }
                       })
                     }
-                    onBlur={() => handleFieldTouch('primaryContact.name')}
-                    className={getInputClassName(
-                      'primaryContact.name',
-                      formData.primaryContact.name
-                    )}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {shouldShowError('primaryContact.name') && (
-                    <p className="text-red-500 text-sm mt-1">
-                      This field is required
-                    </p>
-                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Email <span className="text-red-500">*</span>
+                    Contact Email
                   </label>
                   <input
                     type="email"
@@ -692,27 +525,17 @@ export default function AddCustomerModal({
                         }
                       })
                     }
-                    onBlur={() => handleFieldTouch('primaryContact.email')}
-                    className={getInputClassName(
-                      'primaryContact.email',
-                      formData.primaryContact.email
-                    )}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {shouldShowError('primaryContact.email') && (
-                    <p className="text-red-500 text-sm mt-1">
-                      This field is required
-                    </p>
-                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Phone <span className="text-red-500">*</span>
+                    Contact Phone
                   </label>
                   <input
                     type="tel"
                     required
-                    placeholder="(XXX) XXX-XXXX"
                     value={formData.primaryContact.phone}
                     onChange={(e) =>
                       setFormData({
@@ -723,17 +546,8 @@ export default function AddCustomerModal({
                         }
                       })
                     }
-                    onBlur={() => handleFieldTouch('primaryContact.phone')}
-                    className={getInputClassName(
-                      'primaryContact.phone',
-                      formData.primaryContact.phone
-                    )}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {shouldShowError('primaryContact.phone') && (
-                    <p className="text-red-500 text-sm mt-1">
-                      This field is required
-                    </p>
-                  )}
                 </div>
 
                 <div>
