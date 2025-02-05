@@ -26,6 +26,7 @@ import DisplayMenus from './components/Menus/DisplayMenus';
 import DisplaysView from './components/displays/DisplaysView';
 
 import KioskApp from './KioskApp/src/main';
+import CloverPaymentForm from './components/paymet/CloverPaymentForm';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated, token } = useAuthStore();
@@ -103,6 +104,7 @@ const MainLayout = () => {
             <Route path={ROUTES.POS} element={<PosIntegrationView />} />
             <Route path={ROUTES.ANALYTICS} element={<AnalyticsView />} />
             <Route path={ROUTES.STORES} element={<StoresView />} />
+            <Route path="/clover-pay" element={<CloverPaymentForm />} />
             <Route path="/menus/:storeId" element={<MenusPage />} />
             <Route path="/display-menus" element={<DisplayMenus />} />
             <Route path="/display-views" element={<DisplaysView />} />
