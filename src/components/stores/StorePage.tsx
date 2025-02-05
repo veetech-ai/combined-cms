@@ -10,20 +10,27 @@ export default function StorePage() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await fetch('https://live.fastn.ai/api/v1/getMenu', {
-          method: 'POST',
-          headers: {
-            'x-fastn-api-key': 'e2ea1416-f354-4353-bbd1-5068969ce8b4',
-            'Content-Type': 'application/json',
-            'x-fastn-space-id': '2cade1a6-133a-4344-86bf-c3b6f2bbfbe1',
-            stage: 'DRAFT',
-            'x-fastn-space-tenantid': 'veetech_customer2'
-          },
-          body: JSON.stringify({
-            input: {}
-          })
-        });
+        // const response = await fetch('https://live.fastn.ai/api/v1/getMenu', {
+        //   method: 'POST',
+        //   headers: {
+        //     'x-fastn-api-key': 'e2ea1416-f354-4353-bbd1-5068969ce8b4',
+        //     'Content-Type': 'application/json',
+        //     'x-fastn-space-id': '2cade1a6-133a-4344-86bf-c3b6f2bbfbe1',
+        //     stage: 'DRAFT',
+        //     'x-fastn-space-tenantid': 'veetech_customer2'
+        //   },
+        //   body: JSON.stringify({
+        //     input: {}
+        //   })
+        // });
+        const url = 'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
 
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer acca0c85-6c26-710f-4390-23676eae487c'
+        }
+    });
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText}`);
         }

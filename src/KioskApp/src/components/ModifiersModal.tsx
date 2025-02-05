@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation, useTranslation as useI18next } from 'react-i18next';
-import { MenuItem, ItemAddOn, ItemCustomization, RecommendedItem } from '../types';
+import {
+  MenuItem,
+  ItemAddOn,
+  ItemCustomization,
+  RecommendedItem
+} from '../types';
+import { fetchItemModifierGroups, fetchModifierGroup } from '../api/cloverApi';
 
 interface ModifiersModalProps {
   isOpen: boolean;
@@ -10,6 +16,18 @@ interface ModifiersModalProps {
   item: MenuItem;
   category: string;
   existingInstructions?: string;
+}
+
+interface ModifierGroup {
+  id: string;
+  name: string;
+  modifiers: {
+    elements: {
+      id: string;
+      name: string;
+      price: number;
+    }[];
+  };
 }
 
 export function ModifiersModal({
@@ -23,14 +41,21 @@ export function ModifiersModal({
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language as 'en' | 'es';
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
-  const [selectedCustomizations, setSelectedCustomizations] = useState<string[]>([]);
+  const [selectedCustomizations, setSelectedCustomizations] = useState<
+    string[]
+  >([]);
   const [selectedBeverages, setSelectedBeverages] = useState<string[]>([]);
   const [selectedSides, setSelectedSides] = useState<string[]>([]);
   const [selectedDesserts, setSelectedDesserts] = useState<string[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [customNote, setCustomNote] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [unavailablePreference, setUnavailablePreference] = useState('merchant-recommendation');
+  const [unavailablePreference, setUnavailablePreference] = useState(
+    'merchant-recommendation'
+  );
+  const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
+  const [loadingModifiers, setLoadingModifiers] = useState(false);
+  const [modifierError, setModifierError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && existingInstructions) {
@@ -43,12 +68,18 @@ export function ModifiersModal({
         setSelectedSides(parsed.sides || []);
         setSelectedDesserts(parsed.desserts || []);
         setCustomNote(parsed.specialInstructions || '');
-        setUnavailablePreference(parsed.unavailablePreference || 'merchant-recommendation');
+        setUnavailablePreference(
+          parsed.unavailablePreference || 'merchant-recommendation'
+        );
       } catch {
         // If not JSON, treat as legacy format
-        const options = getOptionsForCategory().map(opt => opt.value);
-        const selectedOpts = instructions.filter(instr => options.includes(instr));
-        const customNotes = instructions.filter(instr => !options.includes(instr)).join(', ');
+        const options = getOptionsForCategory().map((opt) => opt.value);
+        const selectedOpts = instructions.filter((instr) =>
+          options.includes(instr)
+        );
+        const customNotes = instructions
+          .filter((instr) => !options.includes(instr))
+          .join(', ');
         setSelectedOptions(selectedOpts);
         setCustomNote(customNotes);
       }
@@ -65,6 +96,29 @@ export function ModifiersModal({
     }
   }, [isOpen, existingInstructions, category]);
 
+  useEffect(() => {
+    const loadModifierGroups = async () => {
+      if (!item?.id) return;
+
+      try {
+        setLoadingModifiers(true);
+        setModifierError(null);
+
+        const temp = item.modifierGroups[0].id;
+        const response = await fetchItemModifierGroups(temp);
+        setModifierGroups(response.elements || []);
+      } catch (err) {
+        setModifierError(t('errors.failedToLoadModifiers'));
+      } finally {
+        setLoadingModifiers(false);
+      }
+    };
+
+    if (isOpen) {
+      loadModifierGroups();
+    }
+  }, [isOpen, item?.id, t]);
+
   const getOptionsForCategory = () => {
     switch (category) {
       case 'burgers':
@@ -76,7 +130,7 @@ export function ModifiersModal({
           { label: t('modifiers.wellDone'), value: 'Well Done' },
           { label: t('modifiers.mediumWell'), value: 'Medium Well' },
           { label: t('modifiers.medium'), value: 'Medium' },
-          { label: t('modifiers.addBacon'), value: 'Add Bacon' },
+          { label: t('modifiers.addBacon'), value: 'Add Bacon' }
         ];
       case 'pizzas':
         return [
@@ -85,7 +139,7 @@ export function ModifiersModal({
           { label: t('modifiers.wellDone'), value: 'Well Done' },
           { label: t('modifiers.lightlyCrispy'), value: 'Lightly Crispy' },
           { label: t('modifiers.extraSauce'), value: 'Extra Sauce' },
-          { label: t('modifiers.lightSauce'), value: 'Light Sauce' },
+          { label: t('modifiers.lightSauce'), value: 'Light Sauce' }
         ];
       case 'drinks':
         return [
@@ -93,7 +147,7 @@ export function ModifiersModal({
           { label: t('modifiers.lightIce'), value: 'Light Ice' },
           { label: t('modifiers.extraIce'), value: 'Extra Ice' },
           { label: t('modifiers.lessSweet'), value: 'Less Sweet' },
-          { label: t('modifiers.extraSweet'), value: 'Extra Sweet' },
+          { label: t('modifiers.extraSweet'), value: 'Extra Sweet' }
         ];
       default:
         return [];
@@ -101,40 +155,37 @@ export function ModifiersModal({
   };
 
   const toggleOption = (value: string) => {
-    setSelectedOptions(prev =>
-      prev.includes(value)
-        ? prev.filter(o => o !== value)
-        : [...prev, value]
+    setSelectedOptions((prev) =>
+      prev.includes(value) ? prev.filter((o) => o !== value) : [...prev, value]
     );
   };
 
   const calculateTotal = () => {
     let total = item.price;
-    
-    // Add selected add-ons
-    selectedAddOns.forEach(addOnId => {
-      const addOn = item.addOns?.find(a => a.id === addOnId);
-      console.log(addOn);
-      if (addOn) total += addOn.price;
+
+    // Add selected add-ons (converting cents to dollars)
+    selectedAddOns.forEach((addOn) => {
+      total += addOn.price / 100;
     });
 
     // Add selected beverages
-    selectedBeverages.forEach(bevId => {
-      const bev = item.recommendedBeverages?.find(b => b.id === bevId);
-      if (bev) total += bev.price;
+    selectedBeverages.forEach((bevId) => {
+      const bev = item.recommendedBeverages?.find((b) => b.id === bevId);
+      if (bev) total += bev.price / 100;
     });
-    console.log(total);
+
     // Add selected sides
-    selectedSides.forEach(sideId => {
-      const side = item.recommendedSides?.find(s => s.id === sideId);
-      if (side) total += side.price;
+    selectedSides.forEach((sideId) => {
+      const side = item.recommendedSides?.find((s) => s.id === sideId);
+      if (side) total += side.price / 100;
     });
 
     // Add selected desserts
-    selectedDesserts.forEach(dessertId => {
-      const dessert = item.recommendedDesserts?.find(d => d.id === dessertId);
-      if (dessert) total += dessert.price;
+    selectedDesserts.forEach((dessertId) => {
+      const dessert = item.recommendedDesserts?.find((d) => d.id === dessertId);
+      if (dessert) total += dessert.price / 100;
     });
+
     return total * quantity;
   };
 
@@ -155,12 +206,24 @@ export function ModifiersModal({
       quantity
     };
 
-    const instructions = [
-      ...selectedOptions,
-      customNote
-    ].filter(Boolean).join(', ');
-    
+    const instructions = [...selectedOptions, customNote]
+      .filter(Boolean)
+      .join(', ');
+
     onSave(JSON.stringify(allSelections), quantity);
+  };
+
+  const categorizeModifierGroups = (groups: ModifierGroup[]) => {
+    return {
+      addOns: groups.filter(group => group.name.toLowerCase().includes('add-on')),
+      customizations: groups.filter(group => group.name.toLowerCase().includes('mod')),
+      extras: groups.filter(group => group.name.toLowerCase().includes('extra')),
+      others: groups.filter(group => 
+        !group.name.toLowerCase().includes('add-on') && 
+        !group.name.toLowerCase().includes('mod') && 
+        !group.name.toLowerCase().includes('extra')
+      )
+    };
   };
 
   return (
@@ -183,8 +246,18 @@ export function ModifiersModal({
                 onClick={onClose}
                 className="absolute left-4 p-2 hover:bg-gray-100 rounded-full text-gray-500"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
               <h2 className="text-lg font-bold text-center flex-1">
@@ -193,69 +266,194 @@ export function ModifiersModal({
             </div>
 
             <div className="p-4 space-y-6">
-              {/* Add-Ons Section */}
-              {item.addOns && item.addOns.length > 0 && (
-                <div>
-                  <div className="mb-4">
-                    <h3 className="text-base font-semibold">{t('modifiers.addOns')}</h3>
-                    <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
-                  </div>
-                  <div className="space-y-2">
-                    {item.addOns.map(addOn => (
-                      <label key={addOn.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={selectedAddOns.includes(addOn.id)}
-                            onChange={() => {
-                              setSelectedAddOns(prev =>
-                                prev.includes(addOn.id)
-                                  ? prev.filter(id => id !== addOn.id)
-                                  : [...prev, addOn.id]
-                              );
-                            }}
-                            className="w-4 h-4 mr-3 accent-primary"
-                          />
-                          <span className="text-sm">{addOn.name[currentLanguage]}</span>
+              {loadingModifiers ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="mt-4 text-gray-600">Loading options...</p>
+                </div>
+              ) : modifierError ? (
+                <div className="text-red-600 text-center py-4">
+                  {modifierError}
+                </div>
+              ) : (
+                (() => {
+                  const categorized = categorizeModifierGroups(modifierGroups);
+                  return (
+                    <>
+                      {/* Add-Ons Section */}
+                      {categorized.addOns.length > 0 && (
+                        <div>
+                          <div className="mb-4">
+                            <h3 className="text-base font-semibold">Add-Ons</h3>
+                            <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
+                          </div>
+                          <div className="space-y-2">
+                            {categorized.addOns.map(group => (
+                              <div key={group.id} className="space-y-2">
+                                {group.modifiers.elements.map(modifier => (
+                                  <label
+                                    key={modifier.id}
+                                    className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                                  >
+                                    <div className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedAddOns.some(addOn => addOn.id === modifier.id)}
+                                        onChange={() => {
+                                          setSelectedAddOns(prev => {
+                                            const exists = prev.some(addOn => addOn.id === modifier.id);
+                                            return exists
+                                              ? prev.filter(addOn => addOn.id !== modifier.id)
+                                              : [...prev, modifier];
+                                          });
+                                        }}
+                                        className="w-4 h-4 mr-3 accent-primary"
+                                      />
+                                      <span className="text-sm">{modifier.name}</span>
+                                    </div>
+                                    {modifier.price > 0 && (
+                                      <span className="text-sm text-gray-600">
+                                        +${(modifier.price / 100).toFixed(2)}
+                                      </span>
+                                    )}
+                                  </label>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <span className="text-sm text-gray-600">+${addOn.price.toFixed(2)}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      )}
 
-              {/* Customizations Section */}
-              {item.customizations && item.customizations.length > 0 && (
-                <div>
-                  <div className="mb-2">
-                    <h3 className="text-lg font-semibold">{t('modifiers.customize')}</h3>
-                    <p className="text-sm text-gray-500">({t('modifiers.optional')})</p>
-                  </div>
-                  <div className="space-y-2">
-                    {item.customizations.map(customization => (
-                      <label key={customization.id} className="flex items-center p-2 bg-gray-50 rounded-lg">
-                        <input
-                          type="checkbox"
-                          checked={selectedCustomizations.includes(customization.id)}
-                          onChange={() => {
-                            setSelectedCustomizations(prev =>
-                              prev.includes(customization.id)
-                                ? prev.filter(id => id !== customization.id)
-                                : [...prev, customization.id]
-                            );
-                          }}
-                          className="mr-2"
-                        />
-                        <span>{customization.name[currentLanguage]}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                      {/* Customizations Section */}
+                      {categorized.customizations.length > 0 && (
+                        <div>
+                          <div className="mb-4">
+                            <h3 className="text-base font-semibold">Customizations</h3>
+                            <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
+                          </div>
+                          <div className="space-y-2">
+                            {categorized.customizations.map(group => (
+                              <div key={group.id} className="space-y-2">
+                                {group.modifiers.elements.map(modifier => (
+                                  <label
+                                    key={modifier.id}
+                                    className="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedCustomizations.includes(modifier.id)}
+                                      onChange={() => {
+                                        setSelectedCustomizations(prev =>
+                                          prev.includes(modifier.id)
+                                            ? prev.filter(id => id !== modifier.id)
+                                            : [...prev, modifier.id]
+                                        );
+                                      }}
+                                      className="w-4 h-4 mr-3 accent-primary"
+                                    />
+                                    <span className="text-sm">{modifier.name}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Extras Section */}
+                      {categorized.extras.length > 0 && (
+                        <div>
+                          <div className="mb-4">
+                            <h3 className="text-base font-semibold">Extras</h3>
+                            <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
+                          </div>
+                          <div className="space-y-2">
+                            {categorized.extras.map(group => (
+                              <div key={group.id} className="space-y-2">
+                                {group.modifiers.elements.map(modifier => (
+                                  <label
+                                    key={modifier.id}
+                                    className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                                  >
+                                    <div className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedAddOns.some(addOn => addOn.id === modifier.id)}
+                                        onChange={() => {
+                                          setSelectedAddOns(prev => {
+                                            const exists = prev.some(addOn => addOn.id === modifier.id);
+                                            return exists
+                                              ? prev.filter(addOn => addOn.id !== modifier.id)
+                                              : [...prev, modifier];
+                                          });
+                                        }}
+                                        className="w-4 h-4 mr-3 accent-primary"
+                                      />
+                                      <span className="text-sm">{modifier.name}</span>
+                                    </div>
+                                    {modifier.price > 0 && (
+                                      <span className="text-sm text-gray-600">
+                                        +${(modifier.price / 100).toFixed(2)}
+                                      </span>
+                                    )}
+                                  </label>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Updated Other Options section */}
+                      {categorized.others.length > 0 && (
+                        <div>
+                          {categorized.others.map(group => (
+                            <div key={group.id} className="mb-6">
+                              <div className="mb-4">
+                                <h3 className="text-base font-semibold">{group.name}</h3>
+                                <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
+                              </div>
+                              <div className="space-y-2">
+                                {group.modifiers.elements.map(modifier => (
+                                  <label
+                                    key={modifier.id}
+                                    className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                                  >
+                                    <div className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedAddOns.some(addOn => addOn.id === modifier.id)}
+                                        onChange={() => {
+                                          setSelectedAddOns(prev => {
+                                            const exists = prev.some(addOn => addOn.id === modifier.id);
+                                            return exists
+                                              ? prev.filter(addOn => addOn.id !== modifier.id)
+                                              : [...prev, modifier];
+                                          });
+                                        }}
+                                        className="w-4 h-4 mr-3 accent-primary"
+                                      />
+                                      <span className="text-sm">{modifier.name}</span>
+                                    </div>
+                                    {modifier.price > 0 && (
+                                      <span className="text-sm text-gray-600">
+                                        +${(modifier.price / 100).toFixed(2)}
+                                      </span>
+                                    )}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()
               )}
 
               {/* Recommended Beverages Section */}
-              {item.recommendedBeverages && item.recommendedBeverages.length > 0 && (
+              {/* {item.recommendedBeverages && item.recommendedBeverages.length > 0 && (
                 <div>
                   <div className="mb-2">
                     <h3 className="text-lg font-semibold">{t('modifiers.recommendedBeverages')}</h3>
@@ -288,71 +486,82 @@ export function ModifiersModal({
                     ))}
                   </div>
                 </div>
+              )} */}
+
+              {/* Only show these sections if not loading */}
+              {!loadingModifiers && !modifierError && (
+                <>
+                  {/* Special Instructions */}
+                  <div>
+                    <label className="block text-lg font-semibold mb-2">
+                      {t('modifiers.additionalNotes')}
+                    </label>
+                    <textarea
+                      value={customNote}
+                      onChange={(e) => setCustomNote(e.target.value)}
+                      placeholder={t('modifiers.notesPlaceholder')}
+                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Unavailable Item Preference */}
+                  <div>
+                    <label className="block text-lg font-semibold mb-2">
+                      {t('modifiers.ifUnavailable')}
+                    </label>
+                    <select
+                      value={unavailablePreference}
+                      onChange={(e) => setUnavailablePreference(e.target.value)}
+                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                    >
+                      <option value="merchant-recommendation">
+                        {t('modifiers.merchantRecommendation')}
+                      </option>
+                      <option value="refund">{t('modifiers.refundItem')}</option>
+                      <option value="contact">{t('modifiers.contactMe')}</option>
+                      <option value="cancel">{t('modifiers.cancelOrder')}</option>
+                    </select>
+                  </div>
+                </>
               )}
-
-              {/* Special Instructions */}
-              <div>
-                <label className="block text-lg font-semibold mb-2">
-                  {t('modifiers.additionalNotes')}
-                </label>
-                <textarea
-                  value={customNote}
-                  onChange={(e) => setCustomNote(e.target.value)}
-                  placeholder={t('modifiers.notesPlaceholder')}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                  rows={2}
-                />
-              </div>
-
-              {/* Unavailable Item Preference */}
-              <div>
-                <label className="block text-lg font-semibold mb-2">
-                  {t('modifiers.ifUnavailable')}
-                </label>
-                <select
-                  value={unavailablePreference}
-                  onChange={(e) => setUnavailablePreference(e.target.value)}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                >
-                  <option value="merchant-recommendation">{t('modifiers.merchantRecommendation')}</option>
-                  <option value="refund">{t('modifiers.refundItem')}</option>
-                  <option value="contact">{t('modifiers.contactMe')}</option>
-                  <option value="cancel">{t('modifiers.cancelOrder')}</option>
-                </select>
-              </div>
             </div>
 
-            {/* Fixed bottom bar with quantity and add to cart */}
-            <div className="sticky bottom-0 bg-white border-t p-4 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
+            {/* Fixed bottom bar - only show if not loading */}
+            {!loadingModifiers && !modifierError && (
+              <div className="sticky bottom-0 bg-white border-t p-4 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                      className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition"
+                    >
+                      <span className="text-xl">−</span>
+                    </button>
+                    <span className="w-8 text-center text-base font-medium">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setQuantity((prev) => Math.min(99, prev + 1))
+                      }
+                      className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition"
+                    >
+                      <span className="text-xl">+</span>
+                    </button>
+                  </div>
                   <button
-                    onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                    className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition"
+                    onClick={handleSave}
+                    className="flex-1 ml-4 h-12 bg-black text-white rounded-lg hover:bg-black transition-colors font-medium text-base"
                   >
-                    <span className="text-xl">−</span>
-                  </button>
-                  <span className="w-8 text-center text-base font-medium">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity(prev => Math.min(99, prev + 1))}
-                    className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition"
-                  >
-                    <span className="text-xl">+</span>
+                    {t('modifiers.addToCart')} - ${calculateTotal().toFixed(2)}
                   </button>
                 </div>
-                <button
-                  onClick={handleSave}
-                  className="flex-1 ml-4 h-12 bg-black text-white rounded-lg hover:bg-black transition-colors font-medium text-base"
-                >
-                  {t('modifiers.addToCart')} - ${calculateTotal().toFixed(2)}
-                </button>
+                <p className="text-xs text-gray-400 text-center">
+                  {t('modifiers.priceNote')}
+                </p>
               </div>
-              <p className="text-xs text-gray-400 text-center">
-                {t('modifiers.priceNote')}
-              </p>
-            </div>
+            )}
           </motion.div>
         </motion.div>
       )}

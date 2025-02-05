@@ -108,5 +108,25 @@
     "status": "Online",
     "lastSeen": "2025-01-31T17:45:27.354Z",
     "hexCode": "3BB862A2"
+  },
+  {
+    "id": "ef914bb1-66e1-469a-8848-a1fe1904f240",
+    "name": "Test Kiosk Store",
+    "location": "Pending Setup",
+    "store": "ABC Store",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-04T14:40:43.101Z",
+    "hexCode": "E97577F3"
+  },
+  {
+    "id": "2a55e3ed-9a7d-44b8-ba1e-5d5dd67dcaf4",
+    "name": "Zain",
+    "location": "Pending Setup",
+    "store": "TEST ONE",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-05T11:42:03.179Z",
+    "hexCode": "285D49BD"
   }
 ]
