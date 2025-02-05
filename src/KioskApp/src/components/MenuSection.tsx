@@ -181,11 +181,43 @@ type ApiMenuItem = {
   categories?: {
     elements: ApiCategory[];
   };
+  modifierGroups?: {
+    elements: ApiModifierGroup[];
+  };
 };
 
 type ApiResponse = {
   elements: ApiMenuItem[];
 };
+
+// Update the ApiModifierGroup interface
+interface ApiModifierGroup {
+  id: string;
+  name: string;
+  showByDefault: boolean;
+  modifierIds: string;
+  minRequired?: number;
+  maxAllowed?: number;
+  items: {
+    elements: { id: string }[];
+  };
+  sortOrder: number;
+  deleted: boolean;
+}
+
+// Update the MenuItem interface
+interface MenuItem {
+  id: number;
+  name: {
+    en: string;
+    es: string;
+  };
+  price: number;
+  category: string;
+  imageUrl?: string;
+  modifierGroups?: ApiModifierGroup[];
+  // ... other existing fields ...
+}
 
 const sortByCategory = (items: MenuItem[], categories: Category[]) => {
   return [...items].sort((a, b) => {
@@ -212,22 +244,12 @@ const SIMPLIFIED_MODAL_CATEGORIES = [
   'Weekend Special'
 ];
 
-// Add this list to track previously excluded items
-const PREVIOUSLY_EXCLUDED = [
-  'Yellow Daal (Traditional)',
-  'Chicken Karahi (Traditional)',
-  'Beef Nihari Rice Bowl',
-  'Beef Nihari (Traditional)',
-  'Side Nihari Soup w/ Beef',
-  'Can',
-  'Aloo Quesadilla'
-];
-
 // Add a helper function to normalize item names for image mapping
 const normalizeItemName = (name: string) => {
   // Remove extra spaces and trim
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
 };
+
 
 const MenuSection = () => {
   const { t, i18n } = useTranslation();
@@ -242,25 +264,35 @@ const MenuSection = () => {
   const [visibleItems, setVisibleItems] = useState<number>(ITEMS_PER_PAGE);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [showSimplifiedModal, setShowSimplifiedModal] = useState(false);
+  const [showPromo, setShowPromo] = useState(true);
 
   const currentLanguage = i18n.language as 'en' | 'es';
 
   const fetchApiMenuItems = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://live.fastn.ai/api/v1/getMenu', {
-        method: 'POST',
+      // const response = await fetch('https://live.fastn.ai/api/v1/getMenu', {
+      //   method: 'POST',
+      //   headers: {
+      //     'x-fastn-api-key': 'e2ea1416-f354-4353-bbd1-5068969ce8b4',
+      //     'Content-Type': 'application/json',
+      //     'x-fastn-space-id': '2cade1a6-133a-4344-86bf-c3b6f2bbfbe1',
+      //     'x-fastn-space-tenantid': 'veetech_customer2',
+      //     stage: 'DRAFT'
+      //   },
+      //   body: JSON.stringify({ input: {} })
+      // });
+      const url =
+        'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
+
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          'x-fastn-api-key': 'e2ea1416-f354-4353-bbd1-5068969ce8b4',
-          'Content-Type': 'application/json',
-          'x-fastn-space-id': '2cade1a6-133a-4344-86bf-c3b6f2bbfbe1',
-          'x-fastn-space-tenantid': 'veetech_customer2',
-          stage: 'DRAFT'
-        },
-        body: JSON.stringify({ input: {} })
+          Authorization: 'Bearer acca0c85-6c26-710f-4390-23676eae487c'
+        }
       });
       const data = (await response.json()) as ApiResponse;
-
+      console.log(data, 'data');
       // Extract unique categories and their sort orders from API response
       const uniqueCategoriesMap = new Map<string, Category>();
 
@@ -327,6 +359,7 @@ const MenuSection = () => {
             category: finalCategory,
             sortOrder: item.categories?.elements?.[0]?.sortOrder || 999,
             imageUrl: itemImageMap[item.name],
+            modifierGroups: item.modifierGroups?.elements || [],
             addOns: [
               {
                 id: 'extra-cheese',
@@ -413,6 +446,7 @@ const MenuSection = () => {
         id: selectedItem.id,
         name: selectedItem.name,
         price: selectedItem.price,
+        imageUrl: selectedItem.imageUrl || DEFAULT_IMAGE,
         instructions,
         quantity
       });
@@ -559,6 +593,7 @@ const MenuSection = () => {
         id: selectedItem.id,
         name: selectedItem.name,
         price: selectedItem.price,
+        imageUrl: selectedItem.imageUrl || DEFAULT_IMAGE,
         instructions: '',
         quantity
       });
@@ -665,11 +700,10 @@ const MenuSection = () => {
 
   return (
     <div className="flex flex-col h-full">
-      
-      <div className="mb-4 sticky top-0 bg-white shadow-sm relative z-50">
-        {selectedItem && (
-          <div className="absolute inset-0 bg-black/50 z-40" />
-        )}
+
+      {/* Update the z-index of the category bar to be lower than the promo screen */}
+      <div className="mb-4 sticky top-0 bg-white shadow-sm relative z-40">
+        {selectedItem && <div className="absolute inset-0 bg-black/50 z-40" />}
         {!loading && !error && (
           <>
             <div className="p-2 relative z-30">
@@ -677,7 +711,8 @@ const MenuSection = () => {
                 <button
                   onClick={() => setSelectedCategory('All')}
                   className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
-                    typeof selectedCategory === 'string' && selectedCategory.toLowerCase() === 'all'
+                    typeof selectedCategory === 'string' &&
+                    selectedCategory.toLowerCase() === 'all'
                       ? 'bg-black text-white shadow-md'
                       : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                   }`}
@@ -697,20 +732,29 @@ const MenuSection = () => {
                       {CATEGORY_ORDER['Featured'].translations[currentLanguage]}
                     </button>
                     {categories
-                      .filter(category => category.name !== 'Featured' && category.name !== 'All')
+                      .filter(
+                        (category) =>
+                          category.name !== 'Featured' &&
+                          category.name !== 'All'
+                      )
                       .map((category) => {
-                        const categoryKey = typeof category.name === 'string' ? category.name : category.name.en;
+                        const categoryKey =
+                          typeof category.name === 'string'
+                            ? category.name
+                            : category.name.en;
                         return (
                           <button
                             key={category.id}
                             onClick={() => setSelectedCategory(categoryKey)}
                             className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
                               selectedCategory === categoryKey
-                              ? 'bg-black text-white shadow-md'
-                              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                                ? 'bg-black text-white shadow-md'
+                                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                             }`}
                           >
-                            {CATEGORY_ORDER[categoryKey]?.translations[currentLanguage] || categoryKey}
+                            {CATEGORY_ORDER[categoryKey]?.translations[
+                              currentLanguage
+                            ] || categoryKey}
                           </button>
                         );
                       })}
@@ -779,7 +823,7 @@ const MenuSection = () => {
                     {rowItems.map((item) => (
                       <div
                         key={`${item.id}-${item.category}`}
-                        className="bg-white rounded-lg relative group shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden h-72"
+                        className="bg-white rounded-lg relative group shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden h-auto"
                       >
                         <div
                           className="w-full h-full flex flex-col text-left relative cursor-pointer"
@@ -802,12 +846,51 @@ const MenuSection = () => {
                             }}
                           />
                           <div className="p-3 flex flex-col flex-1">
-                            <h3 className="font-medium text-neutral-800 text-lg h-12 line-clamp-2 mb-2">
+                            <h3 className="font-medium text-neutral-800 text-lg mb-2">
                               {capitalizeFirstLetter(
                                 item.name[currentLanguage]
                               )}
                             </h3>
-                            <div className="flex items-center justify-between">
+
+                            {/* Modifier groups display - commented out
+                            {item.modifierGroups && item.modifierGroups.length > 0 && (
+                              <div className="mb-2 bg-gray-50 p-2 rounded-md">
+                                <div className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                                  Modifier Groups
+                                </div>
+                                {item.modifierGroups.map((group) => (
+                                  <div key={group.id} className="text-sm border-l-2 border-primary pl-2 mb-2 last:mb-0">
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-primary">{group.name}</span>
+                                        <span className="text-xs text-gray-400">({group.id})</span>
+                                      </div>
+                                      <div className="text-xs text-gray-500 mt-1">
+                                        <span className="font-medium">Modifiers: </span>
+                                        {group.modifierIds.split(',').map((id, index) => (
+                                          <span key={id} className="inline-block">
+                                            <span className="text-gray-600">{id}</span>
+                                            {index < group.modifierIds.split(',').length - 1 ? ', ' : ''}
+                                          </span>
+                                        ))}
+                                      </div>
+                                      {group.minRequired && group.maxAllowed && (
+                                        <div className="text-xs text-gray-500 mt-1">
+                                          <span className="font-medium">Required: </span>
+                                          <span>
+                                            {group.minRequired === group.maxAllowed
+                                              ? `Select ${group.minRequired}`
+                                              : `Select ${group.minRequired}-${group.maxAllowed}`}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )} */}
+
+                            <div className="flex items-center justify-between mt-auto">
                               <p className="text-primary font-bold text-lg">
                                 ${item.price.toFixed(2)}
                               </p>

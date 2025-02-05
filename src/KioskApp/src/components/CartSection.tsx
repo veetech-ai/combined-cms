@@ -37,8 +37,29 @@ export function CartSection({ onStartOver }: CartSectionProps) {
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
   const [error, setError] = useState('');
 
-  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } =
-    getDiscountedTotal();
+  const getItemTotal = (item: CartItem) => {
+    let total = item.price;
+    
+    try {
+      const instructions = JSON.parse(item.instructions);
+      if (instructions.addOns) {
+        instructions.addOns.forEach((addOn: any) => {
+          total += addOn.price / 100; // Convert cents to dollars
+        });
+      }
+    } catch (e) {
+      //console.error('Error parsing item instructions:');
+    }
+    
+    return total * item.quantity;
+  };
+
+  const calculateSubtotal = () => {
+    return items.reduce((sum, item) => sum + getItemTotal(item), 0);
+  };
+
+  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } = 
+    getDiscountedTotal(calculateSubtotal());
 
   const [orderDetails, setOrderDetails] = useState();
 
