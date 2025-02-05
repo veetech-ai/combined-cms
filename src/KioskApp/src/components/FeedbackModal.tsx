@@ -3,19 +3,28 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Timer } from './ui/Timer';
 import { BackButton } from './ui/BackButton';
+import { useNavigate, useParams } from 'react-router-dom'; // Import useParams
+import { useCartStore } from '../stores/cartStore';
 
-interface FeedbackModalProps {
-  isOpen: boolean;
-  onComplete: () => void;
-  onStartOver: () => void;
-}
 
-export function FeedbackModal({ isOpen, onComplete, onStartOver }: FeedbackModalProps) {
+
+export function FeedbackModal() {
   const { t } = useTranslation();
+  const {
+    clearCart,
+  } = useCartStore();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [showThankYou, setShowThankYou] = useState(false);
+  const navigate = useNavigate(); // Initialize useNavigate
+  const { id } = useParams(); // Extract the `id` from the URL
+
+  const handleStartOrder = () => {
+    clearCart();
+    navigate(`/kiosk/${id}`); // This will resolve to `/kiosk/:id`
+  };
+  
 
   const resetState = () => {
     setRating(0);
@@ -23,12 +32,15 @@ export function FeedbackModal({ isOpen, onComplete, onStartOver }: FeedbackModal
     setSelectedFeatures([]);
     setShowThankYou(false);
   };
+  const handleClose = () => {
+    navigate(-1); // Go back to the previous route
+  };
 
   useEffect(() => {
-    if (!isOpen) {
+    
       resetState();
-    }
-  }, [isOpen]);
+    
+  }, []);
 
   const features = [
     { id: 'order', label: t('feedback.easyOrder') },
@@ -72,10 +84,10 @@ export function FeedbackModal({ isOpen, onComplete, onStartOver }: FeedbackModal
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      
         <div className="fixed inset-0 bg-white flex flex-col h-screen">
           <div className="flex items-center p-4">
-            <BackButton onClick={onStartOver} />
+            <BackButton onClick={handleClose} />
           </div>
 
           <div className="flex-1 p-4">
@@ -149,7 +161,7 @@ export function FeedbackModal({ isOpen, onComplete, onStartOver }: FeedbackModal
                 <p className="text-gray-600">{t('feedback.helpImprove')}</p>
                 <div className="mt-6 space-y-4">
                   <button
-                    onClick={onStartOver}
+                    onClick={handleStartOrder} // Use the updated handleStartOrder function
                     className="w-full bg-black text-white py-4 text-lg font-medium hover:bg-gray-900 transition"
                   >
                     {t('feedback.startNewOrder')}
@@ -160,10 +172,10 @@ export function FeedbackModal({ isOpen, onComplete, onStartOver }: FeedbackModal
           </div>
 
           <div className="absolute top-4 right-4">
-            <Timer seconds={30} onComplete={onComplete} onStartOver={onStartOver} />
+            <Timer seconds={30} onComplete={handleClose} onStartOver={handleStartOrder} />
           </div>
         </div>
-      )}
+      
     </AnimatePresence>
   );
 }

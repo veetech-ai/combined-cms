@@ -935,7 +935,7 @@ const SimplifiedModal = ({
             </button>
             <button
               onClick={() => onSave(quantity)}
-              className="flex-1 px-6 py-3 rounded-lg bg-red-600 text-white font-medium hover:bg-red-500"
+              className="flex-1 px-6 py-3 rounded-lg bg-black text-white font-medium hover:bg-black"
             >
               {t('modifiers.addToCart')}
             </button>
