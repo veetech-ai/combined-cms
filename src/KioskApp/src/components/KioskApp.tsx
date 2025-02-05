@@ -52,9 +52,9 @@ export function KioskApp() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#f8f8f8]">
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {showWelcome && <WelcomeScreen onStart={handleStart} />}
-      </AnimatePresence>
+      </AnimatePresence> */}
       
       {/* Header - Fixed height */}
       <header
