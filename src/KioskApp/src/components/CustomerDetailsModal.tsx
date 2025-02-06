@@ -164,7 +164,7 @@ export function CustomerDetailsModal() {
       </div> */}
 
       <Timer 
-        seconds={300} 
+        seconds={30} 
         isActive={true} 
         onStartOver={handleStartOver} 
       />
