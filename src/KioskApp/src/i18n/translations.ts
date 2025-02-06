@@ -129,7 +129,8 @@ export const translations = {
       emptyCart: 'Your cart is empty',
       invalidAmount: 'Invalid order amount',
       nameRequired: 'Please enter your name',
-      invalidPhone: 'Please enter a valid phone number'
+      invalidPhone: 'Please enter a valid phone number',
+      failedToLoadModifiers: 'Failed to load modifiers'
     }
   },
   es: {
@@ -261,7 +262,8 @@ export const translations = {
       emptyCart: 'Tu carrito está vacío',
       invalidAmount: 'Monto inválido',
       nameRequired: 'Por favor ingresa tu nombre',
-      invalidPhone: 'Por favor ingresa un número de teléfono válido'
+      invalidPhone: 'Por favor ingresa un número de teléfono válido',
+      failedToLoadModifiers: 'Error al cargar modificadores'
     }
   }
 };

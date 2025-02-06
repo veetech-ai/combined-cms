@@ -29,9 +29,14 @@ interface CartItemProps {
   onUpdateQuantity: (cartId: string, quantity: number) => void;
   onRemove: (cartId: string) => void;
   onUpdateInstructions: (cartId: string, instructions: string) => void;
+  addOns: Array<{
+    id: string;
+    name: string;
+    price: number;  // Price in cents
+  }>;
 }
 
-export const CartItem: FC<CartItemProps> = ({ 
+export const CartItem: FC<CartItemProps> = ({
   cartId,
   name,
   price,
@@ -51,12 +56,17 @@ export const CartItem: FC<CartItemProps> = ({
   dessertPrices,
   onUpdateQuantity,
   onRemove,
-  onUpdateInstructions
+  onUpdateInstructions,
+  addOns: addOnsArray
 }) => {
   const { i18n } = useTranslation();
   const currentLanguage = i18n.language as 'en' | 'es';
-  const menuItem = useMenuStore(state => state.menuItems.find(item => item.id === id));
+  const menuItem = useMenuStore((state) =>
+    state.menuItems.find((item) => item.id === id)
+  );
   const [imageError, setImageError] = useState(false);
+
+  const [totalAmount, setTotalAmount] = useState();
 
   // Function to normalize item names for image mapping
   const normalizeItemName = (name: string) => {
@@ -67,35 +77,40 @@ export const CartItem: FC<CartItemProps> = ({
   const getImageUrl = () => {
     const normalizedName = normalizeItemName(name.en);
     const mappedImage = itemImageMap[normalizedName];
-    
+
     if (mappedImage) {
       return mappedImage;
     }
-    
+
     // Log missing image mappings during development
-    console.log('No image mapping found for:', name.en, 'normalized as:', normalizedName);
+    console.log(
+      'No image mapping found for:',
+      name.en,
+      'normalized as:',
+      normalizedName
+    );
     return DEFAULT_IMAGE;
   };
   const calculateAddOnsTotal = () => {
     let addOnsTotal = 0;
 
-    // Add add-ons total
-    addOns.forEach(addOnId => {
-      addOnsTotal += addOnPrices[addOnId] || 0;
+    // Add add-ons total (converting from cents to dollars)
+    addOnsArray.forEach((addOn) => {
+      addOnsTotal += (addOn.price || 0) / 100;
     });
 
     // Add beverages total
-    beverages.forEach(bevId => {
+    beverages.forEach((bevId) => {
       addOnsTotal += beveragePrices[bevId] || 0;
     });
 
     // Add sides total
-    sides.forEach(sideId => {
+    sides.forEach((sideId) => {
       addOnsTotal += sidePrices[sideId] || 0;
     });
 
     // Add desserts total
-    desserts.forEach(dessertId => {
+    desserts.forEach((dessertId) => {
       addOnsTotal += dessertPrices[dessertId] || 0;
     });
 
@@ -105,16 +120,21 @@ export const CartItem: FC<CartItemProps> = ({
   const calculateItemTotal = () => {
     const basePrice = price * quantity;
     const addOnsTotal = calculateAddOnsTotal() * quantity;
-    return basePrice + addOnsTotal;
+
+    const temp = basePrice + addOnsTotal;
+    
+    return temp;
   };
 
   const getAddOnName = (addOnId: string) => {
-    const addOn = menuItem?.addOns?.find(a => a.id === addOnId);
+    const addOn = menuItem?.addOns?.find((a) => a.id === addOnId);
     return addOn?.name[currentLanguage] || addOnId;
   };
 
   const getBeverageName = (bevId: string) => {
-    const beverage = menuItem?.recommendedBeverages?.find(b => b.id === bevId);
+    const beverage = menuItem?.recommendedBeverages?.find(
+      (b) => b.id === bevId
+    );
     return beverage?.name[currentLanguage] || bevId;
   };
 
@@ -129,17 +149,46 @@ export const CartItem: FC<CartItemProps> = ({
 
   // Get the actual menu item image or fall back to the provided imageUrl
   const actualImageUrl = menuItem?.imageUrl || imageUrl;
-  console.log('actualImageUrl:', actualImageUrl);
+
+  const renderAddOns = (instructions: string) => {
+    try {
+      const parsed = JSON.parse(instructions);
+      if (parsed.addOns && parsed.addOns.length > 0) {
+        return (
+          <div className="text-sm text-gray-500 mt-1">
+            {parsed.addOns.map((addOn: any, index: number) => (
+              <div key={index} className="flex justify-between">
+                <span>{addOn.name}</span>
+                {addOn.price > 0 && (
+                  <span>+${(addOn.price / 100).toFixed(2)}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+    } catch (e) {
+      console.error('Error parsing add-ons:', e);
+    }
+    return null;
+  };
 
   return (
-    <div className="flex flex-col gap-2 mb-2 p-2 bg-gray-50 rounded-lg shadow-sm" role="listitem">
+    <div
+      className="flex flex-col gap-2 mb-2 p-2 bg-gray-50 rounded-lg shadow-sm"
+      role="listitem"
+    >
       <div className="flex items-center gap-2">
-        <img 
+        <img
           src={getImageUrl()}
           alt={name[currentLanguage]}
           className="w-16 h-16 rounded-md object-cover"
           onError={(e) => {
-            console.log('Image failed to load for:', name.en, 'Using default image');
+            console.log(
+              'Image failed to load for:',
+              name.en,
+              'Using default image'
+            );
             const img = e.target as HTMLImageElement;
             img.src = DEFAULT_IMAGE;
             setImageError(true);
@@ -152,23 +201,25 @@ export const CartItem: FC<CartItemProps> = ({
           {/* Rest of the component structure remains the same */}
           <div className="text-gray-700 text-sm">
             <p className="font-normal">${price.toFixed(2)}</p>
-            
+
             <div className="text-sm text-gray-600 mt-1">
-              {addOns.map(addOnId => (
-                <div key={addOnId} className="flex justify-between">
-                  <span>+ {getAddOnName(addOnId)}</span>
-                  <span>${addOnPrices[addOnId].toFixed(2)}</span>
+              {addOnsArray.map((addOn) => (
+                <div key={addOn.id} className="flex justify-between">
+                  <span>+ {addOn.name}</span>
+                  {addOn.price > 0 && (
+                    <span>${(addOn.price / 100).toFixed(2)}</span>
+                  )}
                 </div>
               ))}
 
-              {beverages.map(bevId => (
+              {beverages.map((bevId) => (
                 <div key={bevId} className="flex justify-between">
                   <span>+ {getBeverageName(bevId)}</span>
                   <span>${beveragePrices[bevId].toFixed(2)}</span>
                 </div>
               ))}
 
-              {customizations.map(customization => (
+              {customizations.map((customization) => (
                 <div key={customization} className="text-gray-500">
                   • {customization}
                 </div>
@@ -177,14 +228,15 @@ export const CartItem: FC<CartItemProps> = ({
 
             <div className="mt-2 text-right space-y-1">
               <p className="text-sm text-gray-500">
-                Quantity: {quantity} × ${(price + calculateAddOnsTotal()).toFixed(2)}
+                Quantity: {quantity} × $
+                {(price + calculateAddOnsTotal()).toFixed(2)}
               </p>
               <p className="font-semibold text-base">
-                Total: ${calculateItemTotal().toFixed(2)}
+                Total: ${calculateItemTotal()}
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 mt-2">
             <button
               onClick={() => onUpdateQuantity(cartId, quantity - 1)}
@@ -199,13 +251,23 @@ export const CartItem: FC<CartItemProps> = ({
             >
               <span className="text-lg">+</span>
             </button>
-            
+
             <button
               onClick={() => onRemove(cartId)}
               className="ml-auto text-black hover:text-black"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -221,9 +283,7 @@ export const CartItem: FC<CartItemProps> = ({
             className="overflow-hidden"
           >
             <div className="pt-2 border-t mt-2">
-              <p className="text-sm text-gray-600">
-                {instructions}
-              </p>
+              {renderAddOns(instructions)}
             </div>
           </motion.div>
         )}
@@ -233,19 +293,21 @@ export const CartItem: FC<CartItemProps> = ({
         isOpen={showModifiers}
         onClose={() => setShowModifiers(false)}
         onSave={handleModifierSave}
-        item={menuItem || {
-          id: id,
-          name: name,
-          price: price,
-          category: category || '',
-          imageUrl: getImageUrl(),
-          sortOrder: 0,
-          addOns: [],
-          customizations: [],
-          recommendedBeverages: [],
-          recommendedSides: [],
-          recommendedDesserts: []
-        }}
+        item={
+          menuItem || {
+            id: id,
+            name: name,
+            price: price,
+            category: category || '',
+            imageUrl: getImageUrl(),
+            sortOrder: 0,
+            addOns: [],
+            customizations: [],
+            recommendedBeverages: [],
+            recommendedSides: [],
+            recommendedDesserts: []
+          }
+        }
         category={category || ''}
         existingInstructions={instructions}
       />

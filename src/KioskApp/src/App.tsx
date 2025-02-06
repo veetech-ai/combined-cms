@@ -1,18 +1,14 @@
-import { useEffect, useMemo,useState } from 'react';
-import MenuSection from './MenuSection';
-import { CartSection } from './CartSection';
-import { LanguageToggle } from './LanguageToggle';
+import { useEffect, useMemo } from 'react';
+import MenuSection from './components/MenuSection';
+import { CartSection } from './components/CartSection';
+import { LanguageToggle } from './components/LanguageToggle';
 import { Toaster } from 'react-hot-toast';
 // import { useMenuStore } from './stores/menuStore';
-import { useWebSocket } from '../hooks/useWebSocket';
+import { useWebSocket } from './hooks/useWebSocket';
 import Maxikhana from '../images/maxikhana.png';
-import { AnimatePresence } from 'framer-motion';
-import { WelcomeScreen } from './WelcomeScreen';
 
 export function KioskApp() {
   // const { loadMenuItems } = useMenuStore();
-  // const { clearCart } = useCartStore();
-  const [showWelcome, setShowWelcome] = useState(true);
   const wsUrl = useMemo(() => {
     try {
       const apiUrl = (import.meta as any).env.VITE_API_URL;
@@ -33,29 +29,8 @@ export function KioskApp() {
   //   loadMenuItems();
   // }, [loadMenuItems]);
 
-  const handleStartOver = () => {
-    // clearCart();
-    // Ensure we reset all state before showing welcome screen
-    setTimeout(() => {
-      setShowWelcome(true);
-    }, 0);
-    setShowWelcome(true);
-  };
-
-  const handleStart = () => {
-    if (showWelcome) {
-      setShowWelcome(false);
-    }
-    setShowWelcome(false);
-  };
-
-
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#f8f8f8]">
-      {/* <AnimatePresence>
-        {showWelcome && <WelcomeScreen onStart={handleStart} />}
-      </AnimatePresence> */}
-      
       {/* Header - Fixed height */}
       <header
         className="bg-white shadow-sm h-16 flex items-center justify-between px-4 relative"
@@ -84,7 +59,7 @@ export function KioskApp() {
 
         {/* Cart Section - 25% width on desktop */}
         <div className="w-full md:w-1/3 lg:w-1/4 overflow-hidden flex flex-col">
-          <CartSection onStartOver={handleStartOver}/>
+          <CartSection />
         </div>
       </main>
       <Toaster position="top-center" />

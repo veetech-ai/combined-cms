@@ -27,6 +27,11 @@ import DisplaysView from './components/displays/DisplaysView';
 
 import KioskApp from './KioskApp/src/main';
 import CloverPaymentForm from './components/paymet/CloverPaymentForm';
+import { WelcomeScreen } from './KioskApp/src/components/WelcomeScreen';
+import { CustomerDetailsModal } from './KioskApp/src/components/CustomerDetailsModal';
+import { PaymentModal } from './KioskApp/src/components/PaymentModal';
+import { FeedbackModal } from './KioskApp/src/components/FeedbackModal';
+import Success from './KioskApp/src/components/Success';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated, token } = useAuthStore();
@@ -66,7 +71,12 @@ const App = () => {
             <Route path="/login" element={<Login />} />
 
             {/* <Route path="/store/:id" element={<StorePage />} /> */}
-            <Route path="/kiosk/:id" element={<KioskApp />} />
+            <Route path="/kiosk/:id" element={<WelcomeScreen />} />
+            <Route path="/kiosk/:id/kiosk" element={<KioskApp />} />
+            <Route path="/kiosk/:id/details" element={<CustomerDetailsModal  />} />
+            <Route path="/kiosk/:id/payment" element={<PaymentModal  />} />
+            <Route path="/kiosk/:id/feedback" element={<FeedbackModal  />} />
+            <Route path="/kiosk/:id/success" element={<Success  />} />
 
             {/* Protected Routes */}
             <Route

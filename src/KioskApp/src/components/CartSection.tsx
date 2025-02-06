@@ -7,6 +7,8 @@ import { FeedbackModal } from './FeedbackModal';
 import { DiscountModal } from './DiscountModal';
 import { useCartStore } from '../stores/cartStore';
 import { useMenuStore } from '../stores/menuStore';
+import { useNavigate, useParams } from 'react-router-dom'; // Import useParams
+
 
 interface CartSectionProps {
   onStartOver: () => void;
@@ -36,9 +38,37 @@ export function CartSection({ onStartOver }: CartSectionProps) {
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [showDiscountDialog, setShowDiscountDialog] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { id } = useParams();
 
-  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } =
-    getDiscountedTotal();
+  const handleStartOrder = () => {
+    // Navigate to the `/kiosk` route relative to the current route
+    navigate(`/kiosk/${id}/details`); // This will resolve to `/kiosk/${id}/kiosk`
+  };
+
+  const getItemTotal = (item: CartItem) => {
+    let total = item.price;
+    
+    try {
+      const instructions = JSON.parse(item.instructions);
+      if (instructions.addOns) {
+        instructions.addOns.forEach((addOn: any) => {
+          total += addOn.price / 100; // Convert cents to dollars
+        });
+      }
+    } catch (e) {
+      //console.error('Error parsing item instructions:');
+    }
+    
+    return total * item.quantity;
+  };
+
+  const calculateSubtotal = () => {
+    return items.reduce((sum, item) => sum + getItemTotal(item), 0);
+  };
+
+  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } = 
+    getDiscountedTotal(calculateSubtotal());
 
   const [orderDetails, setOrderDetails] = useState();
 
@@ -177,7 +207,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
         </div>
 
         <button
-          onClick={handleCheckout}
+          onClick={handleStartOrder}
           disabled={items.length === 0 || total < 0.01}
           className={`w-full py-3 text-base font-semibold rounded-lg transition-all duration-300 ${
             items.length > 0 && total >= 0.01
@@ -194,19 +224,19 @@ export function CartSection({ onStartOver }: CartSectionProps) {
       </div>
 
       {/* Modals */}
-      <CustomerDetailsModal
+      {/* <CustomerDetailsModal
         isOpen={showCustomerDetails}
         onClose={() => setShowCustomerDetails(false)}
         onStartOver={onStartOver}
         onSubmit={handleCustomerSubmit}
-      />
+      /> */}
 
       <DiscountModal
         isOpen={showDiscountDialog}
         onResponse={handleDiscountResponse}
       />
 
-      <PaymentModal
+      {/* <PaymentModal
         isOpen={showPaymentDialog}
         onClose={() => setShowPaymentDialog(false)}
         onComplete={handlePaymentComplete}
@@ -221,7 +251,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
         isOpen={showFeedbackDialog}
         onComplete={handleFeedbackComplete}
         onStartOver={onStartOver}
-      />
+      /> */}
     </div>
   );
 }
