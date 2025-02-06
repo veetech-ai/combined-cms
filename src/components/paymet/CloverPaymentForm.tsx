@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import './CloverPayment.css'; // Create this CSS file
+import './CloverPayment.css';
 
 declare global {
   interface Window {
@@ -10,19 +10,12 @@ declare global {
 }
 
 interface CloverConfig {
-  // environment: 'sandbox' | 'production';
-  // tokenizationKey: string;
   merchantId: string;
-  // paymentMethods?: ('card' | 'google_pay' | 'apple_pay')[];
-  // style?: {
-  //   theme?: 'light' | 'dark';
-  // };
 }
 
 interface CloverInstance {
   elements: () => any;
   createToken: () => Promise<{ token: string }>;
-  // createPaymentToken: () => Promise<{ token: string }>;
 }
 
 const CloverPaymentForm = () => {
@@ -43,31 +36,18 @@ const CloverPaymentForm = () => {
           return;
         }
 
-        // Use TEST credentials
-        // const clover = new window.Clover('04750d1c04d58c8b1e4e5be9dc3ae37f', {
-        //   merchantId: 'RCTSTAVI0010002',
-        //   environment: 'sandbox', // Change to 'sandbox' for testing
-        //   tokenizationKey: '04750d1c04d58c8b1e4e5be9dc3ae37f', // Use sandbox tokenization key
-        //   paymentMethods: ['card', 'apple_pay', 'google_pay'],
-        //   style: {
-        //     theme: 'dark'
-        //   }
-        // });
-
-        // const clover = new window.Clover('04750d1c04d58c8b1e4e5be9dc3ae37f', {
-        //   merchantId: 'RCTSTAVI0010002'
-        //   // environment: 'sandbox', // Change to 'sandbox' for testing
-        //   // tokenization
-        // });
-
         const clover = new window.Clover('62862dc628972e7b4e7fbffd18ab0cdb', {
           merchantId: 'PSK40XM0M8ME1'
-          // environment: 'sandbox', // Change to 'sandbox' for testing
-          // tokenization
         });
+
+        // test merchant credentials
+        // const clover = new window.Clover('04750d1c04d58c8b1e4e5be9dc3ae37f', {
+        //   merchantId: 'RCTSTAVI0010002'
+        // });
 
         const elements = clover.elements();
 
+        // Create Card Elements
         const cardNumber = elements.create('CARD_NUMBER');
         const cardDate = elements.create('CARD_DATE');
         const cardCvv = elements.create('CARD_CVV');
@@ -77,6 +57,61 @@ const CloverPaymentForm = () => {
         cardDate.mount('#card-date-element');
         cardCvv.mount('#card-cvv-element');
         cardPostal.mount('#card-postal-element');
+
+        // ✅ Google Pay Button
+        const googlePayData = {
+          total: {
+            label: 'Total Amount',
+            amount: 1 // Amount in cents (e.g., $10.99)
+          },
+          options: {
+            button: {
+              buttonType: 'short' // or 'long' for additional text
+            }
+          }
+        };
+
+        const googlePayButton = elements.create('PAYMENT_REQUEST_BUTTON', {
+          paymentReqData: googlePayData
+        });
+        googlePayButton.mount('#google-pay-button');
+
+        googlePayButton.addEventListener('paymentMethod', async (event) => {
+          console.log('Google Pay token received:', event);
+          console.log(
+            'Google Pay token received:',
+            event.detail?.tokenReceived
+          );
+          alert(`Google Pay Token: ${event.detail?.tokenReceived?.id}`);
+        });
+
+        // ✅ Apple Pay Button
+        const applePayData = {
+          total: {
+            label: 'Total Amount',
+            amount: 1 // Amount in cents (e.g., $10.99)
+          },
+          options: {
+            button: {
+              buttonType: 'short' // or 'long' for additional text
+            }
+          }
+        };
+
+        const applePayButton = elements.create(
+          'PAYMENT_REQUEST_BUTTON_APPLE_PAY',
+          {
+            paymentReqData: applePayData
+          }
+        );
+
+        applePayButton.mount('#apple-pay-button');
+
+        applePayButton.addEventListener('paymentMethod', async (event) => {
+          console.log('Apple Pay token received:', event);
+          console.log('Apple Pay token received:', event.detail?.tokenReceived);
+          alert(`Apple Pay Token: ${event.detail?.tokenReceived?.id}`);
+        });
 
         setCloverInstance(clover);
 
@@ -150,6 +185,12 @@ const CloverPaymentForm = () => {
           <label>Postal Code</label>
           <div id="card-postal-element" className="clover-element" />
         </div>
+
+        {/* ✅ Google Pay Button */}
+        <div id="google-pay-button" className="payment-button"></div>
+
+        {/* ✅ Apple Pay Button */}
+        <div id="apple-pay-button" className="payment-button"></div>
 
         {error && <div className="error-message">{error}</div>}
 
