@@ -1,144 +1,98 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronsLeft, ChevronsDown } from 'lucide-react';
-
-interface TimerState {
-  timeLeft: number;
-  isActive: boolean;
-}
+import React from 'react';
 
 interface TimerProps {
   seconds: number;
-  onComplete: () => void;
+  isActive: boolean;
+  variant?: 'light' | 'dark';
   onStartOver: () => void;
 }
 
-export function Timer({ seconds, onComplete, onStartOver }: TimerProps) {
-  const [state, setState] = useState<TimerState>({
-    timeLeft: seconds,
-    isActive: true
-  });
-  const timerRef = useRef<NodeJS.Timeout>();
-  const percentage = (state.timeLeft / seconds) * 100;
+export function Timer({ 
+  seconds, 
+  isActive,
+  variant = 'light',
+  onStartOver 
+}: TimerProps) {
+  if (!isActive) return null;
 
-  // Reset timer when user interacts with any part of the screen
-  useEffect(() => {
-    const handleInteraction = () => {
-      if (state.isActive) {
-        setState((prev) => ({
-          ...prev,
-          timeLeft: seconds
-        }));
-      }
-    };
-
-    window.addEventListener('click', handleInteraction);
-    window.addEventListener('touchstart', handleInteraction);
-    window.addEventListener('keydown', handleInteraction);
-
-    return () => {
-      window.removeEventListener('click', handleInteraction);
-      window.removeEventListener('touchstart', handleInteraction);
-      window.removeEventListener('keydown', handleInteraction);
-    };
-  }, [seconds, state.isActive]);
-
-  useEffect(() => {
-    if (state.timeLeft <= 0) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      setState((prev) => ({ ...prev, isActive: false }));
-      onComplete();
-      return;
-    }
-
-    timerRef.current = setInterval(() => {
-      if (state.isActive) {
-        setState((prev) => ({
-          ...prev,
-          timeLeft: prev.timeLeft - 1
-        }));
-      }
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [state.timeLeft, state.isActive, onComplete]);
-
-  const handleStartOver = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setState({
-      timeLeft: seconds,
-      isActive: true
-    });
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    onStartOver();
-  };
+  const isWarning = seconds <= 10;
+  const progress = (seconds / 30) * 100;
 
   return (
-    <div className="relative flex flex-col items-center">
-      {/* Timer Circle */}
-      <div className="relative w-16 h-16">
-        <svg className="w-full h-full transform -rotate-90">
-          {/* Background circle */}
-          <circle
-            cx="32"
-            cy="32"
-            r="28"
-            className="stroke-[#f0f0f0]"
-            strokeWidth="6"
-            fill="none"
-          />
-          {/* Progress circle */}
-          <motion.circle
-            cx="32"
-            cy="32"
-            r="28"
-            className="stroke-black"
-            strokeWidth="6"
-            fill="none"
-            strokeDasharray={175.93}
-            initial={{ strokeDashoffset: 0 }}
-            animate={{ strokeDashoffset: 175.93 * (1 - percentage / 100) }}
-            transition={{ duration: 1, ease: 'linear' }}
-          />
-        </svg>
+    <div 
+      className={`
+        fixed bottom-6 left-6 transition-all duration-500 ease-in-out
+        ${variant === 'dark' ? 'text-white' : 'text-gray-600'}
+      `}
+    >
+      <div className={`
+        relative rounded-full p-3 pr-5 flex items-center gap-3
+        ${variant === 'dark' 
+          ? isWarning ? 'bg-red-500/20' : 'bg-white/10'
+          : isWarning ? 'bg-red-50' : 'bg-gray-50'
+        }
+        ${isWarning ? 'animate-pulse' : ''}
+      `}>
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-sm font-medium tabular-nums">
+              {seconds}
+            </span>
+          </div>
+          <svg className="w-8 h-8 -rotate-90">
+            <circle
+              cx="16"
+              cy="16"
+              r="14"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              className="opacity-20"
+            />
+            <circle
+              cx="16"
+              cy="16"
+              r="14"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              strokeDasharray={88}
+              strokeDashoffset={88 - (88 * progress) / 100}
+              className={`
+                transition-all duration-1000 ease-linear
+                ${isWarning ? 'stroke-red-500' : ''}
+              `}
+            />
+          </svg>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div>
+            <p className={`
+              text-sm font-medium
+              ${variant === 'dark' 
+                ? isWarning ? 'text-red-300' : 'text-white/90'
+                : isWarning ? 'text-red-600' : 'text-gray-600'
+              }
+            `}>
+              {isWarning ? 'Session expiring' : 'Session active'}
+            </p>
+          </div>
 
-        {/* Timer Text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <motion.span
-            key={state.timeLeft}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-lg font-medium"
+          <button 
+            onClick={() => onStartOver()}
+            className={`
+              text-sm font-medium transition-colors
+              ${variant === 'dark'
+                ? 'text-white/70 hover:text-white'
+                : 'text-gray-500 hover:text-gray-900'
+              }
+            `}
           >
-            {state.timeLeft}
-          </motion.span>
+            Reset
+          </button>
         </div>
       </div>
-
-      {/* Reset Button */}
-      <AnimatePresence>
-        <motion.button
-          onClick={handleStartOver}
-          className="mt-2 px-4 py-1.5 bg-black text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -5 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <ChevronsLeft size={18} />
-          Start Over
-        </motion.button>
-      </AnimatePresence>
     </div>
   );
 }

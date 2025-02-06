@@ -5,8 +5,9 @@ import { Timer } from './ui/Timer';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useNavigate, useParams } from 'react-router-dom';
-import googlePayLogo from '../images/image.png'; // Replace with actual Google Pay logo
-import applePayLogo from '../images/apple-pay.png'; // Add Apple Pay logo image
+import { ApplePayLogo } from './ui/ApplePayLogo';
+import { GooglePayLogo } from  './ui/GooglePayLogo';
+
 import { useCartStore } from '../stores/cartStore';
 
 export function PaymentModal() {
@@ -15,6 +16,12 @@ export function PaymentModal() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { clearCart } = useCartStore();
+
+  // Missing Props
+  // const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  // const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  // const onDigitalPayment = () => { /* handle digital payment */ };
+  // const onCashPayment = () => { /* handle cash payment */ };
 
   useEffect(() => {
     QRCode.toDataURL('https://payment.example.com/order/123')
@@ -42,36 +49,39 @@ export function PaymentModal() {
   return (
     <div className="fixed inset-0 bg-white">
       {step === 'initial' && (
-        <>
-          <div className="flex justify-between items-start p-8">
-            {/* <BackButton onClick={handleClose} /> */}
-            <button
-              type="button"
-              onClick={handleClose}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              <ChevronLeft size={18} />
-              <span>Back</span>
-            </button>
-            <Timer
-              seconds={60}
-              onComplete={handleClose}
-              onStartOver={handleStartOver}
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
+          {/* Left Side - Order Summary */}
+          <div className="p-6 border-r border-gray-100">
+            <h2 className="text-2xl font-medium">Order Summary</h2>
+            {/* Add Order Summary Component Here */}
           </div>
 
-          <div className="max-w-5xl mx-auto px-8">
-            <div className="flex justify-around items-center">
-              {/* Payment methods section */}
-              <div className="flex flex-col">
-                <h2 className="text-3xl font-bold mb-4">Scan to pay with</h2>
-                <div className="flex items-center gap-4">
-                  <img src={googlePayLogo} alt="Google Pay" className="h-32" />
-                  {/* <img src={applePayLogo} alt="Apple Pay" className="h-10" /> */}
-                </div>
+          {/* Right Side - Payment Options */}
+          <div className="flex flex-col p-6">
+            <div className="flex justify-between items-start">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <ChevronLeft size={18} />
+                <span>Back</span>
+              </button>
+              <Timer
+                seconds={60}
+                onComplete={handleClose}
+                onStartOver={handleStartOver}
+              />
+            </div>
+
+            <div className="flex flex-col items-center mt-8">
+              <h2 className="text-3xl font-bold mb-4">Scan to pay with</h2>
+              <div className="flex items-center gap-4 mb-4">
+              <GooglePayLogo />
+              <ApplePayLogo />
+                
               </div>
 
-              {/* Clickable QR Code */}
               <div
                 className="w-[200px] h-[200px] bg-white p-2 rounded-lg shadow-md cursor-pointer"
                 onClick={handleSuccess}
@@ -84,22 +94,10 @@ export function PaymentModal() {
                   />
                 )}
               </div>
-            </div>
 
-            {/* OR separator */}
-            <div className="mt-16">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="flex-1 h-px bg-gray-300" />
-                <span className="text-gray-500 text-lg font-medium px-4">
-                  OR
-                </span>
-                <div className="flex-1 h-px bg-gray-300" />
-              </div>
-
-              {/* Cash/Card Payment Button */}
               <motion.button
                 onClick={() => setStep('cash')}
-                className="w-full h-14 bg-black text-white text-lg font-medium rounded-xl hover:bg-gray-900 transition-colors duration-200"
+                className="w-full h-14 bg-black text-white text-lg font-medium rounded-xl hover:bg-gray-900 transition-colors duration-200 mt-8"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -107,13 +105,12 @@ export function PaymentModal() {
               </motion.button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {step === 'cash' && (
         <div className="h-full flex flex-col">
           <div className="flex items-center p-8">
-            {/* <BackButton onClick={() => setStep('initial')} /> */}
             <button
               type="button"
               onClick={() => setStep('initial')}
