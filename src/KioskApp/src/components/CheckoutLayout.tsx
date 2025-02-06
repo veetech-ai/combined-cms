@@ -1,8 +1,8 @@
 import React from 'react';
 import { ArrowLeft, ShoppingCart } from 'lucide-react';
-import { Timer } from './Timer';
-import { useActivityTimer } from '../hooks/useActivityTimer';
-import { useCheckout } from '../contexts/CheckoutContext';
+import { Timer } from './ui/Timer';
+// import { useActivityTimer } from '../hooks/useActivityTimer';
+// import { useCheckout } from '../contexts/CheckoutContext';
 
 interface CartItem {
   name: string;
@@ -34,13 +34,13 @@ export function CheckoutLayout({
   onTimeout
 }: CheckoutLayoutProps) {
   const { clearSession } = useCheckout();
-  const { timeLeft, isActive } = useActivityTimer({
-    initialTime: timer,
-    onTimeout: () => {
-      clearSession();
-      onStartOver?.();
-    }
-  });
+  // const { timeLeft, isActive } = useActivityTimer({
+  //   initialTime: timer,
+  //   onTimeout: () => {
+  //     clearSession();
+  //     onStartOver?.();
+  //   }
+  // });
 
   const handleStartOver = () => {
     clearSession();
@@ -63,6 +63,10 @@ export function CheckoutLayout({
             isActive={isActive}
             variant={dark ? 'dark' : 'light'}
             onStartOver={handleStartOver}
+            onComplete={() => {
+              clearSession();
+              onStartOver?.();
+            }}
           />
         </div>
       )}

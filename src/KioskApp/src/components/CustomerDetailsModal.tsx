@@ -5,17 +5,20 @@ import { ChevronLeft } from 'lucide-react';
 import { Timer } from './ui/Timer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
-
+import { CheckoutLayout } from '../components/CheckoutLayout';
 type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState<Step>('name');
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [isTimerActive, setIsTimerActive] = useState(true);
   useCustomerStore();
   const navigate = useNavigate();
   const { id } = useParams();
   const { clearCart } = useCartStore();
+  const { setCustomerName } = useCustomerStore();
 
   useEffect(() => {
     if (step === 'phone') {
@@ -26,12 +29,34 @@ export function CustomerDetailsModal() {
     }
   }, [phone, step]);
 
+  useEffect(() => {
+    if (!isTimerActive || timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, isTimerActive]);
+
+  const resetTimer = () => {
+    setTimeLeft(30);
+  };
+
   const handleNameSubmit = () => {
     if (!name.trim()) {
-      toast.error('Please enter your name');
+      toast.error('Please enter youra name');
       return;
     }
     setStep('phone');
+  };
+
+  const handleBack = () => {
+    if (step === 'phone') {
+      setStep('name');
+    } else {
+      navigate(`/kiosk/${id}`);
+    }
   };
 
   const handleStartOver = () => {
@@ -39,9 +64,15 @@ export function CustomerDetailsModal() {
     navigate(`/kiosk/${id}`);
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+    resetTimer();
+  };
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = value.replace(/\D/g, '');
+    resetTimer();
 
     let formattedValue = '';
     if (numericValue.length <= 3) {
@@ -70,31 +101,27 @@ export function CustomerDetailsModal() {
         customerPhone: phone,
         timestamp: new Date().toISOString()
       };
+      setCustomerName(name);
       navigate(`/kiosk/${id}/payment`);
-      console.log('Hello');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save customer data');
     }
   };
 
-  const handleBack = () => {
-    if (step === 'phone') {
-      setStep('name');
-    } else {
-      navigate(-1);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white">
-      <div className="flex items-center p-4">
+      <div className="p-6">
         <button
           type="button"
           onClick={handleBack}
-          className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
+            focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
+            disabled:pointer-events-none disabled:opacity-50
+            hover:bg-gray-100 h-9 px-4 py-2 
+            text-gray-900"
         >
-          <ChevronLeft size={18} />
-          <span>Back</span>
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Back
         </button>
       </div>
 
@@ -113,12 +140,13 @@ export function CustomerDetailsModal() {
                   type="text"
                   placeholder="Your name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={handleNameChange}
                   className="w-full text-5xl bg-transparent focus:outline-none placeholder-gray-300 py-4 focus:ring-0"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && name.trim()) {
                       handleNameSubmit();
+                      resetTimer();
                     }
                   }}
                 />
@@ -144,6 +172,7 @@ export function CustomerDetailsModal() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && phone.trim()) {
                       handlePhoneSubmit();
+                      resetTimer();
                     }
                   }}
                 />
@@ -154,19 +183,11 @@ export function CustomerDetailsModal() {
         </div>
       </div>
 
-      {/* <div className="flex justify-center p-4">
-        <button
-          onClick={step === 'name' ? handleNameSubmit : handlePhoneSubmit}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          {step === 'name' ? 'Next' : 'Submit'}
-        </button>
-      </div> */}
-
       <Timer 
-        seconds={30} 
-        isActive={true} 
-        onStartOver={handleStartOver} 
+        seconds={timeLeft} 
+        isActive={isTimerActive} 
+        onStartOver={handleStartOver}
+        onComplete={handleStartOver}
       />
     </div>
   );

@@ -5,14 +5,22 @@ interface TimerProps {
   isActive: boolean;
   variant?: 'light' | 'dark';
   onStartOver: () => void;
+  onComplete?: () => void;
 }
 
 export function Timer({ 
   seconds, 
   isActive,
   variant = 'light',
-  onStartOver 
+  onStartOver,
+  onComplete 
 }: TimerProps) {
+  React.useEffect(() => {
+    if (isActive && seconds === 0 && onComplete) {
+      onComplete();
+    }
+  }, [seconds, isActive, onComplete]);
+
   if (!isActive) return null;
 
   const isWarning = seconds <= 10;
