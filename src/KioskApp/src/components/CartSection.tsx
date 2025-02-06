@@ -190,7 +190,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
           </div>
           <div className="flex justify-between text-sm">
             <span>{t('cart.taxes')}:</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>$0.00</span>
           </div>
           {phoneDiscountAmount > 0 && (
             <div className="flex justify-between text-sm text-green-600">

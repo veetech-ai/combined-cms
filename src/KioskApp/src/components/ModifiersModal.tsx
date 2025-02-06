@@ -281,7 +281,7 @@ export function ModifiersModal({
                 </div>
               ) : modifierGroups.length === 0 ? (
                 <div>
-                  {/* {`Add-Ons & Customization are not available for ${item.name.en}`} */}
+                  {`Add-Ons & Customization are not available for ${item.name.en}`}
                 </div>
               ) : modifierError ? (
                 <div className="text-red-600 text-center py-4">
@@ -557,7 +557,7 @@ export function ModifiersModal({
               {!loadingModifiers && (
                 <>
                   {/* Special Instructions */}
-                  {/* <div>
+                  <div>
                     <label className="block text-lg font-semibold mb-2">
                       {t('modifiers.additionalNotes')}
                     </label>
@@ -568,7 +568,7 @@ export function ModifiersModal({
                       className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                       rows={2}
                     />
-                  </div> */}
+                  </div>
                 </>
               )}
             </div>

@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ModifiersModal } from './ModifiersModal';
 import { useMenuStore } from '../stores/menuStore';
 import { itemImageMap, DEFAULT_IMAGE } from '../utils/imageMap';
-import { Minus, Plus, X } from 'lucide-react';
 
 interface CartItemProps {
   cartId: string;
@@ -33,7 +32,7 @@ interface CartItemProps {
   addOns: Array<{
     id: string;
     name: string;
-    price: number;
+    price: number; // Price in cents
   }>;
 }
 
@@ -78,23 +77,43 @@ export const CartItem: FC<CartItemProps> = ({
   const getImageUrl = () => {
     const normalizedName = normalizeItemName(name.en);
     const mappedImage = itemImageMap[normalizedName];
-    return mappedImage || DEFAULT_IMAGE;
-  };
 
+    if (mappedImage) {
+      return mappedImage;
+    }
+
+    // Log missing image mappings during development
+    console.log(
+      'No image mapping found for:',
+      name.en,
+      'normalized as:',
+      normalizedName
+    );
+    return DEFAULT_IMAGE;
+  };
   const calculateAddOnsTotal = () => {
     let addOnsTotal = 0;
+
+    // Add add-ons total (converting from cents to dollars)
     addOnsArray.forEach((addOn) => {
       addOnsTotal += (addOn.price || 0) / 100;
     });
+
+    // Add beverages total
     beverages.forEach((bevId) => {
       addOnsTotal += beveragePrices[bevId] || 0;
     });
+
+    // Add sides total
     sides.forEach((sideId) => {
       addOnsTotal += sidePrices[sideId] || 0;
     });
+
+    // Add desserts total
     desserts.forEach((dessertId) => {
       addOnsTotal += dessertPrices[dessertId] || 0;
     });
+
     return addOnsTotal;
   };
 
@@ -157,102 +176,123 @@ export const CartItem: FC<CartItemProps> = ({
   };
 
   return (
-    <>
-      <div className="flex items-center gap-4 py-4 border-b border-gray-100">
+    <div
+      className="flex flex-col gap-2 mb-2 p-2 bg-gray-50 rounded-lg shadow-sm"
+      role="listitem"
+    >
+      <div className="flex items-center gap-2">
         <img
           src={getImageUrl()}
           alt={name[currentLanguage]}
-          className="w-20 h-20 object-cover rounded-lg"
+          className="w-16 h-16 rounded-md object-cover"
           onError={(e) => {
+            console.log(
+              'Image failed to load for:',
+              name.en,
+              'Using default image'
+            );
             const img = e.target as HTMLImageElement;
             img.src = DEFAULT_IMAGE;
             setImageError(true);
           }}
         />
-        
-          
-            
-            <div className="flex-1">
-          <h3 className="font-medium text-gray-900">{name[currentLanguage]}</h3>
-          <p className="text-sm text-gray-500">${(price + calculateAddOnsTotal()).toFixed(2)}</p>
-          
-          {/* Add-ons and customizations section with improved layout */}
-          
-          </div>
-            
-            
-            <div className=" items-center gap-2">
-            <button
-              onClick={() => onUpdateQuantity(cartId, quantity - 1)}
-            className="p-1 hover:bg-gray-100 rounded"
-            >
-            <Minus className="w-4 h-4" />
-            </button>
-          <span className="w-8 text-center">{quantity}</span>
-            <button
-              onClick={() => onUpdateQuantity(cartId, quantity + 1)}
-            className="p-1 hover:bg-gray-100 rounded"
-            >
-            <Plus className="w-4 h-4" />
-            </button>
-        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-base text-gray-900 truncate">
+            {name[currentLanguage]}
+          </h3>
+          {/* Rest of the component structure remains the same */}
+          <div className="text-gray-700 text-sm">
+            <p className="font-normal">${price.toFixed(2)}</p>
 
-            <button
-              onClick={() => onRemove(cartId)}
-          className="p-1 hover:bg-gray-100 rounded"
-        >
-          <X className="w-4 h-4" />
-            </button>
-      
-      </div>
-      
-      {(addOnsArray.length > 0 || beverages.length > 0 || customizations.length > 0) && (
-            <div className="mt-2 space-y-1.5">
-              {/* Add-ons with prices */}
-              {addOnsArray.map((addOn) => (
-                <div key={addOn.id} className="flex items-start text-sm">
-                  <span className="text-gray-400 mr-1.5">+</span>
-                  <div className="flex-1 flex justify-between items-baseline">
-                    <span className="text-gray-600 leading-tight break-words pr-2" style={{ wordBreak: 'break-word' }}>
-                      {addOn.name}
-                    </span>
+            <div className="text-sm text-gray-600 mt-1">
+              {addOnsArray.map((addOn) => {
+                console.log(addOn);
+                return (
+                  <div key={addOn.id} className="flex justify-between">
+                    <span>+ {addOn.name}</span>
                     {addOn.price > 0 && (
-                      <span className="text-gray-500 whitespace-nowrap ml-1">
-                        ${(addOn.price / 100).toFixed(2)}
-                      </span>
+                      <span>${(addOn.price / 100).toFixed(2)}</span>
                     )}
                   </div>
-                </div>
-              ))}
-              
-              {/* Beverages with prices */}
+                );
+              })}
+
               {beverages.map((bevId) => (
-                <div key={bevId} className="flex items-start text-sm">
-                  <span className="text-gray-400 mr-1.5">+</span>
-                  <div className="flex-1 flex justify-between items-baseline">
-                    <span className="text-gray-600 leading-tight break-words pr-2" style={{ wordBreak: 'break-word' }}>
-                      {getBeverageName(bevId)}
-                    </span>
-                    <span className="text-gray-500 whitespace-nowrap ml-1">
-                      ${beveragePrices[bevId].toFixed(2)}
-                    </span>
-                  </div>
+                <div key={bevId} className="flex justify-between">
+                  <span>+ {getBeverageName(bevId)}</span>
+                  <span>${beveragePrices[bevId].toFixed(2)}</span>
                 </div>
               ))}
 
-              {/* Customizations without prices */}
               {customizations.map((customization) => (
-                <div key={customization} className="flex items-start text-sm">
-                  <span className="text-gray-400 mr-1.5">•</span>
-                  <span className="text-gray-500 leading-tight break-words" style={{ wordBreak: 'break-word' }}>
-                    {customization.name}
-                  </span>
+                <div key={customization} className="text-gray-500">
+                  • {customization.name}
                 </div>
               ))}
             </div>
-          )}
-          
-          
+
+            <div className="mt-2 text-right space-y-1">
+              <p className="text-sm text-gray-500">
+                Quantity: {quantity} × $
+                {(price + calculateAddOnsTotal()).toFixed(2)}
+              </p>
+              <p className="font-semibold text-base">
+                Total: ${calculateItemTotal()}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              onClick={() => onUpdateQuantity(cartId, quantity - 1)}
+              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
+            >
+              <span className="text-lg">−</span>
+            </button>
+            <span className="w-8 text-center font-medium">{quantity}</span>
+            <button
+              onClick={() => onUpdateQuantity(cartId, quantity + 1)}
+              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
+            >
+              <span className="text-lg">+</span>
+            </button>
+
+            <button
+              onClick={() => onRemove(cartId)}
+              className="ml-auto text-black hover:text-black"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showInstructions && instructions && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2 border-t mt-2">
+              {renderAddOns(instructions)}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ModifiersModal
         isOpen={showModifiers}
@@ -276,6 +316,6 @@ export const CartItem: FC<CartItemProps> = ({
         category={category || ''}
         existingInstructions={instructions}
       />
-    </>
+    </div>
   );
 };
