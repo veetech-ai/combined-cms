@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronsLeft, ChevronsDown } from 'lucide-react';
 
 interface TimerState {
   timeLeft: number;
@@ -24,7 +25,7 @@ export function Timer({ seconds, onComplete, onStartOver }: TimerProps) {
   useEffect(() => {
     const handleInteraction = () => {
       if (state.isActive) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           timeLeft: seconds
         }));
@@ -47,14 +48,14 @@ export function Timer({ seconds, onComplete, onStartOver }: TimerProps) {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      setState(prev => ({ ...prev, isActive: false }));
+      setState((prev) => ({ ...prev, isActive: false }));
       onComplete();
       return;
     }
 
     timerRef.current = setInterval(() => {
       if (state.isActive) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           timeLeft: prev.timeLeft - 1
         }));
@@ -106,13 +107,13 @@ export function Timer({ seconds, onComplete, onStartOver }: TimerProps) {
             strokeDasharray={175.93}
             initial={{ strokeDashoffset: 0 }}
             animate={{ strokeDashoffset: 175.93 * (1 - percentage / 100) }}
-            transition={{ duration: 1, ease: "linear" }}
+            transition={{ duration: 1, ease: 'linear' }}
           />
         </svg>
-        
+
         {/* Timer Text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <motion.span 
+          <motion.span
             key={state.timeLeft}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -134,9 +135,7 @@ export function Timer({ seconds, onComplete, onStartOver }: TimerProps) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 12h18M12 3l-9 9 9 9" />
-          </svg>
+          <ChevronsLeft size={18} />
           Start Over
         </motion.button>
       </AnimatePresence>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useCustomerStore } from '../stores/customerStore';
 import { toast } from 'react-hot-toast';
+import { ChevronLeft } from 'lucide-react';
 import { Timer } from './ui/Timer';
-import { BackButton } from './ui/BackButton';
+// import { BackButton } from './ui/BackButton';
 import { useNavigate, useParams } from 'react-router-dom'; // Import hooks for navigation
 import { useCartStore } from '../stores/cartStore';
-
 
 type Step = 'name' | 'phone';
 
@@ -16,9 +16,7 @@ export function CustomerDetailsModal() {
   const { findOrCreate, isLoading } = useCustomerStore();
   const navigate = useNavigate(); // Use for navigation
   const { id } = useParams(); // Extract the `id` from the URL
-  const {
-    clearCart,
-  } = useCartStore();
+  const { clearCart } = useCartStore();
 
   useEffect(() => {
     if (step === 'phone') {
@@ -79,9 +77,11 @@ export function CustomerDetailsModal() {
       };
       // Navigate back to the KioskApp after submission
       navigate(`/kiosk/${id}/payment`); // Navigate to the KioskApp route
-      console.log("Hello")
+      console.log('Hello');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to save customer data');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to save customer data'
+      );
     }
   };
 
@@ -96,7 +96,15 @@ export function CustomerDetailsModal() {
   return (
     <div className="fixed inset-0 bg-white flex flex-col h-screen">
       <div className="flex items-center p-4">
-        <BackButton onClick={handleBack} />
+        {/* <BackButton onClick={handleBack} /> */}
+        <button
+          type="button"
+          onClick={handleBack}
+          className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          <ChevronLeft size={18} />
+          <span>Back</span>
+        </button>
       </div>
 
       <div className="flex-1 p-4">
@@ -135,7 +143,10 @@ export function CustomerDetailsModal() {
                 autoFocus
                 maxLength={14}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && phone.replace(/\D/g, '').length === 10) {
+                  if (
+                    e.key === 'Enter' &&
+                    phone.replace(/\D/g, '').length === 10
+                  ) {
                     handlePhoneSubmit();
                   }
                 }}
@@ -153,7 +164,8 @@ export function CustomerDetailsModal() {
           onClick={step === 'name' ? handleNameSubmit : handlePhoneSubmit}
           disabled={
             (step === 'name' && !name.trim()) ||
-            (step === 'phone' && !/^[2-9]\d{9}$/.test(phone.replace(/\D/g, ''))) ||
+            (step === 'phone' &&
+              !/^[2-9]\d{9}$/.test(phone.replace(/\D/g, ''))) ||
             isLoading
           }
           className="w-full bg-black text-white py-4 text-lg font-medium rounded-none disabled:opacity-50 disabled:cursor-not-allowed"
@@ -163,7 +175,11 @@ export function CustomerDetailsModal() {
       </div>
 
       <div className="absolute top-4 right-4">
-        <Timer seconds={30} onComplete={() => navigate(-1)} onStartOver={handleStartOver} />
+        <Timer
+          seconds={30}
+          onComplete={() => navigate(-1)}
+          onStartOver={handleStartOver}
+        />
       </div>
     </div>
   );

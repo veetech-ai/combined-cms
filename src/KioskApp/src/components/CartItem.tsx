@@ -32,7 +32,7 @@ interface CartItemProps {
   addOns: Array<{
     id: string;
     name: string;
-    price: number;  // Price in cents
+    price: number; // Price in cents
   }>;
 }
 
@@ -122,7 +122,7 @@ export const CartItem: FC<CartItemProps> = ({
     const addOnsTotal = calculateAddOnsTotal() * quantity;
 
     const temp = basePrice + addOnsTotal;
-    
+
     return temp;
   };
 
@@ -156,14 +156,16 @@ export const CartItem: FC<CartItemProps> = ({
       if (parsed.addOns && parsed.addOns.length > 0) {
         return (
           <div className="text-sm text-gray-500 mt-1">
-            {parsed.addOns.map((addOn: any, index: number) => (
-              <div key={index} className="flex justify-between">
-                <span>{addOn.name}</span>
-                {addOn.price > 0 && (
-                  <span>+${(addOn.price / 100).toFixed(2)}</span>
-                )}
-              </div>
-            ))}
+            {parsed.addOns.map((addOn: any, index: number) => {
+              return (
+                <div key={index} className="flex justify-between">
+                  <span>{addOn.name}</span>
+                  {addOn.price > 0 && (
+                    <span>+${(addOn.price / 100).toFixed(2)}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         );
       }
@@ -203,14 +205,17 @@ export const CartItem: FC<CartItemProps> = ({
             <p className="font-normal">${price.toFixed(2)}</p>
 
             <div className="text-sm text-gray-600 mt-1">
-              {addOnsArray.map((addOn) => (
-                <div key={addOn.id} className="flex justify-between">
-                  <span>+ {addOn.name}</span>
-                  {addOn.price > 0 && (
-                    <span>${(addOn.price / 100).toFixed(2)}</span>
-                  )}
-                </div>
-              ))}
+              {addOnsArray.map((addOn) => {
+                console.log(addOn);
+                return (
+                  <div key={addOn.id} className="flex justify-between">
+                    <span>+ {addOn.name}</span>
+                    {addOn.price > 0 && (
+                      <span>${(addOn.price / 100).toFixed(2)}</span>
+                    )}
+                  </div>
+                );
+              })}
 
               {beverages.map((bevId) => (
                 <div key={bevId} className="flex justify-between">
@@ -221,7 +226,7 @@ export const CartItem: FC<CartItemProps> = ({
 
               {customizations.map((customization) => (
                 <div key={customization} className="text-gray-500">
-                  • {customization}
+                  • {customization.name}
                 </div>
               ))}
             </div>
