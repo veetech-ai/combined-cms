@@ -8,6 +8,7 @@ import {
   RecommendedItem
 } from '../types';
 import { fetchItemModifierGroups, fetchModifierGroup } from '../api/cloverApi';
+import toast from 'react-hot-toast';
 
 interface ModifiersModalProps {
   isOpen: boolean;
@@ -215,13 +216,20 @@ export function ModifiersModal({
 
   const categorizeModifierGroups = (groups: ModifierGroup[]) => {
     return {
-      addOns: groups.filter(group => group.name.toLowerCase().includes('add-on')),
-      customizations: groups.filter(group => group.name.toLowerCase().includes('mod')),
-      extras: groups.filter(group => group.name.toLowerCase().includes('extra')),
-      others: groups.filter(group => 
-        !group.name.toLowerCase().includes('add-on') && 
-        !group.name.toLowerCase().includes('mod') && 
-        !group.name.toLowerCase().includes('extra')
+      addOns: groups.filter((group) =>
+        group.name.toLowerCase().includes('add-on')
+      ),
+      customizations: groups.filter((group) =>
+        group.name.toLowerCase().includes('mod')
+      ),
+      extras: groups.filter((group) =>
+        group.name.toLowerCase().includes('extra')
+      ),
+      others: groups.filter(
+        (group) =>
+          !group.name.toLowerCase().includes('add-on') &&
+          !group.name.toLowerCase().includes('mod') &&
+          !group.name.toLowerCase().includes('extra')
       )
     };
   };
@@ -271,6 +279,10 @@ export function ModifiersModal({
                   <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                   <p className="mt-4 text-gray-600">Loading options...</p>
                 </div>
+              ) : modifierGroups.length === 0 ? (
+                <div>
+                  {/* {`Add-Ons & Customization are not available for ${item.name.en}`} */}
+                </div>
               ) : modifierError ? (
                 <div className="text-red-600 text-center py-4">
                   {modifierError}
@@ -285,12 +297,14 @@ export function ModifiersModal({
                         <div>
                           <div className="mb-4">
                             <h3 className="text-base font-semibold">Add-Ons</h3>
-                            <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
+                            <p className="text-xs text-gray-500">
+                              ({t('modifiers.optional')})
+                            </p>
                           </div>
                           <div className="space-y-2">
-                            {categorized.addOns.map(group => (
+                            {categorized.addOns.map((group) => (
                               <div key={group.id} className="space-y-2">
-                                {group.modifiers.elements.map(modifier => (
+                                {group.modifiers.elements.map((modifier) => (
                                   <label
                                     key={modifier.id}
                                     className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
@@ -298,18 +312,28 @@ export function ModifiersModal({
                                     <div className="flex items-center">
                                       <input
                                         type="checkbox"
-                                        checked={selectedAddOns.some(addOn => addOn.id === modifier.id)}
+                                        checked={selectedAddOns.some(
+                                          (addOn) => addOn.id === modifier.id
+                                        )}
                                         onChange={() => {
-                                          setSelectedAddOns(prev => {
-                                            const exists = prev.some(addOn => addOn.id === modifier.id);
+                                          setSelectedAddOns((prev) => {
+                                            const exists = prev.some(
+                                              (addOn) =>
+                                                addOn.id === modifier.id
+                                            );
                                             return exists
-                                              ? prev.filter(addOn => addOn.id !== modifier.id)
+                                              ? prev.filter(
+                                                  (addOn) =>
+                                                    addOn.id !== modifier.id
+                                                )
                                               : [...prev, modifier];
                                           });
                                         }}
                                         className="w-4 h-4 mr-3 accent-primary"
                                       />
-                                      <span className="text-sm">{modifier.name}</span>
+                                      <span className="text-sm">
+                                        {modifier.name}
+                                      </span>
                                     </div>
                                     {modifier.price > 0 && (
                                       <span className="text-sm text-gray-600">
@@ -328,30 +352,45 @@ export function ModifiersModal({
                       {categorized.customizations.length > 0 && (
                         <div>
                           <div className="mb-4">
-                            <h3 className="text-base font-semibold">Customizations</h3>
-                            <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
+                            <h3 className="text-base font-semibold">
+                              Customizations
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              ({t('modifiers.optional')})
+                            </p>
                           </div>
                           <div className="space-y-2">
-                            {categorized.customizations.map(group => (
+                            {categorized.customizations.map((group) => (
                               <div key={group.id} className="space-y-2">
-                                {group.modifiers.elements.map(modifier => (
+                                {group.modifiers.elements.map((modifier) => (
                                   <label
                                     key={modifier.id}
                                     className="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
                                   >
                                     <input
                                       type="checkbox"
-                                      checked={selectedCustomizations.includes(modifier.id)}
+                                      checked={selectedCustomizations.some(
+                                        (custom) => custom.id === modifier.id
+                                      )}
                                       onChange={() => {
-                                        setSelectedCustomizations(prev =>
-                                          prev.includes(modifier.id)
-                                            ? prev.filter(id => id !== modifier.id)
-                                            : [...prev, modifier.id]
-                                        );
+                                        setSelectedCustomizations((prev) => {
+                                          const exists = prev.some(
+                                            (custom) =>
+                                              custom.id === modifier.id
+                                          );
+                                          return exists
+                                            ? prev.filter(
+                                                (custom) =>
+                                                  custom.id !== modifier.id
+                                              )
+                                            : [...prev, modifier];
+                                        });
                                       }}
                                       className="w-4 h-4 mr-3 accent-primary"
                                     />
-                                    <span className="text-sm">{modifier.name}</span>
+                                    <span className="text-sm">
+                                      {modifier.name}
+                                    </span>
                                   </label>
                                 ))}
                               </div>
@@ -365,12 +404,14 @@ export function ModifiersModal({
                         <div>
                           <div className="mb-4">
                             <h3 className="text-base font-semibold">Extras</h3>
-                            <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
+                            <p className="text-xs text-gray-500">
+                              ({t('modifiers.optional')})
+                            </p>
                           </div>
                           <div className="space-y-2">
-                            {categorized.extras.map(group => (
+                            {categorized.extras.map((group) => (
                               <div key={group.id} className="space-y-2">
-                                {group.modifiers.elements.map(modifier => (
+                                {group.modifiers.elements.map((modifier) => (
                                   <label
                                     key={modifier.id}
                                     className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
@@ -378,18 +419,28 @@ export function ModifiersModal({
                                     <div className="flex items-center">
                                       <input
                                         type="checkbox"
-                                        checked={selectedAddOns.some(addOn => addOn.id === modifier.id)}
+                                        checked={selectedAddOns.some(
+                                          (addOn) => addOn.id === modifier.id
+                                        )}
                                         onChange={() => {
-                                          setSelectedAddOns(prev => {
-                                            const exists = prev.some(addOn => addOn.id === modifier.id);
+                                          setSelectedAddOns((prev) => {
+                                            const exists = prev.some(
+                                              (addOn) =>
+                                                addOn.id === modifier.id
+                                            );
                                             return exists
-                                              ? prev.filter(addOn => addOn.id !== modifier.id)
+                                              ? prev.filter(
+                                                  (addOn) =>
+                                                    addOn.id !== modifier.id
+                                                )
                                               : [...prev, modifier];
                                           });
                                         }}
                                         className="w-4 h-4 mr-3 accent-primary"
                                       />
-                                      <span className="text-sm">{modifier.name}</span>
+                                      <span className="text-sm">
+                                        {modifier.name}
+                                      </span>
                                     </div>
                                     {modifier.price > 0 && (
                                       <span className="text-sm text-gray-600">
@@ -407,14 +458,18 @@ export function ModifiersModal({
                       {/* Updated Other Options section */}
                       {categorized.others.length > 0 && (
                         <div>
-                          {categorized.others.map(group => (
+                          {categorized.others.map((group) => (
                             <div key={group.id} className="mb-6">
                               <div className="mb-4">
-                                <h3 className="text-base font-semibold">{group.name}</h3>
-                                <p className="text-xs text-gray-500">({t('modifiers.optional')})</p>
+                                <h3 className="text-base font-semibold">
+                                  {group.name}
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                  ({t('modifiers.optional')})
+                                </p>
                               </div>
                               <div className="space-y-2">
-                                {group.modifiers.elements.map(modifier => (
+                                {group.modifiers.elements.map((modifier) => (
                                   <label
                                     key={modifier.id}
                                     className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
@@ -422,18 +477,28 @@ export function ModifiersModal({
                                     <div className="flex items-center">
                                       <input
                                         type="checkbox"
-                                        checked={selectedAddOns.some(addOn => addOn.id === modifier.id)}
+                                        checked={selectedAddOns.some(
+                                          (addOn) => addOn.id === modifier.id
+                                        )}
                                         onChange={() => {
-                                          setSelectedAddOns(prev => {
-                                            const exists = prev.some(addOn => addOn.id === modifier.id);
+                                          setSelectedAddOns((prev) => {
+                                            const exists = prev.some(
+                                              (addOn) =>
+                                                addOn.id === modifier.id
+                                            );
                                             return exists
-                                              ? prev.filter(addOn => addOn.id !== modifier.id)
+                                              ? prev.filter(
+                                                  (addOn) =>
+                                                    addOn.id !== modifier.id
+                                                )
                                               : [...prev, modifier];
                                           });
                                         }}
                                         className="w-4 h-4 mr-3 accent-primary"
                                       />
-                                      <span className="text-sm">{modifier.name}</span>
+                                      <span className="text-sm">
+                                        {modifier.name}
+                                      </span>
                                     </div>
                                     {modifier.price > 0 && (
                                       <span className="text-sm text-gray-600">
@@ -489,10 +554,10 @@ export function ModifiersModal({
               )} */}
 
               {/* Only show these sections if not loading */}
-              {!loadingModifiers && !modifierError && (
+              {!loadingModifiers && (
                 <>
                   {/* Special Instructions */}
-                  <div>
+                  {/* <div>
                     <label className="block text-lg font-semibold mb-2">
                       {t('modifiers.additionalNotes')}
                     </label>
@@ -503,37 +568,20 @@ export function ModifiersModal({
                       className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                       rows={2}
                     />
-                  </div>
-
-                  {/* Unavailable Item Preference */}
-                  <div>
-                    <label className="block text-lg font-semibold mb-2">
-                      {t('modifiers.ifUnavailable')}
-                    </label>
-                    <select
-                      value={unavailablePreference}
-                      onChange={(e) => setUnavailablePreference(e.target.value)}
-                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                    >
-                      <option value="merchant-recommendation">
-                        {t('modifiers.merchantRecommendation')}
-                      </option>
-                      <option value="refund">{t('modifiers.refundItem')}</option>
-                      <option value="contact">{t('modifiers.contactMe')}</option>
-                      <option value="cancel">{t('modifiers.cancelOrder')}</option>
-                    </select>
-                  </div>
+                  </div> */}
                 </>
               )}
             </div>
 
             {/* Fixed bottom bar - only show if not loading */}
-            {!loadingModifiers && !modifierError && (
+            {!loadingModifiers && (
               <div className="sticky bottom-0 bg-white border-t p-4 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-4">
                     <button
-                      onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                      onClick={() =>
+                        setQuantity((prev) => Math.max(1, prev - 1))
+                      }
                       className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100 transition"
                     >
                       <span className="text-xl">−</span>

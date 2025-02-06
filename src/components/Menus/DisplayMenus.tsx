@@ -112,7 +112,7 @@ export const DisplayMenus = () => {
   const openDisplayView = (hexCode: string) => {
     window.open(`${VITE_HOST_URL}/kiosk/${hexCode}`, '_blank');
   };
-
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -129,19 +129,19 @@ export const DisplayMenus = () => {
           <p className="text-gray-600">Manage your digital menu displays</p>
         </div>
         <div className="flex gap-4">
-          <button
+        <button
             className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
             onClick={OpenHexdisplay}
           >
             Generate Display Code
           </button>
-          <button
-            onClick={() => setIsOnboardingOpen(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={20} />
-            <span>Onboard Display</span>
-          </button>
+        <button
+          onClick={() => setIsOnboardingOpen(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Plus size={20} />
+          <span>Onboard Display</span>
+        </button>
         </div>
       </div>
 

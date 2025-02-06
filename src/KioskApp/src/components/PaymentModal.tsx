@@ -1,27 +1,25 @@
-import { useState, useEffect } from "react";
-import { BackButton } from "./ui/BackButton";
-import { Timer } from "./ui/Timer";
-import { motion } from "framer-motion";
-import QRCode from "qrcode";
-import { useNavigate, useParams } from "react-router-dom";
-import googlePayLogo from "../images/image.png"; // Replace with actual Google Pay logo
-import applePayLogo from "../images/apple-pay.png"; // Add Apple Pay logo image
+import { useState, useEffect } from 'react';
+import { ChevronLeft } from 'lucide-react';
+import { BackButton } from './ui/BackButton';
+import { Timer } from './ui/Timer';
+import { motion } from 'framer-motion';
+import QRCode from 'qrcode';
+import { useNavigate, useParams } from 'react-router-dom';
+import googlePayLogo from '../images/image.png'; // Replace with actual Google Pay logo
+import applePayLogo from '../images/apple-pay.png'; // Add Apple Pay logo image
 import { useCartStore } from '../stores/cartStore';
 
-
 export function PaymentModal() {
-  const [qrCode, setQrCode] = useState("");
-  const [step, setStep] = useState("initial");
+  const [qrCode, setQrCode] = useState('');
+  const [step, setStep] = useState('initial');
   const navigate = useNavigate();
   const { id } = useParams();
-  const {
-    clearCart,
-  } = useCartStore();
+  const { clearCart } = useCartStore();
 
   useEffect(() => {
-    QRCode.toDataURL("https://payment.example.com/order/123")
+    QRCode.toDataURL('https://payment.example.com/order/123')
       .then((url) => setQrCode(url))
-      .catch((err) => console.error("Failed to generate QR code:", err));
+      .catch((err) => console.error('Failed to generate QR code:', err));
   }, []);
 
   const handleGotIt = () => {
@@ -43,10 +41,18 @@ export function PaymentModal() {
 
   return (
     <div className="fixed inset-0 bg-white">
-      {step === "initial" && (
+      {step === 'initial' && (
         <>
           <div className="flex justify-between items-start p-8">
-            <BackButton onClick={handleClose} />
+            {/* <BackButton onClick={handleClose} /> */}
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <ChevronLeft size={18} />
+              <span>Back</span>
+            </button>
             <Timer
               seconds={60}
               onComplete={handleClose}
@@ -84,13 +90,15 @@ export function PaymentModal() {
             <div className="mt-16">
               <div className="flex items-center gap-4 mb-8">
                 <div className="flex-1 h-px bg-gray-300" />
-                <span className="text-gray-500 text-lg font-medium px-4">OR</span>
+                <span className="text-gray-500 text-lg font-medium px-4">
+                  OR
+                </span>
                 <div className="flex-1 h-px bg-gray-300" />
               </div>
 
               {/* Cash/Card Payment Button */}
               <motion.button
-                onClick={() => setStep("cash")}
+                onClick={() => setStep('cash')}
                 className="w-full h-14 bg-black text-white text-lg font-medium rounded-xl hover:bg-gray-900 transition-colors duration-200"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -102,10 +110,18 @@ export function PaymentModal() {
         </>
       )}
 
-      {step === "cash" && (
+      {step === 'cash' && (
         <div className="h-full flex flex-col">
           <div className="flex items-center p-8">
-            <BackButton onClick={() => setStep("initial")} />
+            {/* <BackButton onClick={() => setStep('initial')} /> */}
+            <button
+              type="button"
+              onClick={() => setStep('initial')}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <ChevronLeft size={18} />
+              <span>Back</span>
+            </button>
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center px-8">
@@ -115,7 +131,9 @@ export function PaymentModal() {
               className="text-center max-w-md mx-auto"
             >
               <h2 className="text-3xl font-bold mb-4">Customer,</h2>
-              <p className="text-xl mb-12">Give your name at the cashier and pay.</p>
+              <p className="text-xl mb-12">
+                Give your name at the cashier and pay.
+              </p>
 
               <motion.button
                 onClick={handleGotIt}
@@ -129,7 +147,11 @@ export function PaymentModal() {
           </div>
 
           <div className="absolute top-4 right-4">
-            <Timer seconds={30} onComplete={handleClose} onStartOver={handleStartOver} />
+            <Timer
+              seconds={30}
+              onComplete={handleClose}
+              onStartOver={handleStartOver}
+            />
           </div>
         </div>
       )}
