@@ -239,7 +239,7 @@ export function PaymentModal() {
                           <div className="ml-8 text-sm text-gray-500">
                             {item.extras.map((extra, idx) => (
                               <div key={idx} className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                                   <span>+</span>
                                   <span>{extra.name}</span>
                                 </div>
@@ -263,7 +263,7 @@ export function PaymentModal() {
                       <div className="flex justify-between text-gray-500">
                         <span>Subtotal</span>
                         <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
-                      </div>
+                </div>
 
                       <div className="flex justify-between text-lg font-medium">
                         <span>Total</span>
@@ -285,31 +285,31 @@ export function PaymentModal() {
                   <div className="flex flex-col items-center text-center mb-3">
                     <h3 className="text-2xl font-medium mb-1">Quick Pay</h3>
                     <p className="text-gray-500">Scan with your phone</p>
-                  </div>
+              </div>
 
                   <div className="flex justify-center gap-4 mb-3">
                     <div className="transform transition-transform group-hover:scale-105">
-                      <GooglePayLogo />
+                  <GooglePayLogo />
                     </div>
                     <div className="transform transition-transform group-hover:scale-105">
-                      <ApplePayLogo />
+                  <ApplePayLogo />
                     </div>
-                  </div>
+                </div>
 
-                  <div 
+                <div
                     className="flex justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer"
                     onClick={() => {
                       handleQRCodeClick();
                       handleSuccess();
                     }}
-                  >
-                    {qrCode && (
-                      <img
-                        src={qrCode}
-                        alt="Payment QR Code"
+                >
+                  {qrCode && (
+                    <img
+                      src={qrCode}
+                      alt="Payment QR Code"
                         className="w-40 h-40 transition-transform hover:scale-105"
-                      />
-                    )}
+                    />
+                  )}
                   </div>
                 </div>
 
@@ -405,15 +405,15 @@ export function PaymentModal() {
           </div>
 
           {showTimer && (
-            <div className="absolute top-4 right-4">
-              <Timer
-                seconds={timeLeft}
-                isActive={isTimerActive}
-                variant="light"
-                onStartOver={handleStartOver}
+          <div className="absolute top-4 right-4">
+            <Timer
+              seconds={timeLeft}
+              isActive={isTimerActive}
+              variant="light"
+              onStartOver={handleStartOver}
                 onComplete={handleStartOver}
-              />
-            </div>
+            />
+          </div>
           )}
         </div>
       )}

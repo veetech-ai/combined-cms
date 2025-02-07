@@ -82,7 +82,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
       const instructions = JSON.parse(item.instructions);
       if (instructions.addOns) {
         instructions.addOns.forEach((addOn: any) => {
-          total += addOn.price / 100; // Convert cents to dollars
+          total += addOn.price / 100;
         });
       }
     } catch (e) {
@@ -148,17 +148,15 @@ export function CartSection({ onStartOver }: CartSectionProps) {
       role="complementary"
       aria-label={t('cart.title')}
     >
-      {/* Cart Header */}
       <div className="p-4 border-b">
         <h2 className="text-lg font-bold text-neutral-800">
           {t('cart.title')}
         </h2>
       </div>
 
-      {/* Cart Items - Scrollable Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-4">
         <div className="space-y-2">
-          {items.map((item) => {
+          {[...items].reverse().map((item) => {
             const menuItem = menuItems.find((i) => i.id === item.id);
             return (
               <CartItem
@@ -183,44 +181,18 @@ export function CartSection({ onStartOver }: CartSectionProps) {
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="px-4 py-2 bg-black">
           <p className="text-white text-sm">{error}</p>
         </div>
       )}
 
-      {/* Cart Footer */}
       <div className="p-4 border-t bg-neutral-50">
-        {/* <div className="mb-4">
-          <label
-            htmlFor="discountCode"
-            className="block text-sm font-medium text-neutral-600 mb-1"
-          >
-            {t('cart.discountCode')}
-          </label>
-          <input
-            type="text"
-            id="discountCode"
-            value={discountCode}
-            onChange={(e) => {
-              setLocalDiscountCode(e.target.value.toUpperCase());
-              setDiscountCode(e.target.value.toUpperCase());
-            }}
-            placeholder={t('cart.enterCode')}
-            className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-          />
-        </div> */}
-
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
             <span>{t('cart.subtotal')}:</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          {/* <div className="flex justify-between text-sm">
-            <span>{t('cart.taxes')}:</span>
-            <span>$0.00</span>
-          </div> */}
           {phoneDiscountAmount > 0 && (
             <div className="flex justify-between text-sm text-green-600">
               <span>{t('cart.phoneDiscount')}:</span>
@@ -256,35 +228,10 @@ export function CartSection({ onStartOver }: CartSectionProps) {
         </button>
       </div>
 
-      {/* Modals */}
-      {/* <CustomerDetailsModal
-        isOpen={showCustomerDetails}
-        onClose={() => setShowCustomerDetails(false)}
-        onStartOver={onStartOver}
-        onSubmit={handleCustomerSubmit}
-      /> */}
-
       <DiscountModal
         isOpen={showDiscountDialog}
         onResponse={handleDiscountResponse}
       />
-
-      {/* <PaymentModal
-        isOpen={showPaymentDialog}
-        onClose={() => setShowPaymentDialog(false)}
-        onComplete={handlePaymentComplete}
-        customerName={customerName}
-        total={total}
-        orderDetails={orderDetails}
-        onStartOver={onStartOver}
-        
-      />
-
-      <FeedbackModal
-        isOpen={showFeedbackDialog}
-        onComplete={handleFeedbackComplete}
-        onStartOver={onStartOver}
-      /> */}
     </div>
   );
 }

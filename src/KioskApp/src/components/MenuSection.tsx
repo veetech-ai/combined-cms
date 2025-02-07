@@ -522,13 +522,21 @@ const MenuSection = () => {
   });
 
   const handleAddItem = useCallback((item: MenuItem) => {
-    setSelectedItem(item);
+    
     if (SIMPLIFIED_MODAL_CATEGORIES.includes(item.category)) {
-      setShowSimplifiedModal(true);
+      addItem({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        imageUrl: item.imageUrl || DEFAULT_IMAGE,
+        instructions: '',
+        quantity: 1
+      });
     } else {
+      setSelectedItem(item);
       setShowModifiers(true);
     }
-  }, []);
+  }, [addItem]);
 
   const capitalizeFirstLetter = (string: string) => {
     return string
@@ -820,7 +828,7 @@ const MenuSection = () => {
                     {rowItems.map((item) => (
                       <div
                         key={`${item.id}-${item.category}`}
-                        className="bg-white rounded-lg relative group shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden h-auto"
+                        className="bg-white rounded-lg relative group shadow-sm hover:shadow-lg transition-shadow duration-200 overflow-hidden h-[288px]"
                       >
                         <div
                           className="w-full h-full flex flex-col text-left relative cursor-pointer"
@@ -836,18 +844,20 @@ const MenuSection = () => {
                               return imageSrc || DEFAULT_IMAGE;
                             })()}
                             alt={item.name[currentLanguage]}
-                            className="w-full h-40 object-cover"
+                            className="w-full h-40 object-cover flex-shrink-0"
                             onError={(e) => {
                               const img = e.target as HTMLImageElement;
                               img.src = DEFAULT_IMAGE;
                             }}
                           />
-                          <div className="p-3 flex flex-col flex-1">
-                            <h3 className="font-medium text-neutral-800 text-lg mb-2">
-                              {capitalizeFirstLetter(
-                                item.name[currentLanguage]
-                              )}
-                            </h3>
+                          <div className="p-3 flex flex-col h-[128px]">
+                            <div className="flex-1 min-h-0">
+                              <h3 className="font-medium text-neutral-800 text-lg line-clamp-2">
+                                {capitalizeFirstLetter(
+                                  item.name[currentLanguage]
+                                )}
+                              </h3>
+                            </div>
 
                             {/* Modifier groups display - commented out
                             {item.modifierGroups && item.modifierGroups.length > 0 && (
@@ -887,7 +897,7 @@ const MenuSection = () => {
                               </div>
                             )} */}
 
-                            <div className="flex items-center justify-between mt-auto">
+                              <div className="flex items-center justify-between mt-2">
                               <p className="text-primary font-bold text-lg">
                                 ${item.price.toFixed(2)}
                               </p>
