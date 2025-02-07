@@ -115,9 +115,7 @@ model Organization {
 model Module {
   id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
-  key         String        @unique // For identifying specific modules like 'kiosk', 'venu', etc.
   createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
   StoreModule StoreModule[]
 
   @@map("modules")
@@ -147,20 +145,15 @@ model Store {
 }
 
 model StoreModule {
-  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  storeId   String       @map("store_id") @db.Uuid
-  moduleId  String       @map("module_id") @db.Uuid
-  status    ModuleStatus @default(DISABLED)
-  isEnabled Boolean      @default(false)
-  stats     Json?       @db.JsonB
-  createdAt DateTime    @default(now()) @map("created_at")
-  updatedAt DateTime    @updatedAt @map("updated_at")
+  id       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storeId  String       @map("store_id") @db.Uuid
+  moduleId String       @map("module_id") @db.Uuid
+  status   ModuleStatus @default(DISABLED)
 
-  store    Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  module   Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  Devices  Devices[]
+  store   Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  module  Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  Devices Devices[]
 
-  @@unique([storeId, moduleId])
   @@map("store_modules")
 }
 

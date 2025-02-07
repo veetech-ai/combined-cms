@@ -12,20 +12,30 @@ export interface OrganizationSubscription {
 export interface Organization {
   id: string;
   name: string;
+  company: string;
   email: string;
   phone: string;
-  company: string;
   logo?: string;
   website?: string;
-  billingStreet?: string;
-  billingCity?: string;
-  billingState?: string;
-  billingZip?: string;
-  billingCountry?: string;
-  subscriptionPlan?: string;
-  subscriptionStatus?: string;
+  
+  // Billing Address
+  billingStreet: string;
+  billingCity: string;
+  billingState: string;
+  billingZip: string;
+  billingCountry: string;
+  
+  // Subscription
+  subscriptionPlan: string;
+  subscriptionStatus: string;
   subscriptionRenewal?: string;
-  posIntegration?: any; // Replace with proper type if available
-  stores: Store[];
-  modules: any[]; // Replace with proper type if available
+  
+  // POS Integration
+  posIntegration?: {
+    type: string;
+    provider: string;
+    config: any;
+  };
+  
+  stores?: Store[];
 } 

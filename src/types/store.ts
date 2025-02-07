@@ -5,15 +5,21 @@ export interface Store {
   id: string;
   name: string;
   location: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
   phone: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
-  modules: any[]; // Replace 'any' with your Module type if available
+  modules: Module[];
   operatingHours: {
-    [key: string]: { open: string; close: string } | null;
+    [key: string]: {
+      open: string;
+      close: string;
+    } | null;
+  };
+  organizationId: string;
+  organization?: {
+    id: string;
+    name: string;
   };
 }
