@@ -23,14 +23,15 @@ export default function StorePage() {
         //     input: {}
         //   })
         // });
-        const url = 'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
+        const url =
+          'https://cors-anywhere.herokuapp.com/https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
 
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer acca0c85-6c26-710f-4390-23676eae487c'
-        }
-    });
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Authorization: 'Bearer acca0c85-6c26-710f-4390-23676eae487c'
+          }
+        });
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText}`);
         }

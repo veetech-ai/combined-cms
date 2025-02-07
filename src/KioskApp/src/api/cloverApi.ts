@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const CLOVER_API_BASE = 'https://api.clover.com/v3';
+const CLOVER_API_BASE =
+  'https://cors-anywhere.herokuapp.com/https://api.clover.com/v3';
 const MERCHANT_ID = 'PSK40XM0M8ME1';
 const API_KEY = 'acca0c85-6c26-710f-4390-23676eae487c';
 
