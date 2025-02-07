@@ -138,5 +138,15 @@
     "status": "Online",
     "lastSeen": "2025-02-06T16:59:25.053Z",
     "hexCode": "4159C326"
+  },
+  {
+    "id": "393366bd-cf73-4c16-96c0-76c436d09ef7",
+    "name": "Zain",
+    "location": "Pending Setup",
+    "store": "MexiKhana",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-07T11:36:14.566Z",
+    "hexCode": "93940154"
   }
 ]
