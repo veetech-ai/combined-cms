@@ -5,10 +5,10 @@ services:
     build: .
     container_name: combined_cms_app
     ports:
-      - '${APP_PORT:-4000}:4000'
+      - '${APP_PORT:-4001}:4001'
     environment:
       - NODE_ENV=production
-      - SERVER_PORT=${APP_PORT:-4000}
+      - SERVER_PORT=${APP_PORT:-4001}
       - DB_HOST=postgres
       - DB_PORT=${DB_PORT}
       - DB_NAME=${DB_NAME}
