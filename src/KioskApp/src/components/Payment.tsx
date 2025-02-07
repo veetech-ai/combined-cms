@@ -195,10 +195,10 @@ export function Payment() {
         </div>
         <div className="h-1 w-24 bg-[#06C167] rounded-full mt-4"></div>
       </header>
-
+  
       <div className="flex-1 flex flex-col items-center justify-center p-8">
         <div className="relative mb-12">
-          <svg className="w-32 h-32" viewBox="0 0 100 100">
+          <svg className="w-32 h-32 animate-spin" viewBox="0 0 100 100">
             <circle
               cx="50"
               cy="50"
@@ -216,8 +216,8 @@ export function Payment() {
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray="283"
-              strokeDashoffset="100"
-              className="animate-[dash_1.4s_ease-in-out_infinite]"
+              strokeDashoffset="200"
+              className="origin-center rotate-180"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
