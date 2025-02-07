@@ -250,7 +250,6 @@ const normalizeItemName = (name: string) => {
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
 };
 
-
 const MenuSection = () => {
   const { t, i18n } = useTranslation();
   const { addItem } = useCartStore();
@@ -283,7 +282,7 @@ const MenuSection = () => {
       //   body: JSON.stringify({ input: {} })
       // });
       const url =
-        'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
+        'https://cors-anywhere.herokuapp.com/https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
 
       const response = await fetch(url, {
         method: 'GET',
@@ -708,7 +707,6 @@ const MenuSection = () => {
 
   return (
     <div className="flex flex-col h-full">
-
       {/* Update the z-index of the category bar to be lower than the promo screen */}
       <div className="mb-4 sticky top-0 bg-white shadow-sm relative z-40">
       {selectedItem && !SIMPLIFIED_MODAL_CATEGORIES.includes(selectedItem.category) && (
