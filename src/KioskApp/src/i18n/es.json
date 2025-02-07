@@ -1,0 +1,15 @@
+{
+  "categories": {
+    "all": "Todo",
+    "featured": "Destacado",
+    "breakfast": "Desayuno",
+    "tacos": "Tacos",
+    "riceBowls": "Tazones de Arroz",
+    "burritos": "Burritos",
+    "quesadillas": "Quesadillas",
+    "loadedFries": "Papas Cargadas",
+    "drinks": "Bebidas",
+    "desserts": "Postres",
+    "sideItems": "Complementos"
+  }
+} 

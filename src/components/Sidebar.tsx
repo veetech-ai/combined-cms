@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -8,28 +9,28 @@ import {
   BarChart2,
   ChevronLeft,
   ChevronRight,
-  UserCircle,
-  MenuSquare
+  UserCircle
 } from 'lucide-react';
 
-type View = 'dashboard' | 'customers' | 'modules' | 'pos' | 'analytics' | 'stores' | 'menus';
-
-interface SidebarProps {
-  onNavigate: (view: View) => void;
-  currentView: View;
-}
+type View = 'dashboard' | 'customers' | 'modules' | 'pos' | 'analytics' | 'stores';
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', view: 'dashboard' as const },
-  { icon: UserCircle, label: 'Customers', view: 'customers' as const },
-  { icon: Store, label: 'Stores', view: 'stores' as const },
-  { icon: Boxes, label: 'Modules', view: 'modules' as const },
-  { icon: CreditCard, label: 'POS Integrations', view: 'pos' as const },
-  { icon: BarChart2, label: 'Analytics', view: 'analytics' as const },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', view: 'dashboard' as const },
+  { icon: UserCircle, label: 'Customers', path: '/customers', view: 'customers' as const },
+  { icon: Store, label: 'Stores', path: '/stores', view: 'stores' as const },
+  //{ icon: Boxes, label: 'Modules', path: '/modules', view: 'modules' as const },
+  { icon: CreditCard, label: 'POS Integrations', path: '/pos', view: 'pos' as const },
+  { icon: BarChart2, label: 'Analytics', path: '/analytics', view: 'analytics' as const },
 ];
 
-export default function Sidebar({ onNavigate, currentView }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = () => {
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <aside className={`bg-gray-900 text-white h-screen transition-all duration-300 ${
@@ -53,21 +54,27 @@ export default function Sidebar({ onNavigate, currentView }: SidebarProps) {
       
       <nav className="p-4">
         <ul className="space-y-2">
-          {navItems.map((item) => (
-            <li key={item.label}>
-              <button
-                onClick={() => onNavigate(item.view)}
-                className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                  currentView === item.view ? 'bg-blue-600' : 'hover:bg-gray-800'
-                }`}
-              >
-                <item.icon size={20} />
-                {!isCollapsed && <span>{item.label}</span>}
-              </button>
-            </li>
-          ))}
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            
+            return (
+              <li key={item.label}>
+                <button
+                  onClick={() => handleNavigation(item.path)}
+                  className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                    isActive ? 'bg-blue-600' : 'hover:bg-gray-800'
+                  }`}
+                >
+                  <item.icon size={20} />
+                  {!isCollapsed && <span>{item.label}</span>}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </nav>
     </aside>
   );
-}
+};
+
+export default Sidebar;

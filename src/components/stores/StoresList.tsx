@@ -1,6 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Store } from '../../types/store';
-import { Store as StoreIcon, Phone, MapPin } from 'lucide-react';
+import { Store as StoreIcon, Phone, MapPin, ExternalLink } from 'lucide-react';
 
 interface StoresListProps {
   stores: (Store & { customerName: string })[];
@@ -33,10 +34,12 @@ export default function StoresList({ stores, onStoreClick }: StoresListProps) {
               <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <div>
                 <p>{store.address}</p>
-                <p>{store.city}, {store.state} {store.zipCode}</p>
+                <p>
+                  {store.city}, {store.state} {store.zipCode}
+                </p>
               </div>
             </div>
-            
+
             {store.phone && (
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <Phone className="w-4 h-4" />
@@ -48,8 +51,15 @@ export default function StoresList({ stores, onStoreClick }: StoresListProps) {
           <div className="mt-4 pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-500">
-                {store.modules.filter(m => m.enabled).length} Active Modules
+                {store.modules?.filter((m) => m.isEnabled && m.status === 'APPROVED').length || 0} Active Modules
               </span>
+              {/* <a
+                href={`/store/${store.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              </a> */}
             </div>
           </div>
         </div>

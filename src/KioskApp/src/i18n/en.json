@@ -1,0 +1,15 @@
+{
+  "categories": {
+    "all": "All",
+    "featured": "Featured",
+    "breakfast": "Breakfast",
+    "tacos": "Tacos",
+    "riceBowls": "Rice Bowls",
+    "burritos": "Burritos",
+    "quesadillas": "Quesadillas",
+    "loadedFries": "Loaded Fries",
+    "drinks": "Drinks",
+    "desserts": "Desserts",
+    "sideItems": "Side Items"
+  }
+} 
