@@ -8,6 +8,7 @@ import {
   useNavigate
 } from 'react-router-dom';
 import { CustomerProvider } from './contexts/CustomerContext';
+import { OrderProvider } from './contexts/OrderContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardContent from './components/DashboardContent';
@@ -66,10 +67,11 @@ const App = () => {
   return (
     <Router>
       <CustomerProvider>
-        <div className="min-h-screen bg-gray-50">
-          <Routes>
-            {/* Public Route */}
-            <Route path="/login" element={<Login />} />
+        <OrderProvider>
+          <div className="min-h-screen bg-gray-50">
+            <Routes>
+              {/* Public Route */}
+              <Route path="/login" element={<Login />} />
 
             {/* <Route path="/store/:id" element={<StorePage />} /> */}
             <Route path="/kiosk/:id" element={<WelcomeScreen />} />
@@ -80,17 +82,18 @@ const App = () => {
             <Route path="/kiosk/:id/success" element={<Success  />} />
             <Route path="/kiosk/:id/summary" element={<Payment  />} />
 
-            {/* Protected Routes */}
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <MainLayout />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </div>
+              {/* Protected Routes */}
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </div>
+        </OrderProvider>
       </CustomerProvider>
     </Router>
   );

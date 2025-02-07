@@ -8,6 +8,7 @@ import { DiscountModal } from './DiscountModal';
 import { useCartStore } from '../stores/cartStore';
 import { useMenuStore } from '../stores/menuStore';
 import { useNavigate, useParams } from 'react-router-dom'; // Import useParams
+import { useOrder } from '../../../contexts/OrderContext';
 
 interface CartSectionProps {
   onStartOver: () => void;
@@ -15,6 +16,7 @@ interface CartSectionProps {
 
 export function CartSection({ onStartOver }: CartSectionProps) {
   const { t } = useTranslation();
+  const { setOrder } = useOrder();
   const {
     items,
     customerName,
@@ -40,7 +42,35 @@ export function CartSection({ onStartOver }: CartSectionProps) {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const generateOrderId = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let orderId = 'Order #';
+
+    for (let i = 0; i < 12; i++) {
+      orderId += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    return orderId; // Example: ORD-X7A9Z2
+  };
+
   const handleStartOrder = () => {
+    if (items && items.length > 0) {
+      // Generate a random orderId
+      const orderId = generateOrderId();
+
+      const totalBill = calculateSubtotal();
+
+      // Attach orderId to the order object
+      const obj = {
+        orderId,
+        items, // Preserve items array
+        totalBill
+      };
+
+      // Set the order with the new structure
+      setOrder(obj);
+    }
+
     // Navigate to the `/kiosk` route relative to the current route
     navigate(`/kiosk/${id}/details`); // This will resolve to `/kiosk/${id}/kiosk`
   };

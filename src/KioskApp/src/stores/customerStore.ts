@@ -32,7 +32,8 @@ export const useCustomerStore = create<CustomerStore>((set) => ({
       set({ customer, isLoading: false });
       return customer;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save customer';
+      const message =
+        error instanceof Error ? error.message : 'Failed to save customer';
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -45,7 +46,8 @@ export const useCustomerStore = create<CustomerStore>((set) => ({
       set({ customer, isLoading: false });
       return customer;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to lookup customer';
+      const message =
+        error instanceof Error ? error.message : 'Failed to lookup customer';
       set({ error: message, isLoading: false });
       return null;
     }
@@ -55,5 +57,5 @@ export const useCustomerStore = create<CustomerStore>((set) => ({
     set({ customer: null, error: null, isLoading: false });
   },
 
-  setCustomerName: (name) => set({ customerName: name }),
+  setCustomerName: (name) => set({ customerName: name })
 }));

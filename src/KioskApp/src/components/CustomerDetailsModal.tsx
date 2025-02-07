@@ -1,24 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCustomerStore } from '../stores/customerStore';
 import { toast } from 'react-hot-toast';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ShoppingCart } from 'lucide-react';
 import { Timer } from './ui/Timer';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { CheckoutLayout } from '../components/CheckoutLayout';
+import { useOrder } from '../../../contexts/OrderContext';
 type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
+  const { orderItems } = useOrder();
+  const location = useLocation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [step, setStep] = useState<Step>('name');
+  const [step, setStep] = useState<Step>(
+    location.state?.step === 'phone' ? 'phone' : 'name'
+  );
   const [timeLeft, setTimeLeft] = useState(30);
-  const [isTimerActive, setIsTimerActive] = useState(true);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [isUserActive, setIsUserActive] = useState(true);
   useCustomerStore();
   const navigate = useNavigate();
   const { id } = useParams();
   const { clearCart } = useCartStore();
   const { setCustomerName } = useCustomerStore();
+
+  // Add cleanup reference
+  const timerRef = React.useRef<NodeJS.Timeout>();
+
+  // Track user activity
+  const handleUserActivity = useCallback(() => {
+    setLastActivity(Date.now());
+    setIsUserActive(true);
+    
+    if (showTimer) {
+      setShowTimer(false);
+      setTimeLeft(30); // Reset countdown when user becomes active
+    }
+  }, [showTimer]);
+
+  // Set up activity listeners
+  useEffect(() => {
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    
+    events.forEach(event => {
+      window.addEventListener(event, handleUserActivity);
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleUserActivity);
+      });
+    };
+  }, [handleUserActivity]);
+
+  // Check for inactivity
+  useEffect(() => {
+    const inactivityCheck = setInterval(() => {
+      const timeSinceLastActivity = Date.now() - lastActivity;
+      
+      if (timeSinceLastActivity > 10000) { // 10 seconds
+        setIsUserActive(false);
+        setShowTimer(true);
+        setIsTimerActive(true);
+      }
+    }, 1000);
+
+    return () => clearInterval(inactivityCheck);
+  }, [lastActivity]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!isTimerActive || !showTimer || timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, isTimerActive, showTimer]);
+
+  // Handle timer expiry
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      handleStartOver();
+    }
+  }, [timeLeft]);
 
   useEffect(() => {
     if (step === 'phone') {
@@ -29,23 +99,15 @@ export function CustomerDetailsModal() {
     }
   }, [phone, step]);
 
-  useEffect(() => {
-    if (!isTimerActive || timeLeft <= 0) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft, isTimerActive]);
-
   const resetTimer = () => {
     setTimeLeft(30);
+    setIsTimerActive(true);
+    handleUserActivity();
   };
 
   const handleNameSubmit = () => {
     if (!name.trim()) {
-      toast.error('Please enter youra name');
+      toast.error('Please enter your name');
       return;
     }
     setStep('phone');
@@ -60,19 +122,22 @@ export function CustomerDetailsModal() {
   };
 
   const handleStartOver = () => {
+    setIsTimerActive(false);
+    setShowTimer(false);
     clearCart();
     navigate(`/kiosk/${id}`);
   };
 
+  // Update input handlers to use handleUserActivity
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
-    resetTimer();
+    handleUserActivity();
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = value.replace(/\D/g, '');
-    resetTimer();
+    handleUserActivity();
 
     let formattedValue = '';
     if (numericValue.length <= 3) {
@@ -80,7 +145,10 @@ export function CustomerDetailsModal() {
     } else if (numericValue.length <= 6) {
       formattedValue = `(${numericValue.slice(0, 3)}) ${numericValue.slice(3)}`;
     } else {
-      formattedValue = `(${numericValue.slice(0, 3)}) ${numericValue.slice(3, 6)}-${numericValue.slice(6, 10)}`;
+      formattedValue = `(${numericValue.slice(0, 3)}) ${numericValue.slice(
+        3,
+        6
+      )}-${numericValue.slice(6, 10)}`;
     }
 
     if (numericValue.length >= 1 && !/[2-9]/.test(numericValue[0])) {
@@ -104,13 +172,33 @@ export function CustomerDetailsModal() {
       setCustomerName(name);
       navigate(`/kiosk/${id}/payment`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to save customer data');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to save customer data'
+      );
     }
   };
 
+  // Update component cleanup
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Update handler for order button click - remove clearCart
+  const handleOrderClick = () => {
+    navigate(`/kiosk/${id}/kiosk`);
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      <div className="p-6">
+    <div 
+      className="min-h-screen bg-white"
+      onMouseMove={handleUserActivity}
+      onClick={handleUserActivity}
+    >
+      <div className="p-6 flex justify-between">
         <button
           type="button"
           onClick={handleBack}
@@ -122,6 +210,17 @@ export function CustomerDetailsModal() {
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
           Back
+        </button>
+
+        <button
+          type="button"
+          onClick={handleOrderClick}
+          className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+        >
+          <ShoppingCart className="h-4 w-4" />
+          <span>{orderItems && orderItems.items.length} items</span>
+          <span>|</span>
+          <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
         </button>
       </div>
 
@@ -156,7 +255,9 @@ export function CustomerDetailsModal() {
           ) : (
             <>
               <div>
-                <h1 className="text-4xl font-medium mb-4">What's your phone number?</h1>
+                <h1 className="text-4xl font-medium mb-4">
+                  What's your phone number?
+                </h1>
                 <p className="text-gray-500 text-lg max-w-sm">
                   We will also text you when your order is ready
                 </p>
@@ -183,12 +284,14 @@ export function CustomerDetailsModal() {
         </div>
       </div>
 
-      <Timer 
-        seconds={timeLeft} 
-        isActive={isTimerActive} 
-        onStartOver={handleStartOver}
-        onComplete={handleStartOver}
-      />
+      {showTimer && (
+        <Timer
+          seconds={timeLeft}
+          isActive={isTimerActive}
+          onStartOver={resetTimer}
+          onComplete={handleStartOver}
+        />
+      )}
     </div>
   );
 }
