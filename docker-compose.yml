@@ -35,7 +35,7 @@ services:
 
   postgres:
     image: postgres:14.15-alpine3.21
-    container_name: postgres_db
+    container_name: postgres_db_combined_cms
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
