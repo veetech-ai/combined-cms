@@ -28,7 +28,7 @@ export function PaymentModal() {
   const { id } = useParams();
   const { clearCart } = useCartStore();
   const [timeLeft, setTimeLeft] = useState(60);
-  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [isTimerActive, setIsTimerActive] = useState(true);
   const { customerName } = useCustomerStore();
   const [orderTotal, setOrderTotal] = useState();
 
@@ -48,14 +48,19 @@ export function PaymentModal() {
   }, []);
 
   useEffect(() => {
-    if (!isTimerActive || timeLeft <= 0) return;
+    setIsTimerActive(true);
+    setTimeLeft(60);
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+    return () => {
+      setIsTimerActive(false);
+    };
+  }, []);
 
-    return () => clearInterval(timer);
-  }, [timeLeft, isTimerActive]);
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      handleStartOver();
+    }
+  }, [timeLeft]);
 
   const resetTimer = () => {
     setTimeLeft(60);
@@ -77,7 +82,7 @@ export function PaymentModal() {
   };
 
   const handleStartOver = () => {
-    resetTimer();
+    setIsTimerActive(false);
     clearCart();
     navigate(`/kiosk/${id}`);
   };
@@ -154,13 +159,13 @@ export function PaymentModal() {
 
             {/* Right Side - Payment Options */}
             <div className="lg:w-1/2 flex flex-col p-6">
-              <div className="flex justify-end">
+              <div className="absolute top-4 right-4">
                 <Timer
                   seconds={timeLeft}
                   isActive={isTimerActive}
                   variant="light"
                   onStartOver={handleStartOver}
-                  onComplete={handleClose}
+                  onComplete={handleStartOver}
                 />
               </div>
 
@@ -264,7 +269,7 @@ export function PaymentModal() {
               isActive={isTimerActive}
               variant="light"
               onStartOver={handleStartOver}
-              onComplete={handleClose}
+              onComplete={handleStartOver}
             />
           </div>
         </div>

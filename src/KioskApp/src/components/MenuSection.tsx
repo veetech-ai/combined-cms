@@ -699,19 +699,18 @@ const MenuSection = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Update the z-index of the category bar to be lower than the promo screen */}
-      <div className="mb-4 sticky top-0 bg-white shadow-sm relative z-40">
-        {selectedItem && <div className="absolute inset-0 bg-black/50 z-40" />}
+      {/* Update the category bar styling */}
+      <div className="mb-4 sticky top-0 bg-white/95 backdrop-blur-sm z-30">
         {!loading && !error && (
           <>
-            <div className="p-2 relative z-30">
+            <div className="p-2">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSelectedCategory('All')}
                   className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
                     typeof selectedCategory === 'string' &&
                     selectedCategory.toLowerCase() === 'all'
-                      ? 'bg-black text-white shadow-md'
+                      ? 'bg-black text-white'
                       : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                   }`}
                 >
@@ -723,7 +722,7 @@ const MenuSection = () => {
                       onClick={() => setSelectedCategory('Featured')}
                       className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
                         selectedCategory === 'Featured'
-                          ? 'bg-black text-white shadow-md'
+                          ? 'bg-black text-white'
                           : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                       }`}
                     >
@@ -746,7 +745,7 @@ const MenuSection = () => {
                             onClick={() => setSelectedCategory(categoryKey)}
                             className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all whitespace-nowrap flex-shrink-0 ${
                               selectedCategory === categoryKey
-                                ? 'bg-black text-white shadow-md'
+                                ? 'bg-black text-white'
                                 : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                             }`}
                           >

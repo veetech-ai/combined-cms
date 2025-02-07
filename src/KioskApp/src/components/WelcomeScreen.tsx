@@ -1,9 +1,8 @@
 import { motion } from 'framer-motion';
 import { useLanguageStore } from '../stores/languageStore';
 import { useNavigate, useParams } from 'react-router-dom';
-import background from '../images/background.jpg';
-import { FaHandPointer } from 'react-icons/fa';
 import { useCartStore } from '../stores/cartStore';
+import blurMask from '../images/Blur Mask.svg';
 
 export function WelcomeScreen() {
   const { currentLanguage } = useLanguageStore();
@@ -24,15 +23,6 @@ export function WelcomeScreen() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Background image */}
-      {/* <div className="absolute inset-0 bg-cover bg-center z-0 opacity-80">
-        <img
-          src={background}
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
-      </div> */}
-
       {/* Background video */}
       <div className="absolute inset-0 z-0 opacity-80">
         <video autoPlay loop muted className="w-full h-full object-cover">
@@ -49,13 +39,7 @@ export function WelcomeScreen() {
         {/* Start Order Button */}
         <motion.button
           onClick={handleStartOrder}
-          className="relative w-full max-w-md px-12 py-4 rounded-full text-xl font-medium text-white flex items-center justify-center gap-2 overflow-hidden"
-          style={{
-            background:
-              'linear-gradient(90deg, rgba(90,90,90,0.6), rgba(30,30,30,0.6))',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.3)'
-          }}
+          className="relative w-full max-w-[562px] cursor-pointer"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           initial={{ y: 20, opacity: 0 }}
@@ -67,10 +51,11 @@ export function WelcomeScreen() {
             damping: 25
           }}
         >
-          <span>
-            {currentLanguage === 'en' ? 'Start Order' : 'Comenzar Orden'}
-          </span>
-          <FaHandPointer className="text-white text-lg" />
+          <img 
+            src={blurMask} 
+            alt={currentLanguage === 'en' ? 'Start Order' : 'Comenzar Orden'}
+            className="w-full h-auto"
+          />
         </motion.button>
       </div>
     </motion.div>
