@@ -33,10 +33,32 @@ const DisplaySetup = () => {
   const copyToClipboard = () => {
     // Remove spaces from the code
     const codeWithoutSpaces = code.replace(/\s+/g, '');
-    navigator.clipboard.writeText(codeWithoutSpaces).then(() => {
-      toast.success('Code copied to clipboard!');
-    });
-    // alert('Code copied to clipboard!');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(codeWithoutSpaces)
+        .then(() => {
+          toast.success('Code copied to clipboard!');
+        })
+        .catch((err) => {
+          console.error('Failed to copy: ', err);
+          toast.error('Failed to copy code to clipboard.');
+        });
+    } else {
+      // Fallback method for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = codeWithoutSpaces;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success('Code copied to clipboard!');
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+        toast.error('Failed to copy code to clipboard.');
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   return (
@@ -77,7 +99,7 @@ const DisplaySetup = () => {
           <p className="text-3xl font-bold text-blue-400 tracking-widest">
             {code && code}
           </p>
-          <button onClick={copyToClipboard}>copy</button>
+          <button onClick={copyToClipboard}>Copy</button>
           <p className="text-gray-400 text-sm mt-2">
             Use this code in the admin panel to connect this display to a store.
           </p>
