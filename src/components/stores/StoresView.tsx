@@ -22,20 +22,22 @@ export default function StoresView() {
     dispatch
   } = useCustomer();
 
-  const [storesList, setStoresList] = useState<Store[]>([]);
+  const [storesList, setStoresList] = useState([]);
 
   const token = localStorage.getItem('access_token');
 
-  // Add a function to fetch stores baseURL: API_CONFIG.BASE_URL + API_CONFIG.VERSION,
+  // Add a function to fetch stores
   const fetchStores = async () => {
     try {
-      //Hardcoded change it to dynamic
-      const resp = await axios.get('http://localhost:4000/api/v1/stores/all', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const resp = await axios.get(
+        'http://localhost:4000/api/v1/stores/all',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
       if (resp && resp.data) {
         setStoresList(resp.data);
@@ -49,7 +51,7 @@ export default function StoresView() {
   // Use the fetchStores function in useEffect
   useEffect(() => {
     fetchStores();
-  }, [isAddingStore]);
+  }, []);
 
   // Get unique organizations from the stores list
   const organizations = Array.from(
@@ -62,20 +64,15 @@ export default function StoresView() {
       (store) =>
         store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         store.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (store.organization?.name || '')
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
+        (store.organization?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(
       (store) =>
-        !selectedOrganization ||
-        store.organization?.name === selectedOrganization
+        !selectedOrganization || store.organization?.name === selectedOrganization
     );
 
   // Handle when a store is clicked to view details
-  const handleStoreClick = (
-    store: Store & { organization?: { name: string } }
-  ) => {
+  const handleStoreClick = (store: Store & { organization?: { name: string } }) => {
     setSelectedStore({
       ...store,
       customerName: store.organization?.name || 'Unknown Organization'
@@ -115,11 +112,11 @@ export default function StoresView() {
   if (selectedStore) {
     return (
       <StoreDetailsView
-      store={selectedStore}
-      onBack={() => setSelectedStore(null)}
-      onModuleToggle={(moduleId: string, enabled: boolean) =>
-        handleModuleToggle(selectedStore.id, moduleId, enabled)
-      }
+        store={selectedStore}
+        onBack={() => setSelectedStore(null)}
+        onModuleToggle={(moduleId, enabled) =>
+          handleModuleToggle(selectedStore.id, moduleId, enabled)
+        }
       />
     );
   }
@@ -150,7 +147,7 @@ export default function StoresView() {
                 key={orgName}
                 onClick={() =>
                   setSelectedOrganization(
-                    selectedOrganization === orgName ? '' : orgName || ''
+                    selectedOrganization === orgName ? '' : orgName
                   )
                 }
                 className={`relative inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-full border-2 transition-all ${
@@ -173,8 +170,8 @@ export default function StoresView() {
         </div>
       </div>
 
-      <StoresList
-        stores={filteredStores.map((store) => ({
+      <StoresList 
+        stores={filteredStores.map(store => ({
           ...store,
           customerName: store.organization?.name || 'Unknown Organization',
           address: store.address || store.location,
@@ -183,8 +180,8 @@ export default function StoresView() {
           zipCode: store.zipCode || '',
           phone: store.phone || '',
           modules: store.modules || []
-        }))}
-        onStoreClick={handleStoreClick}
+        }))} 
+        onStoreClick={handleStoreClick} 
       />
 
       {isAddingStore && organizations.length > 0 && (

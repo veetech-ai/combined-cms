@@ -4,7 +4,7 @@ import type { Organization } from '../types';
 
 // Simple in-memory cache
 const cache = new Map<string, { data: Organization; timestamp: number }>();
-const CACHE_DURATION = 1; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export const organizationService = {
   async getOrganizations() {
@@ -115,23 +115,6 @@ export const organizationService = {
     } catch (error) {
       console.error('Error updating POS integration:', error);
       throw error;
-    }
-  },
-
-  async checkEmailAvailability(email: string) {
-    try {
-      const { data } = await apiClient.get<{
-        available: boolean;
-        message: string;
-      }>(API_CONFIG.ENDPOINTS.CHECK_EMAIL(email));
-      return data;
-    } catch (error: any) {
-      console.error('Error checking email availability:', error);
-      return {
-        available: false,
-        message:
-          error.response?.data?.message || 'Error checking email availability'
-      };
     }
   }
 };

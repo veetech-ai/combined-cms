@@ -11,24 +11,29 @@ import ModuleManagementView from '../modules/ModuleManagementView';
 interface StoreDetailsViewProps {
   store: Store & { customerName: string };
   onBack: () => void;
+  onModuleToggle: (moduleId: string, enabled: boolean) => void;
 }
 
-export default function StoreDetailsView({
-  store,
-  onBack
+export default function StoreDetailsView({ 
+  store, 
+  onBack,
+  onModuleToggle 
 }: StoreDetailsViewProps) {
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  
+  const selectedModule = store.modules.find(m => m.id === selectedModuleId);
 
-  const handleModuleClick = (moduleId: string) => {
-    setSelectedModuleId(moduleId);
-  };
-
-  if (selectedModuleId) {
+  if (selectedModule) {
     return (
       <ModuleManagementView
-        moduleId={selectedModuleId}
-        storeId={store.id}
+        module={selectedModule}
         onBack={() => setSelectedModuleId(null)}
+        onToggle={(enabled) => {
+          onModuleToggle(selectedModule.id, enabled);
+          if (!enabled) {
+            setSelectedModuleId(null);
+          }
+        }}
       />
     );
   }
@@ -67,13 +72,14 @@ export default function StoreDetailsView({
         </CollapsibleSection>
       </div>
 
-      <CollapsibleSection
-        title="Store Modules"
+      <CollapsibleSection 
+        title="Store Modules" 
         subtitle="Manage your store's active modules and devices"
       >
         <StoreModulesSection
-          store={store}
-          onModuleClick={handleModuleClick}
+          modules={store.modules}
+          onModuleToggle={onModuleToggle}
+          onModuleClick={setSelectedModuleId}
         />
       </CollapsibleSection>
     </div>

@@ -1,25 +1,17 @@
-export type ModuleStatus = 'DISABLED' | 'PENDING_APPROVAL' | 'APPROVED';
-
-export interface ModuleStats {
-  activeDevices: number;
-  activeUsers: number;
-  lastUpdated: string;
-}
-
 export interface Module {
   id: string;
   name: string;
-  key: string;
   isEnabled: boolean;
-  status: ModuleStatus;
-  stats?: ModuleStats;
-  createdAt: string;
-  updatedAt: string;
+  stats?: {
+    activeUsers: number;
+    activeDevices: number;
+    lastUpdated: string;
+  };
 }
 
-export const DEFAULT_MODULES: Array<Pick<Module, 'key' | 'name'>> = [
-  { key: 'venu', name: 'Venu (Digital Menu)' },
-  { key: 'kiosk', name: 'Kiosk System' },
-  { key: 'kitchen', name: 'Kitchen Display' },
-  { key: 'rewards', name: 'Rewards Program' }
+export const DEFAULT_MODULES = [
+  { id: 'venu', name: 'Venu (Digital Menu)', isEnabled: false },
+  { id: 'kiosk', name: 'Kiosk System', isEnabled: false },
+  { id: 'kitchen', name: 'Kitchen Display', isEnabled: false },
+  { id: 'rewards', name: 'Rewards Program', isEnabled: false }
 ];

@@ -20,19 +20,6 @@ import StoresView from './components/stores/StoresView';
 import { Login } from './components/auth/login';
 import { ROUTES } from './constants/route-names';
 import { useAuthStore } from './stores/auth-store';
-import ClientApp from './components/codeApp/ClientApp';
-// import StorePage from './components/stores/StorePage';
-import DisplayMenus from './components/Menus/DisplayMenus';
-import DisplaysView from './components/displays/DisplaysView';
-
-import KioskApp from './KioskApp/src/main';
-import CloverPaymentForm from './components/paymet/CloverPaymentForm';
-import { WelcomeScreen } from './KioskApp/src/components/WelcomeScreen';
-import { CustomerDetailsModal } from './KioskApp/src/components/CustomerDetailsModal';
-import { PaymentModal } from './KioskApp/src/components/PaymentModal';
-import { FeedbackModal } from './KioskApp/src/components/FeedbackModal';
-import Success from './KioskApp/src/components/Success';
-import { Payment } from './KioskApp/src/components/Payment';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated, token } = useAuthStore();
@@ -50,18 +37,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => {
-  const path = window.location.pathname;
-
   useEffect(() => {
     const isAuthenticated = useAuthStore.getState().checkAuth();
     if (!isAuthenticated) {
       // Optionally handle redirection logic here
     }
   }, []);
-
-  if (path === '/code') {
-    return <ClientApp />;
-  }
 
   return (
     <Router>
@@ -70,15 +51,6 @@ const App = () => {
           <Routes>
             {/* Public Route */}
             <Route path="/login" element={<Login />} />
-
-            {/* <Route path="/store/:id" element={<StorePage />} /> */}
-            <Route path="/kiosk/:id" element={<WelcomeScreen />} />
-            <Route path="/kiosk/:id/kiosk" element={<KioskApp />} />
-            <Route path="/kiosk/:id/details" element={<CustomerDetailsModal  />} />
-            <Route path="/kiosk/:id/payment" element={<PaymentModal  />} />
-            <Route path="/kiosk/:id/feedback" element={<FeedbackModal  />} />
-            <Route path="/kiosk/:id/success" element={<Success  />} />
-            <Route path="/kiosk/:id/summary" element={<Payment  />} />
 
             {/* Protected Routes */}
             <Route
@@ -116,10 +88,7 @@ const MainLayout = () => {
             <Route path={ROUTES.POS} element={<PosIntegrationView />} />
             <Route path={ROUTES.ANALYTICS} element={<AnalyticsView />} />
             <Route path={ROUTES.STORES} element={<StoresView />} />
-            <Route path="/clover-pay" element={<CloverPaymentForm />} />
             <Route path="/menus/:storeId" element={<MenusPage />} />
-            <Route path="/display-menus" element={<DisplayMenus />} />
-            <Route path="/display-views" element={<DisplaysView />} />
             <Route
               path="*"
               element={<Navigate to={ROUTES.DASHBOARD} replace />}
