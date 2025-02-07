@@ -55,24 +55,60 @@ export function CartSection({ onStartOver }: CartSectionProps) {
 
   const handleStartOrder = () => {
     if (items && items.length > 0) {
-      // Generate a random orderId
       const orderId = generateOrderId();
-
       const totalBill = calculateSubtotal();
 
-      // Attach orderId to the order object
-      const obj = {
+      // Transform cart items to include all details
+      const transformedItems = items.map(item => {
+        // Parse instructions to get addons and customizations
+        let addons = [];
+        let customization = {};
+        let extras = [];
+
+        try {
+          if (item.instructions) {
+            const parsedInstructions = JSON.parse(item.instructions);
+            if (parsedInstructions.addOns) {
+              addons = parsedInstructions.addOns.map(addon => ({
+                id: addon.id,
+                name: addon.name,
+                price: addon.price / 100 // Convert cents to dollars
+              }));
+            }
+            if (parsedInstructions.customization) {
+              customization = parsedInstructions.customization;
+            }
+            if (parsedInstructions.extras) {
+              extras = parsedInstructions.extras;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing instructions:', e);
+        }
+
+        return {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          addons,
+          customization,
+          extras,
+          instructions: item.instructions
+        };
+      });
+
+      // Set the order with complete item details
+      const orderObj = {
         orderId,
-        items, // Preserve items array
-        totalBill
+        items: transformedItems,
+        totalBill: totalBill.toFixed(2)
       };
 
-      // Set the order with the new structure
-      setOrder(obj);
+      setOrder(orderObj);
     }
 
-    // Navigate to the `/kiosk` route relative to the current route
-    navigate(`/kiosk/${id}/details`); // This will resolve to `/kiosk/${id}/kiosk`
+    navigate(`/kiosk/${id}/details`);
   };
 
   const getItemTotal = (item: CartItem) => {
