@@ -3,7 +3,7 @@ import { useCustomerStore } from '../stores/customerStore';
 import { toast } from 'react-hot-toast';
 import { ChevronLeft, ShoppingCart } from 'lucide-react';
 import { Timer } from './ui/Timer';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { CheckoutLayout } from '../components/CheckoutLayout';
 import { useOrder } from '../../../contexts/OrderContext';
@@ -11,9 +11,12 @@ type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
   const { orderItems } = useOrder();
+  const location = useLocation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [step, setStep] = useState<Step>('name');
+  const [step, setStep] = useState<Step>(
+    location.state?.step === 'phone' ? 'phone' : 'name'
+  );
   const [timeLeft, setTimeLeft] = useState(30);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
@@ -104,7 +107,7 @@ export function CustomerDetailsModal() {
 
   const handleNameSubmit = () => {
     if (!name.trim()) {
-      toast.error('Please enter youra name');
+      toast.error('Please enter your name');
       return;
     }
     setStep('phone');
@@ -114,7 +117,7 @@ export function CustomerDetailsModal() {
     if (step === 'phone') {
       setStep('name');
     } else {
-      navigate(`/kiosk/${id}`);
+      navigate(`/kiosk/${id}/kiosk`);
     }
   };
 

@@ -129,9 +129,10 @@ export function PaymentModal() {
   };
 
   const handleClose = () => {
-    resetTimer();
-    handleUserActivity();
-    navigate(`/kiosk/${id}/details`);
+    // Navigate back to phone number step without clearing cart
+    navigate(`/kiosk/${id}/details`, { 
+      state: { step: 'phone' } // Pass step information
+    });
   };
 
   const handleStartOver = () => {
@@ -161,10 +162,7 @@ export function PaymentModal() {
           <div className="p-6 flex justify-between">
             <button
               type="button"
-              onClick={() => {
-                handleClose();
-                resetTimer();
-              }}
+              onClick={handleClose}
               className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
                 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
                 disabled:pointer-events-none disabled:opacity-50
@@ -201,17 +199,64 @@ export function PaymentModal() {
                   {/* Order Items List */}
                   <div className="p-4 space-y-4">
                     {orderItems.items.map((item, index) => (
-                      <div 
-                        key={index}
-                        className="flex justify-between items-center"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-gray-500">{item.quantity}x</span>
-                          <span className="font-medium">{item.name.en}</span>
+                      <div key={index} className="space-y-1">
+                        {/* Main Item */}
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <span className="text-gray-500">{item.quantity}x</span>
+                            <span className="font-medium">{item.name.en}</span>
+                          </div>
+                          <span className="font-medium">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </span>
                         </div>
-                        <span className="font-medium">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </span>
+
+                        {/* Customizations */}
+                        {item.customization && Object.keys(item.customization).length > 0 && (
+                          <div className="ml-8 text-sm text-gray-500">
+                            {Object.entries(item.customization).map(([key, value]) => (
+                              <div key={key} className="flex items-center gap-2">
+                                <span>•</span>
+                                <span>{value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Addons */}
+                        {item.addons && item.addons.length > 0 && (
+                          <div className="ml-8 text-sm text-gray-500">
+                            {item.addons.map((addon, idx) => (
+                              <div key={idx} className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <span>+</span>
+                                  <span>{addon.name}</span>
+                                </div>
+                                <span>${addon.price.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Extras */}
+                        {item.extras && item.extras.length > 0 && (
+                          <div className="ml-8 text-sm text-gray-500">
+                            {item.extras.map((extra, idx) => (
+                              <div key={idx} className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <span>+</span>
+                                  <span>{extra.name}</span>
+                                </div>
+                                <span>${extra.price.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Divider except for last item */}
+                        {index < orderItems.items.length - 1 && (
+                          <div className="border-b border-gray-100 my-2" />
+                        )}
                       </div>
                     ))}
                   </div>
