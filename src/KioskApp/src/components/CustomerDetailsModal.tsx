@@ -55,7 +55,7 @@ export function CustomerDetailsModal() {
     if (step === 'phone') {
       setStep('name');
     } else {
-      navigate(`/kiosk/${id}`);
+      navigate(`/kiosk/${id}/kiosk`);
     }
   };
 

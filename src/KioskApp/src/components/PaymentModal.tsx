@@ -6,17 +6,17 @@ import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ApplePayLogo } from './ui/ApplePayLogo';
-import { GooglePayLogo } from  './ui/GooglePayLogo';
+import { GooglePayLogo } from './ui/GooglePayLogo';
 
 import { useCartStore } from '../stores/cartStore';
 import { useCustomerStore } from '../stores/customerStore';
 
 // Add dummy data
 const dummyCartItems = [
-  { name: "Cappuccino", price: 4.50, quantity: 1 },
-  { name: "Chocolate Croissant", price: 3.75, quantity: 2 },
-  { name: "Iced Latte", price: 5.00, quantity: 1 },
-  { name: "Blueberry Muffin", price: 3.25, quantity: 1 }
+  { name: 'Cappuccino', price: 4.5, quantity: 1 },
+  { name: 'Chocolate Croissant', price: 3.75, quantity: 2 },
+  { name: 'Iced Latte', price: 5.0, quantity: 1 },
+  { name: 'Blueberry Muffin', price: 3.25, quantity: 1 }
 ];
 
 export function PaymentModal() {
@@ -29,7 +29,10 @@ export function PaymentModal() {
   const [isTimerActive, setIsTimerActive] = useState(true);
   const { customerName } = useCustomerStore();
 
-  const total = dummyCartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const total = dummyCartItems.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
 
   useEffect(() => {
     QRCode.toDataURL('https://payment.example.com/order/123')
@@ -58,7 +61,8 @@ export function PaymentModal() {
 
   const handleSuccess = () => {
     resetTimer();
-    navigate(`/kiosk/${id}/success`);
+    navigate(`/kiosk/${id}/summary`);
+    // navigate(`/kiosk/${id}/success`);
   };
 
   const handleClose = () => {
@@ -190,7 +194,7 @@ export function PaymentModal() {
               className="text-center max-w-md mx-auto"
             >
               <h2 className="text-3xl font-bold mb-4">
-                {customerName || 'Customer'} 
+                {customerName || 'Customer'}
               </h2>
               <p className="text-xl mb-12">
                 Give your name at the cashier and pay.
