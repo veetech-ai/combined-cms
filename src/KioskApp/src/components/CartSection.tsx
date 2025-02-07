@@ -9,7 +9,6 @@ import { useCartStore } from '../stores/cartStore';
 import { useMenuStore } from '../stores/menuStore';
 import { useNavigate, useParams } from 'react-router-dom'; // Import useParams
 
-
 interface CartSectionProps {
   onStartOver: () => void;
 }
@@ -48,7 +47,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
 
   const getItemTotal = (item: CartItem) => {
     let total = item.price;
-    
+
     try {
       const instructions = JSON.parse(item.instructions);
       if (instructions.addOns) {
@@ -59,7 +58,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
     } catch (e) {
       //console.error('Error parsing item instructions:');
     }
-    
+
     return total * item.quantity;
   };
 
@@ -67,7 +66,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
     return items.reduce((sum, item) => sum + getItemTotal(item), 0);
   };
 
-  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } = 
+  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } =
     getDiscountedTotal(calculateSubtotal());
 
   const [orderDetails, setOrderDetails] = useState();
@@ -76,7 +75,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
     setCustomerInfo(name, phone);
     setShowCustomerDetails(false);
     setOrderDetails(order);
-  
+
     if (isEligibleForPhoneDiscount(phone)) {
       setShowDiscountDialog(true);
     } else {
@@ -163,7 +162,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
 
       {/* Cart Footer */}
       <div className="p-4 border-t bg-neutral-50">
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <label
             htmlFor="discountCode"
             className="block text-sm font-medium text-neutral-600 mb-1"
@@ -181,17 +180,17 @@ export function CartSection({ onStartOver }: CartSectionProps) {
             placeholder={t('cart.enterCode')}
             className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
           />
-        </div>
+        </div> */}
 
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
             <span>{t('cart.subtotal')}:</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-sm">
+          {/* <div className="flex justify-between text-sm">
             <span>{t('cart.taxes')}:</span>
             <span>$0.00</span>
-          </div>
+          </div> */}
           {phoneDiscountAmount > 0 && (
             <div className="flex justify-between text-sm text-green-600">
               <span>{t('cart.phoneDiscount')}:</span>

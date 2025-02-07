@@ -26,11 +26,13 @@ import DisplayMenus from './components/Menus/DisplayMenus';
 import DisplaysView from './components/displays/DisplaysView';
 
 import KioskApp from './KioskApp/src/main';
+import CloverPaymentForm from './components/paymet/CloverPaymentForm';
 import { WelcomeScreen } from './KioskApp/src/components/WelcomeScreen';
 import { CustomerDetailsModal } from './KioskApp/src/components/CustomerDetailsModal';
 import { PaymentModal } from './KioskApp/src/components/PaymentModal';
 import { FeedbackModal } from './KioskApp/src/components/FeedbackModal';
 import Success from './KioskApp/src/components/Success';
+import { Payment } from './KioskApp/src/components/Payment';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated, token } = useAuthStore();
@@ -76,6 +78,7 @@ const App = () => {
             <Route path="/kiosk/:id/payment" element={<PaymentModal  />} />
             <Route path="/kiosk/:id/feedback" element={<FeedbackModal  />} />
             <Route path="/kiosk/:id/success" element={<Success  />} />
+            <Route path="/kiosk/:id/summary" element={<Payment  />} />
 
             {/* Protected Routes */}
             <Route
@@ -113,6 +116,7 @@ const MainLayout = () => {
             <Route path={ROUTES.POS} element={<PosIntegrationView />} />
             <Route path={ROUTES.ANALYTICS} element={<AnalyticsView />} />
             <Route path={ROUTES.STORES} element={<StoresView />} />
+            <Route path="/clover-pay" element={<CloverPaymentForm />} />
             <Route path="/menus/:storeId" element={<MenusPage />} />
             <Route path="/display-menus" element={<DisplayMenus />} />
             <Route path="/display-views" element={<DisplaysView />} />

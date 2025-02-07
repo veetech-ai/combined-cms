@@ -15,12 +15,15 @@ interface CustomerStore {
   findOrCreate: (name: string, phone: string) => Promise<Customer>;
   lookupByPhone: (phone: string) => Promise<Customer | null>;
   clear: () => void;
+  customerName: string;
+  setCustomerName: (name: string) => void;
 }
 
 export const useCustomerStore = create<CustomerStore>((set) => ({
   customer: null,
   isLoading: false,
   error: null,
+  customerName: '',
 
   findOrCreate: async (name: string, phone: string) => {
     set({ isLoading: true, error: null });
@@ -50,5 +53,7 @@ export const useCustomerStore = create<CustomerStore>((set) => ({
 
   clear: () => {
     set({ customer: null, error: null, isLoading: false });
-  }
+  },
+
+  setCustomerName: (name) => set({ customerName: name }),
 }));
