@@ -250,7 +250,6 @@ const normalizeItemName = (name: string) => {
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
 };
 
-
 const MenuSection = () => {
   const { t, i18n } = useTranslation();
   const { addItem } = useCartStore();
@@ -700,7 +699,6 @@ const MenuSection = () => {
 
   return (
     <div className="flex flex-col h-full">
-
       {/* Update the z-index of the category bar to be lower than the promo screen */}
       <div className="mb-4 sticky top-0 bg-white shadow-sm relative z-40">
         {selectedItem && <div className="absolute inset-0 bg-black/50 z-40" />}

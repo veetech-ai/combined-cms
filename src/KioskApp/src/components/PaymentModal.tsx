@@ -1,35 +1,45 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { CheckCircle, ChevronLeft, ShoppingCart } from 'lucide-react';
 import { BackButton } from './ui/BackButton';
 import { Timer } from './ui/Timer';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ApplePayLogo } from './ui/ApplePayLogo';
-import { GooglePayLogo } from  './ui/GooglePayLogo';
+import { GooglePayLogo } from './ui/GooglePayLogo';
 
 import { useCartStore } from '../stores/cartStore';
 import { useCustomerStore } from '../stores/customerStore';
+import { useOrder } from '../../../contexts/OrderContext';
 
 // Add dummy data
 const dummyCartItems = [
-  { name: "Cappuccino", price: 4.50, quantity: 1 },
-  { name: "Chocolate Croissant", price: 3.75, quantity: 2 },
-  { name: "Iced Latte", price: 5.00, quantity: 1 },
-  { name: "Blueberry Muffin", price: 3.25, quantity: 1 }
+  { name: 'Cappuccino', price: 4.5, quantity: 1 },
+  { name: 'Chocolate Croissant', price: 3.75, quantity: 2 },
+  { name: 'Iced Latte', price: 5.0, quantity: 1 },
+  { name: 'Blueberry Muffin', price: 3.25, quantity: 1 }
 ];
 
 export function PaymentModal() {
+  const { orderItems } = useOrder();
   const [qrCode, setQrCode] = useState('');
   const [step, setStep] = useState('initial');
   const navigate = useNavigate();
   const { id } = useParams();
   const { clearCart } = useCartStore();
   const [timeLeft, setTimeLeft] = useState(60);
-  const [isTimerActive, setIsTimerActive] = useState(true);
+  const [isTimerActive, setIsTimerActive] = useState(false);
   const { customerName } = useCustomerStore();
+  const [orderTotal, setOrderTotal] = useState();
 
-  const total = dummyCartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const total = dummyCartItems.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
+
+  useEffect(() => {
+    console.log(orderItems);
+  }, [orderItems]);
 
   useEffect(() => {
     QRCode.toDataURL('https://payment.example.com/order/123')
@@ -76,7 +86,7 @@ export function PaymentModal() {
     <div className="fixed inset-0 bg-white">
       {step === 'initial' && (
         <>
-          <div className="p-6">
+          <div className="p-6 flex justify-between">
             <button
               type="button"
               onClick={() => {
@@ -92,27 +102,52 @@ export function PaymentModal() {
               <ChevronLeft className="mr-2 h-4 w-4" />
               Back
             </button>
+
+            <button
+              type="button"
+              className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span>{orderItems && orderItems.items.length} items</span>
+              <span>|</span>
+              <span>${orderItems && orderItems.totalBill}</span>
+            </button>
           </div>
 
           <div className="flex flex-col lg:flex-row h-[calc(100%-5rem)]">
             {/* Left Side - Order Summary */}
             <div className="lg:w-1/2 p-6 border-r border-gray-200">
               <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
-              <ul className="space-y-4">
-                {dummyCartItems.map((item, index) => (
-                  <li key={index} className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-600">{item.quantity}x</span>
-                      <span>{item.name}</span>
-                    </div>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
-                  </li>
-                ))}
+              <p>{orderItems && orderItems.orderId}</p>
+              <ul className="space-y-4 bg-gray-100 p-4 rounded-lg mt-3">
+                {orderItems.items.map((item, index) => {
+                  return (
+                    <li
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">{item.quantity}x</span>
+                        <span>{item.name.en}</span>
+                      </div>
+                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    </li>
+                  );
+                })}
               </ul>
               <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="flex justify-between font-bold text-lg">
+                <div className="flex justify-between font-semibold text-xs text-gray-600">
+                  <span>Subtotal:</span>
+                  <span>
+                    ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between font-bold text-lg mt-4">
                   <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>
+                    ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -187,13 +222,29 @@ export function PaymentModal() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center max-w-md mx-auto"
+              className="text-center max-w-md mx-auto flex flex-col items-center"
             >
-              <h2 className="text-3xl font-bold mb-4">
-                {customerName || 'Customer'} 
-              </h2>
-              <p className="text-xl mb-12">
-                Give your name at the cashier and pay.
+              {/* Centering CheckCircle */}
+              <div className="flex items-center justify-center">
+                <CheckCircle className="h-14 w-14 text-green-500" />
+              </div>
+
+              <div className="mt-3">
+                <p className="text-lg font-semibold">You've Paid</p>
+                <p className="text-3xl font-semibold">
+                  ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+                </p>
+              </div>
+
+              <div className="mt-3">
+                <p className="text-sm font-semibold text-gray-500">
+                  {orderItems && orderItems.orderId}
+                </p>
+              </div>
+
+              <p className="text-lg font-normal text-gray-500 mt-5 mb-5">
+                Thanks, {customerName}! We will text you when your order is
+                ready.
               </p>
 
               <motion.button

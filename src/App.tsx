@@ -8,6 +8,7 @@ import {
   useNavigate
 } from 'react-router-dom';
 import { CustomerProvider } from './contexts/CustomerContext';
+import { OrderProvider } from './contexts/OrderContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardContent from './components/DashboardContent';
@@ -64,30 +65,35 @@ const App = () => {
   return (
     <Router>
       <CustomerProvider>
-        <div className="min-h-screen bg-gray-50">
-          <Routes>
-            {/* Public Route */}
-            <Route path="/login" element={<Login />} />
+        <OrderProvider>
+          <div className="min-h-screen bg-gray-50">
+            <Routes>
+              {/* Public Route */}
+              <Route path="/login" element={<Login />} />
 
-            {/* <Route path="/store/:id" element={<StorePage />} /> */}
-            <Route path="/kiosk/:id" element={<WelcomeScreen />} />
-            <Route path="/kiosk/:id/kiosk" element={<KioskApp />} />
-            <Route path="/kiosk/:id/details" element={<CustomerDetailsModal  />} />
-            <Route path="/kiosk/:id/payment" element={<PaymentModal  />} />
-            <Route path="/kiosk/:id/feedback" element={<FeedbackModal  />} />
-            <Route path="/kiosk/:id/success" element={<Success  />} />
+              {/* <Route path="/store/:id" element={<StorePage />} /> */}
+              <Route path="/kiosk/:id" element={<WelcomeScreen />} />
+              <Route path="/kiosk/:id/kiosk" element={<KioskApp />} />
+              <Route
+                path="/kiosk/:id/details"
+                element={<CustomerDetailsModal />}
+              />
+              <Route path="/kiosk/:id/payment" element={<PaymentModal />} />
+              <Route path="/kiosk/:id/feedback" element={<FeedbackModal />} />
+              <Route path="/kiosk/:id/success" element={<Success />} />
 
-            {/* Protected Routes */}
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <MainLayout />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </div>
+              {/* Protected Routes */}
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </div>
+        </OrderProvider>
       </CustomerProvider>
     </Router>
   );

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useCustomerStore } from '../stores/customerStore';
 import { toast } from 'react-hot-toast';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ShoppingCart } from 'lucide-react';
 import { Timer } from './ui/Timer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { CheckoutLayout } from '../components/CheckoutLayout';
+import { useOrder } from '../../../contexts/OrderContext';
 type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
+  const { orderItems } = useOrder();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState<Step>('name');
@@ -80,7 +82,10 @@ export function CustomerDetailsModal() {
     } else if (numericValue.length <= 6) {
       formattedValue = `(${numericValue.slice(0, 3)}) ${numericValue.slice(3)}`;
     } else {
-      formattedValue = `(${numericValue.slice(0, 3)}) ${numericValue.slice(3, 6)}-${numericValue.slice(6, 10)}`;
+      formattedValue = `(${numericValue.slice(0, 3)}) ${numericValue.slice(
+        3,
+        6
+      )}-${numericValue.slice(6, 10)}`;
     }
 
     if (numericValue.length >= 1 && !/[2-9]/.test(numericValue[0])) {
@@ -104,13 +109,15 @@ export function CustomerDetailsModal() {
       setCustomerName(name);
       navigate(`/kiosk/${id}/payment`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to save customer data');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to save customer data'
+      );
     }
   };
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="p-6">
+      <div className="p-6 flex justify-between">
         <button
           type="button"
           onClick={handleBack}
@@ -122,6 +129,16 @@ export function CustomerDetailsModal() {
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
           Back
+        </button>
+
+        <button
+          type="button"
+          className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+        >
+          <ShoppingCart className="h-4 w-4" />
+          <span>{orderItems && orderItems.items.length} items</span>
+          <span>|</span>
+          <span>${orderItems && orderItems.totalBill}</span>
         </button>
       </div>
 
@@ -156,7 +173,9 @@ export function CustomerDetailsModal() {
           ) : (
             <>
               <div>
-                <h1 className="text-4xl font-medium mb-4">What's your phone number?</h1>
+                <h1 className="text-4xl font-medium mb-4">
+                  What's your phone number?
+                </h1>
                 <p className="text-gray-500 text-lg max-w-sm">
                   We will also text you when your order is ready
                 </p>
@@ -183,9 +202,9 @@ export function CustomerDetailsModal() {
         </div>
       </div>
 
-      <Timer 
-        seconds={timeLeft} 
-        isActive={isTimerActive} 
+      <Timer
+        seconds={timeLeft}
+        isActive={isTimerActive}
         onStartOver={handleStartOver}
         onComplete={handleStartOver}
       />

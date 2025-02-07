@@ -8,7 +8,7 @@ import { DiscountModal } from './DiscountModal';
 import { useCartStore } from '../stores/cartStore';
 import { useMenuStore } from '../stores/menuStore';
 import { useNavigate, useParams } from 'react-router-dom'; // Import useParams
-
+import { useOrder } from '../../../contexts/OrderContext';
 
 interface CartSectionProps {
   onStartOver: () => void;
@@ -16,6 +16,7 @@ interface CartSectionProps {
 
 export function CartSection({ onStartOver }: CartSectionProps) {
   const { t } = useTranslation();
+  const { setOrder } = useOrder();
   const {
     items,
     customerName,
@@ -41,14 +42,42 @@ export function CartSection({ onStartOver }: CartSectionProps) {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const generateOrderId = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let orderId = 'Order #';
+
+    for (let i = 0; i < 12; i++) {
+      orderId += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    return orderId; // Example: ORD-X7A9Z2
+  };
+
   const handleStartOrder = () => {
+    if (items && items.length > 0) {
+      // Generate a random orderId
+      const orderId = generateOrderId();
+
+      const totalBill = calculateSubtotal();
+
+      // Attach orderId to the order object
+      const obj = {
+        orderId,
+        items, // Preserve items array
+        totalBill
+      };
+
+      // Set the order with the new structure
+      setOrder(obj);
+    }
+
     // Navigate to the `/kiosk` route relative to the current route
     navigate(`/kiosk/${id}/details`); // This will resolve to `/kiosk/${id}/kiosk`
   };
 
   const getItemTotal = (item: CartItem) => {
     let total = item.price;
-    
+
     try {
       const instructions = JSON.parse(item.instructions);
       if (instructions.addOns) {
@@ -59,7 +88,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
     } catch (e) {
       //console.error('Error parsing item instructions:');
     }
-    
+
     return total * item.quantity;
   };
 
@@ -67,7 +96,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
     return items.reduce((sum, item) => sum + getItemTotal(item), 0);
   };
 
-  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } = 
+  const { subtotal, phoneDiscountAmount, couponDiscountAmount, total } =
     getDiscountedTotal(calculateSubtotal());
 
   const [orderDetails, setOrderDetails] = useState();
@@ -76,7 +105,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
     setCustomerInfo(name, phone);
     setShowCustomerDetails(false);
     setOrderDetails(order);
-  
+
     if (isEligibleForPhoneDiscount(phone)) {
       setShowDiscountDialog(true);
     } else {
@@ -163,7 +192,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
 
       {/* Cart Footer */}
       <div className="p-4 border-t bg-neutral-50">
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <label
             htmlFor="discountCode"
             className="block text-sm font-medium text-neutral-600 mb-1"
@@ -181,7 +210,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
             placeholder={t('cart.enterCode')}
             className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
           />
-        </div>
+        </div> */}
 
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
