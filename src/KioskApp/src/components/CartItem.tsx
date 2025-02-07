@@ -245,7 +245,12 @@ export const CartItem: FC<CartItemProps> = ({
           <div className="flex items-center gap-2 mt-2">
             <button
               onClick={() => onUpdateQuantity(cartId, quantity - 1)}
-              className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
+              disabled={quantity <= 1}
+              className={`w-8 h-8 rounded-full flex items-center justify-center
+                ${quantity <= 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-gray-200 hover:bg-gray-300'
+                }`}
             >
               <span className="text-lg">−</span>
             </button>
