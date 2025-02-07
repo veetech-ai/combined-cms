@@ -15,11 +15,15 @@ export function Timer({
   onStartOver,
   onComplete 
 }: TimerProps) {
+  const [showResetButton, setShowResetButton] = React.useState(false);
+
   React.useEffect(() => {
-    if (isActive && seconds === 0 && onComplete) {
-      onComplete();
+    if (isActive && seconds === 0) {
+      setShowResetButton(true);
+    } else {
+      setShowResetButton(false);
     }
-  }, [seconds, isActive, onComplete]);
+  }, [seconds, isActive]);
 
   if (!isActive) return null;
 
@@ -83,22 +87,41 @@ export function Timer({
                 : isWarning ? 'text-red-600' : 'text-gray-600'
               }
             `}>
-              {isWarning ? 'Session expiring' : 'Session active'}
+              {showResetButton ? 'Session expired' : isWarning ? 'Session expiring' : 'Session active'}
             </p>
           </div>
 
-          <button 
-            onClick={() => onStartOver()}
-            className={`
-              text-sm font-medium transition-colors
-              ${variant === 'dark'
-                ? 'text-white/70 hover:text-white'
-                : 'text-gray-500 hover:text-gray-900'
-              }
-            `}
-          >
-            Reset
-          </button>
+          {showResetButton ? (
+            <button 
+              onClick={() => {
+                onStartOver();
+                setShowResetButton(false);
+              }}
+              className={`
+                text-sm font-medium px-4 py-1 rounded-full
+                ${variant === 'dark'
+                  ? 'bg-white/20 hover:bg-white/30 text-white'
+                  : 'bg-black text-white hover:bg-gray-800'
+                }
+                transition-colors
+              `}
+            >
+              Reset Session
+            </button>
+          ) : (
+            <button 
+              onClick={() => onStartOver()}
+              className={`
+                text-sm font-medium transition-colors
+                ${variant === 'dark'
+                  ? 'text-white/70 hover:text-white'
+                  : 'text-gray-500 hover:text-gray-900'
+                }
+              `}
+            >
+              Reset
+            </button>
+          )}
         </div>
       </div>
     </div>
