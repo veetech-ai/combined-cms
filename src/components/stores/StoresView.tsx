@@ -9,6 +9,7 @@ import SearchInput from '../common/SearchInput';
 import { storeService } from '../../services/storeService';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import apiClient from '../../services/apiClient';
 
 export default function StoresView() {
   const [selectedStore, setSelectedStore] = useState<
@@ -30,12 +31,14 @@ export default function StoresView() {
   const fetchStores = async () => {
     try {
       //Hardcoded change it to dynamic
-      const resp = await axios.get('http://localhost:4000/api/v1/stores/all', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // const resp = await axios.get(`http://localhost:4000/api/v1/stores/all`, {
+      //   headers: {
+      //     Authorization: `Bearer ${token}`,
+      //     'Content-Type': 'application/json'
+      //   }
+      // });
+
+      const resp = await apiClient.get('/stores/all');
 
       if (resp && resp.data) {
         setStoresList(resp.data);
@@ -115,11 +118,11 @@ export default function StoresView() {
   if (selectedStore) {
     return (
       <StoreDetailsView
-      store={selectedStore}
-      onBack={() => setSelectedStore(null)}
-      onModuleToggle={(moduleId: string, enabled: boolean) =>
-        handleModuleToggle(selectedStore.id, moduleId, enabled)
-      }
+        store={selectedStore}
+        onBack={() => setSelectedStore(null)}
+        onModuleToggle={(moduleId: string, enabled: boolean) =>
+          handleModuleToggle(selectedStore.id, moduleId, enabled)
+        }
       />
     );
   }

@@ -5,7 +5,9 @@ import { Store } from '../../types/store';
 import { displayService } from '../../services/displayService';
 import { toast, Toaster } from 'react-hot-toast';
 
-const socket = io('http://localhost:4000'); // Replace with your backend server address
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+
+const socket = io(API_URL); // Replace with your backend server address
 
 interface CreateDisplayModalProps {
   stores: Store[];

@@ -14,7 +14,7 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE 4000
+EXPOSE 4001
 
 ENV NODE_ENV=production
 
