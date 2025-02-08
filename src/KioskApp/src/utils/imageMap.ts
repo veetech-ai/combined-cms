@@ -2,7 +2,7 @@ export const itemImageMap: Record<string, string> = {
   "reg kebab": "https://i.imgur.com/63PvMan.png",
   "weekend special rice bowl": "https://i.ibb.co/n8SSyCY/Weekend-Special-Rice-Bowl.jpg",
   "weekend special burrito": "https://i.ibb.co/fCZ9xBP/Weekend-Special-Burrito.jpg",
-  "jarritos": "https://i.ibb.co/XCXqFNv/Jarritos.jpg",
+  "jarritos": "https://images.squarespace-cdn.com/content/v1/5c803b39c2ff6147e65c841c/1633488663715-FQG6RBEVB0LQ8I59N9MS/jarritos-duonew.jpg",
   "weekend special - pink kashmiri chai": "https://i.ibb.co/GRpSPPc/Weekend-Special-Pink-Kashmiri-Chai.jpg",
   "breakfast burrito": "https://i.ibb.co/vXF61xM/Breakfast-Burrito.jpg",
   "bun kebab": "https://i.ibb.co/Mn1zpDH/Bun-Kebab.jpg",
