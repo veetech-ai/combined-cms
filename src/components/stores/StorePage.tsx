@@ -24,7 +24,7 @@ export default function StorePage() {
         //   })
         // });
         const url =
-          'https://cors-anywhere.herokuapp.com/https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
+          'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
 
         const response = await fetch(url, {
           method: 'GET',
