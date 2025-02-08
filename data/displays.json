@@ -148,5 +148,15 @@
     "status": "Online",
     "lastSeen": "2025-02-07T11:36:14.566Z",
     "hexCode": "93940154"
+  },
+  {
+    "id": "9cef3ce2-9d04-45ce-b6ad-a2ed29ecf347",
+    "name": "ZAIN",
+    "location": "Pending Setup",
+    "store": "MaxiKhana",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-08T06:37:53.253Z",
+    "hexCode": "F274DFAQ"
   }
 ]
