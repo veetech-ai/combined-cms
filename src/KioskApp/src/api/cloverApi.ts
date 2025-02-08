@@ -1,12 +1,12 @@
 import axios from 'axios';
 
 const CLOVER_API_BASE =
-  'https://cors-anywhere.herokuapp.com/https://api.clover.com/v3';
+  'https://bq2pgkc2c7.execute-api.us-east-1.amazonaws.com';
 const MERCHANT_ID = 'PSK40XM0M8ME1';
 const API_KEY = 'acca0c85-6c26-710f-4390-23676eae487c';
 
 const cloverApi = axios.create({
-  baseURL: `${CLOVER_API_BASE}/merchants/${MERCHANT_ID}`,
+  baseURL: `${CLOVER_API_BASE}`,
   headers: {
     Authorization: `Bearer ${API_KEY}`,
     'Content-Type': 'application/json'
@@ -15,9 +15,7 @@ const cloverApi = axios.create({
 
 export const fetchModifierGroup = async (modifierGroupId: string) => {
   try {
-    const response = await cloverApi.get(
-      `/modifier_groups/${modifierGroupId}?expand=modifiers,items`
-    );
+    const response = await cloverApi.get(`/modifier_group/${modifierGroupId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching modifier group:', error);
@@ -33,9 +31,7 @@ export const fetchItemModifierGroups = async (itemId: string) => {
     // const modifierGroupId = 'SC1XA3K6BQ5Z2'; // This should come from props
     // console.log(itemId);
 
-    const response = await cloverApi.get(
-      `/modifier_groups/${itemId}?expand=modifiers,items`
-    );
+    const response = await cloverApi.get(`/item_id/${itemId}`);
 
     // Return in the expected format
     return {
