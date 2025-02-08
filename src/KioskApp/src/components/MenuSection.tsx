@@ -282,7 +282,7 @@ const MenuSection = () => {
       //   body: JSON.stringify({ input: {} })
       // });
       const url =
-        'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
+        'https://cors-anywhere.herokuapp.com/https://api.clover.com/v3/merchants/PSK40XM0M8ME1/items?expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions';
 
       const response = await fetch(url, {
         method: 'GET',
@@ -521,24 +521,22 @@ const MenuSection = () => {
     overscan: 10 // Increase overscan to show more items
   });
 
-  const handleAddItem = useCallback(
-    (item: MenuItem) => {
-      if (SIMPLIFIED_MODAL_CATEGORIES.includes(item.category)) {
-        addItem({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          imageUrl: item.imageUrl || DEFAULT_IMAGE,
-          instructions: '',
-          quantity: 1
-        });
-      } else {
-        setSelectedItem(item);
-        setShowModifiers(true);
-      }
-    },
-    [addItem]
-  );
+  const handleAddItem = useCallback((item: MenuItem) => {
+    
+    if (SIMPLIFIED_MODAL_CATEGORIES.includes(item.category)) {
+      addItem({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        imageUrl: item.imageUrl || DEFAULT_IMAGE,
+        instructions: '',
+        quantity: 1
+      });
+    } else {
+      setSelectedItem(item);
+      setShowModifiers(true);
+    }
+  }, [addItem]);
 
   const capitalizeFirstLetter = (string: string) => {
     return string
@@ -899,7 +897,7 @@ const MenuSection = () => {
                               </div>
                             )} */}
 
-                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center justify-between mt-2">
                               <p className="text-primary font-bold text-lg">
                                 ${item.price.toFixed(2)}
                               </p>
