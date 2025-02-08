@@ -30,10 +30,10 @@ export function OnboardClientModal({ store, onClose, onSubmit }: Props) {
 
       const validationCode = localStorage.getItem('hexaCode');
       const cleanedHexString = validationCode && validationCode.replace(/\s+/g, '');
-      if (hexCode !== cleanedHexString) {
-        toast.error('Hex code mismatch');
-        return;
-      }
+      // if (hexCode !== cleanedHexString) {
+      //   toast.error('Hex code mismatch');
+      //   return;
+      // }
 
       const newDisplay: Display = {
         id: uuidv4(),

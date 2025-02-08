@@ -5,7 +5,7 @@ import { Store } from '../../types/store';
 import { displayService } from '../../services/displayService';
 import { toast, Toaster } from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const socket = io(API_URL); // Replace with your backend server address
 

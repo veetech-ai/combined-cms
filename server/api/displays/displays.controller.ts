@@ -40,13 +40,13 @@ export const getDisplays = asyncHandler(async (req: Request, res: Response) => {
 
 export const addDisplay = asyncHandler(async (req: Request, res: Response) => {
   const newDisplay = req.body;
-  
+
   if (!newDisplay.id || !newDisplay.hexCode) {
     throw new ApiError(400, 'Display ID and hex code are required');
   }
 
   const displays = await readDisplays();
-  
+
   // Check if display with same hex code already exists
   if (displays.some((d: any) => d.hexCode === newDisplay.hexCode)) {
     throw new ApiError(400, 'Display with this hex code already exists');
@@ -54,37 +54,41 @@ export const addDisplay = asyncHandler(async (req: Request, res: Response) => {
 
   displays.push(newDisplay);
   await writeDisplays(displays);
-  
+
   res.status(201).json(newDisplay);
 });
 
-export const updateDisplay = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const updateData = req.body;
+export const updateDisplay = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const updateData = req.body;
 
-  const displays = await readDisplays();
-  const index = displays.findIndex((d: any) => d.id === id);
-  
-  if (index === -1) {
-    throw new ApiError(404, 'Display not found');
+    const displays = await readDisplays();
+    const index = displays.findIndex((d: any) => d.id === id);
+
+    if (index === -1) {
+      throw new ApiError(404, 'Display not found');
+    }
+
+    displays[index] = { ...displays[index], ...updateData };
+    await writeDisplays(displays);
+
+    res.json(displays[index]);
   }
+);
 
-  displays[index] = { ...displays[index], ...updateData };
-  await writeDisplays(displays);
-  
-  res.json(displays[index]);
-});
+export const deleteDisplay = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
 
-export const deleteDisplay = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+    const displays = await readDisplays();
+    const filteredDisplays = displays.filter((d: any) => d.id !== id);
 
-  const displays = await readDisplays();
-  const filteredDisplays = displays.filter((d: any) => d.id !== id);
-  
-  if (displays.length === filteredDisplays.length) {
-    throw new ApiError(404, 'Display not found');
+    if (displays.length === filteredDisplays.length) {
+      throw new ApiError(404, 'Display not found');
+    }
+
+    await writeDisplays(filteredDisplays);
+    res.status(204).send();
   }
-
-  await writeDisplays(filteredDisplays);
-  res.status(204).send();
-}); 
+);
