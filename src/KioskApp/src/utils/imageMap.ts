@@ -46,7 +46,20 @@ export const itemImageMap: Record<string, string> = {
   "beef nihari (traditional)": "https://i.ibb.co/sq96cFS/Beef-Nihari-Burrito.webp",
   "side nihari soup w/ beef": "https://i.ibb.co/f125fsj/Side-Nihari-Soup.jpg",
   "can": "https://i.ibb.co/XCXqFNv/Jarritos.jpg",
-  "aloo quesadilla": "https://i.ibb.co/3ky267g/Cheese-Quesadilla.webp"
+  "aloo quesadilla": "https://i.ibb.co/3ky267g/Cheese-Quesadilla.webp",
+
+  //newly added images
+  'chicken rice bowl with cheese':
+  'https://www.afpllc.com/wp-content/uploads/cheesey-chicken-rice-bowl-recipe-1343.jpg',
+'extra puri':
+  'https://www.awesomecuisine.com/wp-content/uploads/2020/03/poori-masala-kizhangu-500x375.jpg',
+'puri chane':
+  'https://img-global.cpcdn.com/recipes/213596010438c266/680x482cq70/chane-ki-sabzi-with-puri-recipe-main-photo.jpg',
+'poori':
+  'https://studentbiryanibuckingham.co.uk/sbb-content/uploads/2024/06/Puri-2.webp ',
+'tikka': 'https://cookingfrog.com/wp-content/uploads/2021/11/Original-Pakistani-Chicken-Tikka-Recipe.jpg'
+
+
 };
 
 // Update default image to a hosted URL
