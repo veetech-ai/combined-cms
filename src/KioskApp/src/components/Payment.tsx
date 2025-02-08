@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useOrder } from '../../../contexts/OrderContext';
 import { useCustomerStore } from '../stores/customerStore';
+import { createCharge } from '../api/clover';
 
 export function Payment() {
   const { orderItems } = useOrder();
@@ -19,6 +20,22 @@ export function Payment() {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const processGooglePayPayment = async (token: string) => {
+    const response: any = await createCharge(
+      amount * 100,
+      token,
+      'Payment for order',
+      'usd'
+    );
+    console.log(response, 'sdadsadsa');
+    if (response.status === 'succeeded') {
+      setCurrentScreen('confirmation');
+    } else {
+      setError('Failed to process payment. Please try again.');
+      // setCurrentScreen
+    }
+  };
 
   useEffect(() => {
     setError(null);
@@ -69,6 +86,11 @@ export function Payment() {
         return;
       }
 
+      // avoid re-initializing Clover if already initialized
+      if (googlePayContainer.querySelector('iframe')) {
+        return;
+      }
+
       // Initialize Clover
       const clover = new window.Clover('62862dc628972e7b4e7fbffd18ab0cdb', {
         merchantId: 'PSK40XM0M8ME1'
@@ -108,20 +130,20 @@ export function Payment() {
 
       // Listen for Google Pay event
       googlePayButton.addEventListener('paymentMethod', async (event) => {
-        console.log('Google Pay token received:', event.detail);
+        console.log('Google Pay token received:', event);
 
-        if (!event.detail || !event.detail.tokenReceived) {
+        if (!event.token) {
           console.error('Google Pay tokenization failed:', event);
           setError('Google Pay transaction failed. Please try again.');
           return;
         }
 
-        const token = event.detail.tokenReceived.id;
+        const token = event.token;
         console.log('Google Pay token:', token);
-        alert(`Google Pay Token: ${token}`);
+        // alert(`Google Pay Token: ${token}`);
 
         // Send token to backend for processing
-        // await processGooglePayPayment(token);
+        await processGooglePayPayment(token);
       });
     } catch (error) {
       console.error('Error initiating Google Pay:', error);
@@ -138,7 +160,7 @@ export function Payment() {
       } else if (provider === 'apple') {
         // await handleApplePay();
       }
-      setCurrentScreen('confirmation');
+      // setCurrentScreen('confirmation');
 
       // Simulate payment processing
       // setTimeout(() => {
