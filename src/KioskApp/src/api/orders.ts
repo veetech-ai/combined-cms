@@ -11,7 +11,13 @@ interface Order {
   id: string;
   customer_id: string;
   order_number: string;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'preparing'
+    | 'ready'
+    | 'completed'
+    | 'cancelled';
   subtotal: number;
   phone_discount: boolean;
   phone_discount_amount: number;
@@ -35,7 +41,9 @@ export async function createOrder(data: {
   return apiClient.post<Order>('/orders', data);
 }
 
-export async function getOrdersByCustomer(customerId: string): Promise<Order[]> {
+export async function getOrdersByCustomer(
+  customerId: string
+): Promise<Order[]> {
   return apiClient.get<Order[]>(`/orders/customer/${customerId}`);
 }
 
@@ -44,7 +52,7 @@ export async function getOrderByNumber(orderNumber: string): Promise<Order> {
 }
 
 export async function updateOrderStatus(
-  id: string, 
+  id: string,
   status: Order['status']
 ): Promise<Order> {
   return apiClient.put<Order>(`/orders/${id}/status`, { status });

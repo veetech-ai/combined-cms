@@ -7,6 +7,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { CheckoutLayout } from '../components/CheckoutLayout';
 import { useOrder } from '../../../contexts/OrderContext';
+import { orderService } from '../../..//services/orderService';
 type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
@@ -165,10 +166,17 @@ export function CustomerDetailsModal() {
 
     try {
       const orderDetails = {
+        orderId: orderItems?.orderId,
         customerName: name,
         customerPhone: phone,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        items: orderItems?.items || [],
+        totalBill: orderItems?.totalBill || "0"
       };
+
+      // Use the order service instead of direct fetch
+      await orderService.createOrder(orderDetails);
+      
       setCustomerName(name);
       navigate(`/kiosk/${id}/payment`);
     } catch (error) {

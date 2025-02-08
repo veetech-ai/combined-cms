@@ -44,14 +44,24 @@ export function CartSection({ onStartOver }: CartSectionProps) {
 
   const generateOrderId = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let orderId = 'Order #';
-
-    for (let i = 0; i < 12; i++) {
-      orderId += chars.charAt(Math.floor(Math.random() * chars.length));
+    let randomPart = '';
+  
+    // Generate a 6-character random string
+    for (let i = 0; i < 6; i++) {
+      randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-
-    return orderId; // Example: ORD-X7A9Z2
+  
+    // Get current date in YYYYMMDD format
+    const now = new Date();
+    const datePart = now.getFullYear().toString() + 
+                     String(now.getMonth() + 1).padStart(2, '0') + 
+                     String(now.getDate()).padStart(2, '0');
+  
+    return `${datePart}-${randomPart}`; 
   };
+  
+  // Example Output: ORD-20250208-X7A9Z2
+  
 
   const handleStartOrder = () => {
     if (items && items.length > 0) {

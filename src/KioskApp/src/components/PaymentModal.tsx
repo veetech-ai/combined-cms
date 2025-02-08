@@ -7,10 +7,13 @@ import QRCode from 'qrcode';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ApplePayLogo } from './ui/ApplePayLogo';
 import { GooglePayLogo } from './ui/GooglePayLogo';
+import { toast } from 'react-hot-toast';
 
 import { useCartStore } from '../stores/cartStore';
 import { useCustomerStore } from '../stores/customerStore';
 import { useOrder } from '../../../contexts/OrderContext';
+
+const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:5173';
 
 // Add dummy data
 const dummyCartItems = [
@@ -40,11 +43,26 @@ export function PaymentModal() {
     0
   );
 
+  // Update QR code generation when orderId changes
   useEffect(() => {
-    QRCode.toDataURL('https://payment.example.com/order/123')
-      .then((url) => setQrCode(url))
-      .catch((err) => console.error('Failed to generate QR code:', err));
-  }, []);
+    if (orderItems?.orderId) {
+      const summaryUrl = `${BASE_URL}/kiosk/${id}/summary?orderId=${orderItems.orderId}`;
+      
+      QRCode.toDataURL(summaryUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      })
+        .then((url) => setQrCode(url))
+        .catch((err) => {
+          console.error('Failed to generate QR code:', err);
+          toast.error('Failed to generate QR code');
+        });
+    }
+  }, [orderItems?.orderId, id]);
 
   // Track user activity
   const handleUserActivity = useCallback(() => {
@@ -120,8 +138,9 @@ export function PaymentModal() {
 
   const handleSuccess = () => {
     resetTimer();
-    navigate(`/kiosk/${id}/summary`);
-    // navigate(`/kiosk/${id}/success`);
+    const summaryUrl = `/kiosk/${id}/summary?orderId=${orderItems?.orderId}`;
+    console.log('Navigating to:', summaryUrl);
+    navigate(summaryUrl);
   };
 
   const handleClose = () => {
@@ -289,33 +308,47 @@ export function PaymentModal() {
                 <div className="bg-white rounded-2xl p-4 shadow-lg relative overflow-hidden border border-gray-100 group">
                   <div className="flex flex-col items-center text-center mb-3">
                     <h3 className="text-2xl font-medium mb-1">Quick Pay</h3>
-                    <p className="text-gray-500">Scan with your phone</p>
-              </div>
+                    <p className="text-gray-500">Scan with your phone to view order summary</p>
+                  </div>
 
                   <div className="flex justify-center gap-4 mb-3">
                     <div className="transform transition-transform group-hover:scale-105">
-                  <GooglePayLogo />
+                      <GooglePayLogo />
                     </div>
                     <div className="transform transition-transform group-hover:scale-105">
-                  <ApplePayLogo />
+                      <ApplePayLogo />
                     </div>
-                </div>
-
-                <div
-                    className="flex justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer"
-                    onClick={() => {
-                      handleQRCodeClick();
-                      handleSuccess();
-                    }}
-                >
-                  {qrCode && (
-                    <img
-                      src={qrCode}
-                      alt="Payment QR Code"
-                        className="w-40 h-40 transition-transform hover:scale-105"
-                    />
-                  )}
                   </div>
+
+                  {orderItems?.orderId ? (
+                    <div
+                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer"
+                      onClick={() => {
+                        handleQRCodeClick();
+                        handleSuccess();
+                      }}
+                    >
+                      {qrCode && (
+                        <>
+                          <img
+                            src={qrCode}
+                            alt="Order Summary QR Code"
+                            className="w-40 h-40 transition-transform hover:scale-105"
+                          />
+                          <p className="text-sm text-gray-500 mt-2">
+                            Order ID: {orderItems.orderId}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Click or scan to view summary
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center p-4 text-gray-500">
+                      Loading order details...
+                    </div>
+                  )}
                 </div>
 
                 {/* Cash/Card Payment */}

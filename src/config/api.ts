@@ -1,20 +1,20 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api",
-  VERSION: import.meta.env.VITE_API_VERSION || "/v1",
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
+  VERSION: import.meta.env.VITE_API_VERSION || '',
   ENDPOINTS: {
     // Auth
-    LOGIN: "/auth/login",
-    LOGOUT: "/auth/logout",
-    REFRESH_TOKEN: "/auth/refresh-token",
+    LOGIN: '/auth/login',
+    LOGOUT: '/auth/logout',
+    REFRESH_TOKEN: '/auth/refresh-token',
 
     // Organizations
-    ORGANIZATIONS: "/organizations",
+    ORGANIZATIONS: '/organizations',
     ORGANIZATION_BY_ID: (id: string) => `/organizations/${id}`,
     ORGANIZATION_ANALYTICS: (id: string) => `/organizations/${id}/analytics`,
 
     // Stores
-    STORES: "/stores",
+    STORES: '/stores',
     STORE_BY_ID: (id: string) => `/stores/${id}`,
     STORE_ANALYTICS: (id: string) => `/stores/${id}/analytics`,
     STORE_SEARCH_ANALYTICS: (id: string) => `/stores/${id}/search-analytics`,
@@ -30,11 +30,16 @@ export const API_CONFIG = {
 
     // Store Modules
     STORE_MODULES: '/store-modules',
-    STORE_MODULE_BY_ID: (storeId: string, moduleId: string) => `/store-modules/${storeId}/${moduleId}`,
-    INITIALIZE_STORE_MODULES: (storeId: string) => `/store-modules/${storeId}/initialize`,
+    STORE_MODULE_BY_ID: (storeId: string, moduleId: string) =>
+      `/store-modules/${storeId}/${moduleId}`,
+    INITIALIZE_STORE_MODULES: (storeId: string) =>
+      `/store-modules/${storeId}/initialize`,
 
     // Displays
     DISPLAYS: '/displays',
-    DISPLAY_BY_ID: (id: string) => `/displays/${id}`
-  },
+    DISPLAY_BY_ID: (id: string) => `/displays/${id}`,
+
+    // Orders
+    ORDERS: '/orders'
+  }
 };

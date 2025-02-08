@@ -1,19 +1,19 @@
 import axios from 'axios';
 import { API_CONFIG } from '../config/api';
-import { authService } from "./authService";
+import { authService } from './authService';
 
 export const authClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
-  withCredentials: true,
+  withCredentials: true
 });
 
 // Create axios instance with default config
 const apiClient = axios.create({
-  baseURL: API_CONFIG.BASE_URL + API_CONFIG.VERSION,
+  baseURL: `${API_CONFIG.BASE_URL}/v1`,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json'
   },
-  withCredentials: true, // Important for handling refresh tokens
+  withCredentials: true // Important for handling refresh tokens
 });
 
 // Request interceptor for adding auth token
@@ -32,7 +32,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => {
     // Check for new token in response headers
-    const newToken = response.headers["x-new-access-token"];
+    const newToken = response.headers['x-new-access-token'];
     if (newToken) {
       // Update the token in auth service
       authService.setToken(newToken);

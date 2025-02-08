@@ -75,12 +75,12 @@ const App = () => {
 
             {/* <Route path="/store/:id" element={<StorePage />} /> */}
             <Route path="/kiosk/:id" element={<WelcomeScreen />} />
-            <Route path="/kiosk/:id/kiosk" element={<KioskApp />} />
+            <Route path="/kiosk/:id/*" element={<KioskApp />} />
             <Route path="/kiosk/:id/details" element={<CustomerDetailsModal  />} />
             <Route path="/kiosk/:id/payment" element={<PaymentModal  />} />
             <Route path="/kiosk/:id/feedback" element={<FeedbackModal  />} />
             <Route path="/kiosk/:id/success" element={<Success  />} />
-            <Route path="/kiosk/:id/summary" element={<Payment  />} />
+            <Route path="/kiosk/:id/summary" element={<Payment />} />
 
               {/* Protected Routes */}
               <Route
