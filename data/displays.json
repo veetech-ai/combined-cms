@@ -150,13 +150,23 @@
     "hexCode": "93940154"
   },
   {
-    "id": "9cef3ce2-9d04-45ce-b6ad-a2ed29ecf347",
-    "name": "ZAIN",
+    "id": "5b274ebb-5b34-4cd7-b758-dc35e107834d",
+    "name": "Panda Display",
     "location": "Pending Setup",
-    "store": "MaxiKhana",
+    "store": "Pandamart",
     "organization": "Default Organization",
     "status": "Online",
-    "lastSeen": "2025-02-08T06:37:53.253Z",
-    "hexCode": "F274DFAQ"
+    "lastSeen": "2025-02-08T03:15:53.711Z",
+    "hexCode": "FD8A6783"
+  },
+  {
+    "id": "21b11375-29e5-4373-b9ce-9a38fcd37e61",
+    "name": "Zain",
+    "location": "Pending Setup",
+    "store": "Muhammad Zain112",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-08T07:54:06.685Z",
+    "hexCode": "FDSSDFSD"
   }
 ]

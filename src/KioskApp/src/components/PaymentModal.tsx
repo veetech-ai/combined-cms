@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle, ChevronLeft, ShoppingCart, CreditCard } from 'lucide-react';
+import {
+  CheckCircle,
+  ChevronLeft,
+  ShoppingCart,
+  CreditCard
+} from 'lucide-react';
 import { BackButton } from './ui/BackButton';
 import { Timer } from './ui/Timer';
 import { motion } from 'framer-motion';
@@ -7,6 +12,8 @@ import QRCode from 'qrcode';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ApplePayLogo } from './ui/ApplePayLogo';
 import { GooglePayLogo } from './ui/GooglePayLogo';
+import axios from 'axios';
+import { toast, Toaster } from 'react-hot-toast';
 
 import { useCartStore } from '../stores/cartStore';
 import { useCustomerStore } from '../stores/customerStore';
@@ -50,7 +57,7 @@ export function PaymentModal() {
   const handleUserActivity = useCallback(() => {
     setLastActivity(Date.now());
     setIsUserActive(true);
-    
+
     if (showTimer) {
       setShowTimer(false);
       setTimeLeft(60); // Reset countdown when user becomes active
@@ -59,14 +66,20 @@ export function PaymentModal() {
 
   // Set up activity listeners
   useEffect(() => {
-    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
-    
-    events.forEach(event => {
+    const events = [
+      'mousemove',
+      'mousedown',
+      'keydown',
+      'touchstart',
+      'scroll'
+    ];
+
+    events.forEach((event) => {
       window.addEventListener(event, handleUserActivity);
     });
 
     return () => {
-      events.forEach(event => {
+      events.forEach((event) => {
         window.removeEventListener(event, handleUserActivity);
       });
     };
@@ -76,8 +89,9 @@ export function PaymentModal() {
   useEffect(() => {
     const inactivityCheck = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActivity;
-      
-      if (timeSinceLastActivity > 10000) { // 10 seconds
+
+      if (timeSinceLastActivity > 10000) {
+        // 10 seconds
         setIsUserActive(false);
         setShowTimer(true);
         setIsTimerActive(true);
@@ -92,7 +106,7 @@ export function PaymentModal() {
     if (!isTimerActive || !showTimer || timeLeft <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -126,7 +140,7 @@ export function PaymentModal() {
 
   const handleClose = () => {
     // Navigate back to phone number step without clearing cart
-    navigate(`/kiosk/${id}/details`, { 
+    navigate(`/kiosk/${id}/details`, {
       state: { step: 'phone' } // Pass step information
     });
   };
@@ -149,6 +163,65 @@ export function PaymentModal() {
   // Update handler for order button click - remove clearCart
   const handleOrderClick = () => {
     navigate(`/kiosk/${id}/kiosk`);
+  };
+
+  const generateRandomId = () => {
+    return Math.random().toString(36).substring(2, 15); // Generates up to 13 characters
+  };
+
+  const handlePostOrder = async () => {
+    const temp = orderItems.orderId
+      .split(' ')
+      .map((item) => item.replace(/^#/, ''));
+
+    const obj = {
+      orderCart: {
+        lineItems: orderItems.items.map((item, index) => {
+          // console.log(String(item.id));
+          return {
+            id: generateRandomId(), // Unique ID per line item
+            item: { id: String(item.id) }, // Convert ID to string if needed
+            price: item.price * 100, // Assuming API expects price in cents
+            unitQty: item.quantity,
+            note: item.name.en || 'No name'
+          };
+        }),
+        note: 'Test order',
+        merchant: { id: 'PSK40XM0M8ME1' },
+        currency: 'USD',
+        id: temp[1] // Order ID extracted
+      }
+    };
+
+    try {
+      const response = await axios.post(
+        'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/atomic_order/orders',
+        obj,
+        {
+          headers: {
+            // Correct placement of headers
+            Authorization: 'Bearer acca0c85-6c26-710f-4390-23676eae487c',
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        toast.success('Order Place Successfully');
+
+        // Ensure these lines run by removing `return`
+        setStep('cash');
+        resetTimer();
+      } else {
+        toast.error('Error Placing Order');
+      }
+    } catch (error) {
+      console.error(
+        'Error:',
+        error.response ? error.response.data : error.message
+      );
+      toast.error('Error Placing Order');
+    }
   };
 
   return (
@@ -177,7 +250,9 @@ export function PaymentModal() {
               <ShoppingCart className="h-4 w-4" />
               <span>{orderItems && orderItems.items.length} items</span>
               <span>|</span>
-              <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
+              <span>
+                ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+              </span>
             </button>
           </div>
 
@@ -189,9 +264,10 @@ export function PaymentModal() {
                       <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-medium">Order Summary</h2>
                     <span className="text-gray-500">
-                      ({orderItems && orderItems.items.length} {orderItems.items.length === 1 ? 'Item' : 'Items'})
+                      ({orderItems && orderItems.items.length}{' '}
+                      {orderItems.items.length === 1 ? 'Item' : 'Items'})
                     </span>
-                      </div>
+                  </div>
                   <div className="text-gray-500">{orderItems && orderItems.orderId}</div>
                 </div>
 
@@ -204,7 +280,9 @@ export function PaymentModal() {
                         {/* Main Item */}
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-3">
-                            <span className="text-gray-500">{item.quantity}x</span>
+                            <span className="text-gray-500">
+                              {item.quantity}x
+                            </span>
                             <span className="font-medium">{item.name.en}</span>
                           </div>
                           <span className="font-medium">
@@ -213,22 +291,31 @@ export function PaymentModal() {
                         </div>
 
                         {/* Customizations */}
-                        {item.customization && Object.keys(item.customization).length > 0 && (
-                          <div className="ml-8 text-sm text-gray-500">
-                            {Object.entries(item.customization).map(([key, value]) => (
-                              <div key={key} className="flex items-center gap-2">
-                                <span>•</span>
-                                <span>{value}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        {item.customization &&
+                          Object.keys(item.customization).length > 0 && (
+                            <div className="ml-8 text-sm text-gray-500">
+                              {Object.entries(item.customization).map(
+                                ([key, value]) => (
+                                  <div
+                                    key={key}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <span>•</span>
+                                    <span>{value}</span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          )}
 
                         {/* Addons */}
                         {item.addons && item.addons.length > 0 && (
                           <div className="ml-8 text-sm text-gray-500">
                             {item.addons.map((addon, idx) => (
-                              <div key={idx} className="flex justify-between items-center">
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center"
+                              >
                                 <div className="flex items-center gap-2">
                                   <span>+</span>
                                   <span>{addon.name}</span>
@@ -243,7 +330,10 @@ export function PaymentModal() {
                         {item.extras && item.extras.length > 0 && (
                           <div className="ml-8 text-sm text-gray-500">
                             {item.extras.map((extra, idx) => (
-                              <div key={idx} className="flex justify-between items-center">
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center"
+                              >
                                 <div className="flex items-center gap-2">
                                   <span>+</span>
                                   <span>{extra.name}</span>
@@ -267,12 +357,20 @@ export function PaymentModal() {
                     <div className="p-4 space-y-2">
                       <div className="flex justify-between text-gray-500">
                         <span>Subtotal</span>
-                        <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
+                        <span>
+                          $
+                          {orderItems &&
+                            parseFloat(orderItems.totalBill).toFixed(2)}
+                        </span>
                       </div>
 
                       <div className="flex justify-between text-lg font-medium">
                         <span>Total</span>
-                        <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
+                        <span>
+                          $
+                          {orderItems &&
+                            parseFloat(orderItems.totalBill).toFixed(2)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -283,7 +381,9 @@ export function PaymentModal() {
             {/* Right Side - Payment Options */}
             <div className="flex-1 p-6 order-1 lg:order-2 overflow-auto">
               <div className="max-w-lg mx-auto space-y-6">
-                <h2 className="text-2xl font-medium mb-4">Select Payment Method</h2>
+                <h2 className="text-2xl font-medium mb-4">
+                  Select Payment Method
+                </h2>
 
                 {/* Digital Payment */}
                 <div className="bg-white rounded-2xl p-4 shadow-lg relative overflow-hidden border border-gray-100 group">
@@ -320,16 +420,15 @@ export function PaymentModal() {
 
                 {/* Cash/Card Payment */}
                 <motion.button
-                  onClick={() => {
-                    setStep('cash');
-                    resetTimer();
-                  }}
+                  onClick={handlePostOrder}
                   className="w-full bg-black text-white rounded-2xl p-4 flex items-center justify-between hover:bg-black/90 transition-colors"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <div>
-                    <h3 className="text-lg font-medium mb-1">Pay with Cash or Card</h3>
+                    <h3 className="text-lg font-medium mb-1">
+                      Pay with Cash or Card
+                    </h3>
                     <p className="text-white/70 text-sm">Pay at the counter</p>
                   </div>
                   <CreditCard className="w-6 h-6" />
@@ -422,9 +521,9 @@ export function PaymentModal() {
           )}
         </div>
       )}
+      <Toaster />
     </div>
   );
 }
 
 export default PaymentModal;
-
