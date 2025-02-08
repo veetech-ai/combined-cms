@@ -16,6 +16,15 @@ interface CloverConfig {
 interface CloverInstance {
   elements: () => any;
   createToken: () => Promise<{ token: string }>;
+  createApplePaymentRequest: ({
+    amount,
+    currencyCode,
+    countryCode
+  }: {
+    amount: number;
+    currencyCode: string;
+    countryCode: string;
+  }) => Promise<{ token: string }>;
 }
 
 const CloverPaymentForm = () => {

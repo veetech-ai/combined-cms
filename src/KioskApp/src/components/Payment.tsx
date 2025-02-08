@@ -27,14 +27,13 @@ export function Payment() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const processGooglePayPayment = async (token: string) => {
+  const processPayment = async (token: string) => {
     const response: any = await createCharge(
       amount * 100,
       token,
       'Payment for order',
       'usd'
     );
-    console.log(response, 'sdadsadsa');
     if (response.status === 'succeeded') {
       setCurrentScreen('confirmation');
     } else {
@@ -46,7 +45,7 @@ export function Payment() {
   useEffect(() => {
     setError(null);
     if (currentScreen === 'apple') {
-      //
+      handleApplePay();
     } else if (currentScreen === 'google') {
       handleGooglePay();
     }
@@ -84,8 +83,118 @@ export function Payment() {
     }, 300);
   };
 
+  const handleApplePay = async () => {
+    try {
+      if (!amount || amount <= 0) {
+        console.error('Invalid amount, cannot proceed with Apple Pay.');
+        setError('Payment amount is required.');
+        return;
+      }
+
+      if (!window.Clover) {
+        console.error('Clover SDK is not loaded');
+        setError('Payment system not initialized.');
+        return;
+      }
+
+      const applePayContainer = document.getElementById('apple-pay-button');
+      if (!applePayContainer) {
+        console.error('Apple Pay button container not found.');
+        setError('Apple Pay button not available.');
+        return;
+      }
+
+      // Avoid re-initializing Clover if already initialized
+      if (applePayContainer.querySelector('iframe')) {
+        return;
+      }
+
+      // Initialize Clover
+      const clover = new window.Clover('62862dc628972e7b4e7fbffd18ab0cdb', {
+        merchantId: 'PSK40XM0M8ME1'
+      });
+
+      const applePayRequest = clover.createApplePaymentRequest({
+        amount: amount * 100,
+        countryCode: 'US',
+        currencyCode: 'USD'
+      });
+
+      const elements = clover.elements();
+      applePayContainer.innerHTML = '';
+
+      // Create Apple Pay Button Element
+      const applePayButton = elements.create(
+        'PAYMENT_REQUEST_BUTTON_APPLE_PAY',
+        {
+          applePayRequest,
+          sessionIdentifier: 'PSK40XM0M8ME1'
+        }
+      );
+      // const applePayButton = elements.create(
+      //   'PAYMENT_REQUEST_BUTTON_APPLE_PAY',
+      //   {
+      //     paymentReqData: {
+      //       total: {
+      //         label: 'Total Amount',
+      //         amount: amount * 100 // Convert to cents
+      //       },
+      //       options: {
+      //         button: {
+      //           buttonType: 'short'
+      //         }
+      //       }
+      //     }
+      //   }
+      // );
+
+      applePayButton.mount('#apple-pay-button');
+
+      // Ensure iframe inside container has correct height
+      setTimeout(() => {
+        const iframe = applePayContainer.querySelector('iframe');
+        if (iframe) {
+          iframe.style.height = '50px'; // Adjust height
+          iframe.style.width = '100%'; // Ensure full width
+          iframe.style.border = 'none'; // Remove border
+          iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
+        }
+      }, 500);
+
+      // Listen for Apple Pay event
+      applePayButton.addEventListener('paymentMethod', async (event) => {
+        console.log('Apple Pay token received:', event);
+        if (!event.detail || !event.detail.tokenReceived) {
+          setError('Apple Pay transaction failed. Please try again.');
+          return;
+        }
+
+        if (!event.token) {
+          console.error('Apple Pay tokenization failed:', event);
+          setError('Apple Pay transaction failed. Please try again.');
+          return;
+        }
+
+        const token = event.token || event.detail.tokenReceived.i;
+        console.log('Apple Pay token:', token);
+
+        // Send token to backend for processing
+        await processPayment(token);
+      });
+    } catch (error) {
+      console.error('Error initiating Apple Pay:', error);
+      setError('Failed to initiate Apple Pay.');
+    }
+  };
+
   const handleGooglePay = async () => {
     try {
+      if (!amount || amount <= 0) {
+        console.error('Invalid amount, cannot proceed with Apple Pay.');
+        setError('Payment amount is required.');
+        return;
+      }
+
       if (!window.Clover) {
         console.error('Clover SDK is not loaded');
         setError('Payment system not initialized.');
@@ -156,7 +265,7 @@ export function Payment() {
         // alert(`Google Pay Token: ${token}`);
 
         // Send token to backend for processing
-        await processGooglePayPayment(token);
+        await processPayment(token);
       });
     } catch (error) {
       console.error('Error initiating Google Pay:', error);
@@ -171,7 +280,7 @@ export function Payment() {
       if (provider === 'google') {
         await handleGooglePay();
       } else if (provider === 'apple') {
-        // await handleApplePay();
+        await handleApplePay();
       }
       // setCurrentScreen('confirmation');
 
@@ -274,7 +383,7 @@ export function Payment() {
       </div>
 
       <div className="p-6 space-y-4 bg-white shadow-xl rounded-t-[2.5rem] fixed bottom-0 left-0 right-0 max-w-lg mx-auto">
-        <button
+        {/* <button
           onClick={() => handlePayment('apple')}
           className={`w-full text-xl font-bold rounded-2xl py-5 flex items-center justify-center gap-3 shadow-lg transition-all ${
             amount
@@ -284,7 +393,17 @@ export function Payment() {
           disabled={!amount}
         >
           Pay with Apple Pay
+        </button> */}
+        <button
+          id="apple-pay-button"
+          className={`w-full h-14 bg-black text-white text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 shadow-md transition-all hover:bg-gray-800 hover:shadow-lg active:scale-95 font-roboto ${
+            amount ? '' : 'cursor-not-allowed opacity-50'
+          }`}
+          disabled={!amount}
+        >
+          Pay with Apple Pay
         </button>
+
         <button
           onClick={() => setCurrentScreen('google')}
           className={`w-full bg-white border-2 border-black text-lg font-medium rounded-2xl py-4 transition-colors hover:bg-gray-50 ${
