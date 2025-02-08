@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Star,
   Instagram,
@@ -18,10 +18,33 @@ export function Payment() {
   const [rating, setRating] = useState<number>(0);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setError(null);
+    if (currentScreen === 'apple') {
+      //
+    } else if (currentScreen === 'google') {
+      handleGooglePay();
+    }
+
+    // Perform any setup or initialization here
+    console.log('Payment component mounted');
+
+    return () => {
+      // Cleanup if necessary
+      console.log('Payment component unmounted');
+    };
+  }, [currentScreen]);
+
+  const renderErrorMessage = () =>
+    error ? (
+      <div className="p-4 bg-red-100 text-red-700 rounded-lg mb-4">{error}</div>
+    ) : null;
 
   const items = orderItems?.items || [];
-  // const amount = 0.01; // for testing purposes - dummy payment
-  const amount = orderItems ? parseFloat(orderItems.totalBill) : 0;
+  const amount = 0.01; // for testing purposes - dummy payment
+  // const amount = orderItems ? parseFloat(orderItems.totalBill) : 0;
   const orderId = orderItems?.orderId || '';
 
   const handleStarClick = (value: number) => {
@@ -31,14 +54,103 @@ export function Payment() {
     }, 300);
   };
 
-  const handlePayment = (provider: 'apple' | 'google') => {
-    setIsAnimating(true);
-    setCurrentScreen('processing');
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsAnimating(false);
+  const handleGooglePay = async () => {
+    try {
+      if (!window.Clover) {
+        console.error('Clover SDK is not loaded');
+        setError('Payment system not initialized.');
+        return;
+      }
+
+      const googlePayContainer = document.getElementById('google-pay-button');
+      if (!googlePayContainer) {
+        console.error('Google Pay button container not found.');
+        setError('Google Pay button not available.');
+        return;
+      }
+
+      // Initialize Clover
+      const clover = new window.Clover('62862dc628972e7b4e7fbffd18ab0cdb', {
+        merchantId: 'PSK40XM0M8ME1'
+      });
+
+      const elements = clover.elements();
+      // Remove any existing buttons before re-creating
+      googlePayContainer.innerHTML = '';
+
+      // Create Google Pay Button Element
+      const googlePayButton = elements.create('PAYMENT_REQUEST_BUTTON', {
+        paymentReqData: {
+          total: {
+            label: 'Total Amount',
+            amount: amount * 100 // Convert to cents
+          },
+          options: {
+            button: {
+              buttonType: 'short'
+            }
+          }
+        }
+      });
+
+      googlePayButton.mount('#google-pay-button');
+
+      // Ensure iframe inside container has correct height
+      setTimeout(() => {
+        const iframe = googlePayContainer.querySelector('iframe');
+        if (iframe) {
+          iframe.style.height = '50px'; // Adjust height
+          iframe.style.width = '100%'; // Ensure full width
+          iframe.style.border = 'none'; // Remove border
+          iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
+        }
+      }, 500);
+
+      // Listen for Google Pay event
+      googlePayButton.addEventListener('paymentMethod', async (event) => {
+        console.log('Google Pay token received:', event.detail);
+
+        if (!event.detail || !event.detail.tokenReceived) {
+          console.error('Google Pay tokenization failed:', event);
+          setError('Google Pay transaction failed. Please try again.');
+          return;
+        }
+
+        const token = event.detail.tokenReceived.id;
+        console.log('Google Pay token:', token);
+        alert(`Google Pay Token: ${token}`);
+
+        // Send token to backend for processing
+        // await processGooglePayPayment(token);
+      });
+    } catch (error) {
+      console.error('Error initiating Google Pay:', error);
+      setError('Failed to initiate Google Pay.');
+    }
+  };
+
+  const handlePayment = async (provider: 'apple' | 'google') => {
+    try {
+      setIsAnimating(true);
+      setCurrentScreen('processing');
+      if (provider === 'google') {
+        await handleGooglePay();
+      } else if (provider === 'apple') {
+        // await handleApplePay();
+      }
       setCurrentScreen('confirmation');
-    }, 2000);
+
+      // Simulate payment processing
+      // setTimeout(() => {
+      //   setIsAnimating(false);
+      //   setCurrentScreen('confirmation');
+      // }, 2000);
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      setError('Failed to initiate payment.');
+    } finally {
+      setIsAnimating(false);
+    }
   };
 
   const renderApplePayScreen = () => (
@@ -61,7 +173,7 @@ export function Payment() {
           </div>
           <div className="h-1 w-24 bg-[#06C167] rounded-full mt-4"></div>
         </header>
-
+        {renderErrorMessage()}
         <div className="flex-1 p-8 text-left">
           <h2 className="text-2xl font-bold mb-1 text-black">Total Amount</h2>
           <div className="text-6xl font-bold mb-8 text-black tracking-tight">
@@ -168,6 +280,7 @@ export function Payment() {
           </div>
           <div className="h-1 w-24 bg-[#06C167] rounded-full mt-4"></div>
         </header>
+        {renderErrorMessage()}
 
         <div className="flex-1 p-8 text-left">
           <h2 className="text-2xl font-bold mb-1 font-roboto text-black">
@@ -238,15 +351,17 @@ export function Payment() {
       </div>
 
       <div className="p-6 space-y-4 bg-white shadow-xl rounded-t-[2.5rem] fixed bottom-0 left-0 right-0 max-w-lg mx-auto">
+        {/* <button
+          id="google-pay-button"
+          className="w-full max-w-xs h-12 rounded-lg bg-black flex items-center justify-center shadow-lg hover:bg-gray-800 transition"
+        ></button> */}
         <button
-          onClick={() => handlePayment('google')}
-          className={`w-full bg-[#06C167] text-white text-xl font-bold rounded-2xl py-5 flex items-center justify-center gap-3 shadow-lg transition-all hover:bg-[#05a85a] hover:shadow-xl active:transform active:scale-98 font-roboto ${
+          id="google-pay-button"
+          className={`w-full h-14 bg-black text-white text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 shadow-md transition-all hover:bg-gray-800 hover:shadow-lg active:scale-95 font-roboto ${
             amount ? '' : 'cursor-not-allowed opacity-50'
           }`}
           disabled={!amount}
-        >
-          Pay with Google Pay
-        </button>
+        ></button>
         <button
           onClick={() => setCurrentScreen('apple')}
           className={`w-full bg-white border-2 border-[#06C167] text-[#06C167] text-lg font-medium rounded-2xl py-4 transition-colors hover:bg-green-50 font-roboto ${
