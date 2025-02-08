@@ -1,4 +1,6 @@
+import apiClient from '../../../services/apiClient';
 import { CartItem } from '../types';
+import { apiClient as apiClientFastn } from './apiClient';
 
 const CLOVER_API_BASE =
   'https://cors-anywhere.herokuapp.com/https://api.clover.com/v3';
@@ -26,6 +28,41 @@ interface CloverOrderRequest {
     id: string;
   };
 }
+
+export const createCharge = async (
+  amount: number,
+  source: string,
+  description: string,
+  currency: string
+) => {
+  try {
+    const response = await apiClient.post('/pos/charge', {
+      amount,
+      source,
+      description,
+      currency
+    });
+
+    return response.data;
+
+    // if (!response.ok) {
+    //   const errorText = await response.text();
+    //   console.error('Clover API Error:', errorText);
+    //   throw new Error(`Failed to create charge: ${response.statusText}`);
+    // }
+
+    // const data = await response.json();
+    // console.log('Clover API Response:', data);
+
+    // return data;
+  } catch (error: any) {
+    console.error('Error creating Clover charge:', error);
+    return (
+      error?.response?.data || error.message || 'Error creating Clover charge'
+    );
+    // throw error;
+  }
+};
 
 export const createCloverOrder = async (
   items: CartItem[],

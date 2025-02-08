@@ -25,8 +25,13 @@ class ApiClient {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new ApiError(response.status, errorData.message || `HTTP error! status: ${response.status}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'Unknown error' }));
+      throw new ApiError(
+        response.status,
+        errorData.message || `HTTP error! status: ${response.status}`
+      );
     }
     return response.json();
   }
@@ -50,8 +55,13 @@ class ApiClient {
   }
 
   // Customer endpoints
-  async findOrCreateCustomer(name: string, phone: string): Promise<ApiResponse<any>> {
-    const endpoint = API_CONFIG.ENDPOINTS.CUSTOMERS.FIND_OR_CREATE(this.storeId);
+  async findOrCreateCustomer(
+    name: string,
+    phone: string
+  ): Promise<ApiResponse<any>> {
+    const endpoint = API_CONFIG.ENDPOINTS.CUSTOMERS.FIND_OR_CREATE(
+      this.storeId
+    );
     return this.post(endpoint, { name, phone });
   }
 }

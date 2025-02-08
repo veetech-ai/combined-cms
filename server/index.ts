@@ -22,7 +22,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${config.port}`,
+        url: `${config.baseUrl}/api/v1`,
         description: 'Development server'
       }
     ]
@@ -41,6 +41,7 @@ import organizationRoutes from './api/organizations/organizations.routes';
 import storeRoutes from './api/stores/stores.routes';
 import storeModulesRoutes from './api/store-modules/store-modules.routes';
 import displayRoutes from './api/displays/displays.routes';
+import posRoutes from './api/pos/pos.routes';
 import { DBService } from './services/db.service';
 import { prisma } from './db';
 import { PrismaClientInitializationError } from '@prisma/client/runtime/library';
@@ -88,6 +89,7 @@ app.use('/api/v1', organizationRoutes);
 app.use('/api/v1', storeRoutes);
 app.use('/api/v1', storeModulesRoutes);
 app.use('/api/v1', displayRoutes);
+app.use('/api/v1', posRoutes);
 
 // not found handler for /api endpoints
 app.use('/api/*', (req, res) => {
@@ -142,7 +144,6 @@ io.on('connection', (socket) => {
     console.log('user disconnected');
     socket.emit('redirect', { url: '/login' });
   });
-
 });
 
 server.listen(config.port, async () => {
