@@ -9,8 +9,14 @@ import {
 import { useOrder } from '../../../contexts/OrderContext';
 import { useCustomerStore } from '../stores/customerStore';
 import { createCharge } from '../api/clover';
+import { useLocation } from 'react-router-dom';
 
 export function Payment() {
+  const location = useLocation();
+
+  const queryParams = new URLSearchParams(location.search);
+  const testDummyPayment = queryParams.get('testDummyPayment') === 'true';
+
   const { orderItems } = useOrder();
   const { customerName } = useCustomerStore();
   const [currentScreen, setCurrentScreen] = useState<
@@ -58,9 +64,16 @@ export function Payment() {
     error ? (
       <div className="p-4 bg-red-100 text-red-700 rounded-lg mb-4">{error}</div>
     ) : null;
-
+  console.log(
+    'Payment component mounted - pass testDummyPayment=true to test 0.01 usd payment'
+  );
   const items = orderItems?.items || [];
-  const amount = 0.01; // for testing purposes - dummy payment
+  const amount = testDummyPayment
+    ? 0.01
+    : orderItems?.totalBill
+    ? parseFloat(orderItems.totalBill)
+    : 0;
+
   // const amount = orderItems ? parseFloat(orderItems.totalBill) : 0;
   const orderId = orderItems?.orderId || '';
 
