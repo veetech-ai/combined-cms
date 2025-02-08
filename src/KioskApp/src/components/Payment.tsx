@@ -121,7 +121,7 @@ export function Payment() {
       });
 
       const elements = clover.elements();
-      applePayContainer.innerHTML = '';
+      // applePayContainer.innerHTML = '';
 
       // Create Apple Pay Button Element
       const applePayButton = elements.create(
