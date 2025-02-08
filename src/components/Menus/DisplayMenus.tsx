@@ -17,7 +17,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import { displayService, Display } from '../../services/displayService';
 
 // Add environment variable
-const VITE_HOST_URL = import.meta.env.VITE_HOST_URL;
+const VITE_HOST_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173';
 
 interface LocationState {
   store: {
