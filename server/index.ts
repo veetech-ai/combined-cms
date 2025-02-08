@@ -62,10 +62,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Use CORS middleware
 app.use(
-	cors({
-		origin: config.cors.origin, // Replace with allowed origins
-		credentials: true, // Allow cookies and credentials
-	})
+	cors()
 );
 
 app.use(cookieParser());
