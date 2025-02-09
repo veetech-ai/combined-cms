@@ -19,8 +19,9 @@ import { useCartStore } from '../stores/cartStore';
 import { useCustomerStore } from '../stores/customerStore';
 import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
+import { orderService } from '../../../services/orderService';
 
-const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173';
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000'; //5173 on localhost
 
 // Add dummy data
 const dummyCartItems = [
@@ -64,15 +65,12 @@ export function PaymentModal() {
 
     socket.on('orderStatusUpdated', (data) => {
       console.log('Order status updated:', data);
-      if (
-        data.orderId === orderItems?.orderId &&
-        data.status === 'payment_processing'
-      ) {
-        setStep(data.status);
-      }
-
-      if (data.orderId === orderItems?.orderId && data.status === 'completed') {
-        setStep('card_paid');
+      if (data.orderId === orderItems?.orderId) {
+        if (data.status === 'payment_processing') {
+          setStep('payment_processing');
+        } else if (data.status === 'completed') {
+          setStep('card_paid');
+        }
       }
     });
 
@@ -208,6 +206,19 @@ export function PaymentModal() {
   const handleQRCodeClick = () => {
     resetTimer();
     handleUserActivity();
+    // Set processing state
+    setStep('payment_processing');
+    
+    // Update order status to payment_processing
+    if (orderItems?.orderId) {
+      orderService.updateOrder(orderItems.orderId, {
+        status: 'payment_processing'
+      }).catch(error => {
+        console.error('Error updating order status:', error);
+        toast.error('Failed to process payment');
+        setStep('initial');
+      });
+    }
   };
 
   // Update handler for order button click - remove clearCart
@@ -399,6 +410,7 @@ export function PaymentModal() {
                   {orderItems?.orderId ? (
                     <div
                       className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100"
+                      onClick={handleQRCodeClick}
                     >
                       {qrCode && (
                         <>
@@ -568,17 +580,16 @@ export function PaymentModal() {
       )}
       {step === 'payment_processing' && (
         <div className="h-full flex flex-col items-center justify-center bg-black text-white">
-          <div className="flex flex-col items-center justify-center text-center">
-            {/* Circular Loader */}
-            <div className="loader mb-5"></div>
-
-            {/* Processing Message */}
-            <p className="text-2xl font-semibold mb-2">Processing Payment...</p>
-
-            {/* Instruction Message */}
-            <p className="text-sm text-gray-300">
+          <div className="flex flex-col items-center justify-center text-center p-8">
+            <div className="loader mb-8"></div>
+            <h2 className="text-3xl font-bold mb-4">Processing Payment...</h2>
+            <p className="text-lg text-gray-300 mb-8">
               Please don't close this window
             </p>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <p className="text-sm text-gray-400">Securely processing your payment</p>
+            </div>
           </div>
         </div>
       )}
