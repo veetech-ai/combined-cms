@@ -64,8 +64,8 @@ export class DeviceService extends DBService {
   async createDevice(data: {
     name: string;
     hexCode: string;
-    storeModule: { connect: { id: string } };
-    screenSpecs: { connect: { id: string } };
+    storeModuleId: string;
+    screenSpecsId: string;
   }): Promise<DeviceWithRelations> {
     if (!/^[0-9A-F]{8}$/i.test(data.hexCode)) {
       throw new ApiError(400, 'Invalid hex code format');
@@ -75,10 +75,14 @@ export class DeviceService extends DBService {
       return this.db.devices.create({
         data: {
           name: data.name,
-          storeModuleId: data.storeModule.connect.id,
-          screenSpecsId: data.screenSpecs.connect.id,
           status: 'OFFLINE',
-          location: 'Pending Setup'
+          location: 'Pending Setup',
+          hexCode: data.hexCode,
+          storeModule: {
+            connect: {
+              id: data.storeModuleId
+            }
+          }
         },
         include: {
           storeModule: {

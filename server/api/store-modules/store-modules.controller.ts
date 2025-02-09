@@ -3,7 +3,6 @@ import { StoreModuleService } from './store-modules.service';
 import { prisma } from '../../db';
 import { asyncHandler } from '../../util/asyn-handler';
 import { ApiError } from '../../util/api.error';
-import { ModuleStatus } from '@prisma/client';
 
 const storeModuleService = new StoreModuleService(prisma);
 
@@ -15,23 +14,25 @@ export const getStoreModules = asyncHandler(
       throw new ApiError(400, 'Store ID is required');
     }
 
-  const modules = await storeModuleService.getStoreModules(storeId);
-  
-  // Transform the response to match the frontend expectations
-  const transformedModules = modules.map(({ module, isEnabled, stats, Devices }) => ({
-    id: module.id,
-    name: module.name,
-    key: module.key,
-    isEnabled,
-    stats: stats || {
-      activeDevices: Devices?.length || 0,
-      activeUsers: 0,
-      lastUpdated: new Date().toISOString()
-    }
-  }));
-  
-  res.json(transformedModules);
-});
+    const modules = await storeModuleService.getStoreModules(storeId);
+
+    // Transform the response to match the frontend expectations
+    const transformedModules = modules.map((item) => ({
+      id: item.id,
+      moduleId: item.module.id,
+      name: item.module.name,
+      key: item.module.key,
+      isEnabled: item.isEnabled,
+      stats: item.stats || {
+        activeDevices: item.Devices?.length || 0,
+        activeUsers: 0,
+        lastUpdated: new Date().toISOString()
+      }
+    }));
+
+    res.json(transformedModules);
+  }
+);
 
 export const updateModuleState = asyncHandler(
   async (req: Request, res: Response) => {

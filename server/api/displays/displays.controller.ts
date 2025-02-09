@@ -11,9 +11,7 @@ const storeService = new StoreService();
 const newDeviceSchema = z.object({
   name: z.string(),
   hexCode: z.string(),
-  storeModule: z.object({
-    connect: z.object({ id: z.string() })
-  })
+  storeModuleId: z.string()
 });
 
 const updateDeviceSchema = z.object({
@@ -21,17 +19,7 @@ const updateDeviceSchema = z.object({
   hexCode: z.string().optional(),
   status: z.string().optional(),
   location: z.string().optional(),
-  storeModule: z
-    .object({
-      connect: z.object({ id: z.string() }).optional()
-    })
-    .optional(),
-
-  screenSpecs: z
-    .object({
-      connect: z.object({ id: z.string() }).optional()
-    })
-    .optional()
+  storeModuleId: z.string().optional()
 });
 
 export const getDevices = asyncHandler(async (req: Request, res: Response) => {
@@ -53,7 +41,7 @@ export const addDevice = asyncHandler(async (req: Request, res: Response) => {
     where: { hexCode: validatedDevice.data.hexCode }
   });
 
-  if (existingDevice) {
+  if (existingDevice && existingDevice.length > 0) {
     throw new ApiError(400, 'Device with this hex code already exists');
   }
 
@@ -125,7 +113,6 @@ export const getStoreDevices = asyncHandler(
     if (!devices) {
       throw new ApiError(404, 'No devices found');
     }
-
 
     res.json(devices);
   }

@@ -91,11 +91,23 @@ export const DisplayMenus = () => {
 
   const handleDisplaySubmit = async (newDisplay: Display) => {
     try {
-      // Set the store information in the new display
+      // Get store modules to find the kiosk module
+      const modules = await displayService.getStoreModules(store.id);
+      const kioskModule = modules.find(module => module.key === 'kiosk');
+      
+      if (!kioskModule) {
+        throw new Error('Kiosk module not found for this store');
+      }
+
+      // Set the store information and storeModuleId in the new display
       const displayWithStore = {
         ...newDisplay,
-        store: store.name
+        store: store.name,
+        storeModuleId: kioskModule.id
       };
+
+      console.log({ displayWithStore });
+
       await displayService.addDisplay(displayWithStore);
       setDisplays((prevDisplays) => [...prevDisplays, displayWithStore]);
       toast.success('Display added successfully');

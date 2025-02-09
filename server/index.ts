@@ -150,7 +150,9 @@ server.listen(config.port, async () => {
   try {
     await new DBService(prisma).testConnection();
     console.log(
-      `Server running on port ${config.port} (${process.env.NODE_ENV} mode)`
+      `Server running on port ${config.port} (${
+        process.env.NODE_ENV ?? 'development'
+      } mode)`
     );
   } catch (error) {
     if (error instanceof PrismaClientInitializationError) {

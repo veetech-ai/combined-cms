@@ -183,7 +183,7 @@ model Devices {
   description   String?
   location      String?
   storeModuleId String       @map("store_module_id") @db.Uuid
-  screenSpecsId String       @map("screen_specs_id") @db.Uuid
+  screenSpecsId String?      @map("screen_specs_id") @db.Uuid
   hexCode       String?
   status        DeviceStatus @default(OFFLINE)
   lastSeen      DateTime?
@@ -191,8 +191,10 @@ model Devices {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  storeModule StoreModule @relation(fields: [storeModuleId], references: [id], onDelete: Cascade)
-  screenSpecs ScreenSpecs @relation(fields: [screenSpecsId], references: [id], onDelete: Cascade)
+  storeModule StoreModule  @relation(fields: [storeModuleId], references: [id], onDelete: Cascade)
+  screenSpecs ScreenSpecs? @relation(fields: [screenSpecsId], references: [id], onDelete: Cascade)
+
+  @@map("devices")
 }
 
 model RefreshToken {
