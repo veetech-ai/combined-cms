@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle, ChevronLeft, ShoppingCart, CreditCard } from 'lucide-react';
+import {
+  CheckCircle,
+  ChevronLeft,
+  ShoppingCart,
+  CreditCard
+} from 'lucide-react';
 import { BackButton } from './ui/BackButton';
 import { Timer } from './ui/Timer';
 import { motion } from 'framer-motion';
@@ -47,14 +52,14 @@ export function PaymentModal() {
   useEffect(() => {
     if (orderItems?.orderId) {
       const summaryUrl = `${BASE_URL}/kiosk/${id}/summary?orderId=${orderItems.orderId}`;
-      
+
       QRCode.toDataURL(summaryUrl, {
         width: 200,
         margin: 2,
         color: {
           dark: '#000000',
-          light: '#FFFFFF',
-        },
+          light: '#FFFFFF'
+        }
       })
         .then((url) => setQrCode(url))
         .catch((err) => {
@@ -68,7 +73,7 @@ export function PaymentModal() {
   const handleUserActivity = useCallback(() => {
     setLastActivity(Date.now());
     setIsUserActive(true);
-    
+
     if (showTimer) {
       setShowTimer(false);
       setTimeLeft(60); // Reset countdown when user becomes active
@@ -77,14 +82,20 @@ export function PaymentModal() {
 
   // Set up activity listeners
   useEffect(() => {
-    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
-    
-    events.forEach(event => {
+    const events = [
+      'mousemove',
+      'mousedown',
+      'keydown',
+      'touchstart',
+      'scroll'
+    ];
+
+    events.forEach((event) => {
       window.addEventListener(event, handleUserActivity);
     });
 
     return () => {
-      events.forEach(event => {
+      events.forEach((event) => {
         window.removeEventListener(event, handleUserActivity);
       });
     };
@@ -94,8 +105,9 @@ export function PaymentModal() {
   useEffect(() => {
     const inactivityCheck = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActivity;
-      
-      if (timeSinceLastActivity > 10000) { // 10 seconds
+
+      if (timeSinceLastActivity > 10000) {
+        // 10 seconds
         setIsUserActive(false);
         setShowTimer(true);
         setIsTimerActive(true);
@@ -110,7 +122,7 @@ export function PaymentModal() {
     if (!isTimerActive || !showTimer || timeLeft <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -145,7 +157,7 @@ export function PaymentModal() {
 
   const handleClose = () => {
     // Navigate back to phone number step without clearing cart
-    navigate(`/kiosk/${id}/details`, { 
+    navigate(`/kiosk/${id}/details`, {
       state: { step: 'phone' } // Pass step information
     });
   };
@@ -196,7 +208,9 @@ export function PaymentModal() {
               <ShoppingCart className="h-4 w-4" />
               <span>{orderItems && orderItems.items.length} items</span>
               <span>|</span>
-              <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
+              <span>
+                ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+              </span>
             </button>
           </div>
 
@@ -205,13 +219,16 @@ export function PaymentModal() {
             <div className="w-full lg:w-[45%] lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full">
               <div className="p-6">
                 <div className="mb-4">
-                      <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-medium">Order Summary</h2>
                     <span className="text-gray-500">
-                      ({orderItems && orderItems.items.length} {orderItems.items.length === 1 ? 'Item' : 'Items'})
+                      ({orderItems && orderItems.items.length}{' '}
+                      {orderItems.items.length === 1 ? 'Item' : 'Items'})
                     </span>
-                      </div>
-                  <div className="text-gray-500">{orderItems && orderItems.orderId}</div>
+                  </div>
+                  <div className="text-gray-500">
+                    {orderItems && orderItems.orderId}
+                  </div>
                 </div>
 
                 {/* Order Details Card */}
@@ -223,31 +240,42 @@ export function PaymentModal() {
                         {/* Main Item */}
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-3">
-                            <span className="text-gray-500">{item.quantity}x</span>
+                            <span className="text-gray-500">
+                              {item.quantity}x
+                            </span>
                             <span className="font-medium">{item.name.en}</span>
                           </div>
                           <span className="font-medium">
                             ${(item.price * item.quantity).toFixed(2)}
-                  </span>
+                          </span>
                         </div>
 
                         {/* Customizations */}
-                        {item.customization && Object.keys(item.customization).length > 0 && (
-                          <div className="ml-8 text-sm text-gray-500">
-                            {Object.entries(item.customization).map(([key, value]) => (
-                              <div key={key} className="flex items-center gap-2">
-                                <span>•</span>
-                                <span>{value}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        {item.customization &&
+                          Object.keys(item.customization).length > 0 && (
+                            <div className="ml-8 text-sm text-gray-500">
+                              {Object.entries(item.customization).map(
+                                ([key, value]) => (
+                                  <div
+                                    key={key}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <span>•</span>
+                                    <span>{value}</span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          )}
 
                         {/* Addons */}
                         {item.addons && item.addons.length > 0 && (
                           <div className="ml-8 text-sm text-gray-500">
                             {item.addons.map((addon, idx) => (
-                              <div key={idx} className="flex justify-between items-center">
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center"
+                              >
                                 <div className="flex items-center gap-2">
                                   <span>+</span>
                                   <span>{addon.name}</span>
@@ -262,7 +290,10 @@ export function PaymentModal() {
                         {item.extras && item.extras.length > 0 && (
                           <div className="ml-8 text-sm text-gray-500">
                             {item.extras.map((extra, idx) => (
-                              <div key={idx} className="flex justify-between items-center">
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center"
+                              >
                                 <div className="flex items-center gap-2">
                                   <span>+</span>
                                   <span>{extra.name}</span>
@@ -286,12 +317,20 @@ export function PaymentModal() {
                     <div className="p-4 space-y-2">
                       <div className="flex justify-between text-gray-500">
                         <span>Subtotal</span>
-                        <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
+                        <span>
+                          $
+                          {orderItems &&
+                            parseFloat(orderItems.totalBill).toFixed(2)}
+                        </span>
                       </div>
 
                       <div className="flex justify-between text-lg font-medium">
                         <span>Total</span>
-                        <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
+                        <span>
+                          $
+                          {orderItems &&
+                            parseFloat(orderItems.totalBill).toFixed(2)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -302,13 +341,17 @@ export function PaymentModal() {
             {/* Right Side - Payment Options */}
             <div className="flex-1 p-6 order-1 lg:order-2 overflow-auto">
               <div className="max-w-lg mx-auto space-y-6">
-                <h2 className="text-2xl font-medium mb-4">Select Payment Method</h2>
+                <h2 className="text-2xl font-medium mb-4">
+                  Select Payment Method
+                </h2>
 
                 {/* Digital Payment */}
                 <div className="bg-white rounded-2xl p-4 shadow-lg relative overflow-hidden border border-gray-100 group">
                   <div className="flex flex-col items-center text-center mb-3">
                     <h3 className="text-2xl font-medium mb-1">Quick Pay</h3>
-                    <p className="text-gray-500">Scan with your phone to view order summary</p>
+                    <p className="text-gray-500">
+                      Scan with your phone to view order summary
+                    </p>
                   </div>
 
                   <div className="flex justify-center gap-4 mb-3">
@@ -362,7 +405,9 @@ export function PaymentModal() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <div>
-                    <h3 className="text-lg font-medium mb-1">Pay with Cash or Card</h3>
+                    <h3 className="text-lg font-medium mb-1">
+                      Pay with Cash or Card
+                    </h3>
                     <p className="text-white/70 text-sm">Pay at the counter</p>
                   </div>
                   <CreditCard className="w-6 h-6" />
@@ -408,50 +453,46 @@ export function PaymentModal() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center max-w-md mx-auto flex flex-col items-center"
             >
-              {/* Centering CheckCircle */}
-              <div className="flex items-center justify-center">
-                <CheckCircle className="h-14 w-14 text-green-500" />
-              </div>
-
               <div className="mt-3">
-                <p className="text-lg font-semibold">You've Paid</p>
                 <p className="text-3xl font-semibold">
-                  ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+                  {customerName || 'Hi there'}
                 </p>
               </div>
 
               <div className="mt-3">
-                <p className="text-sm font-semibold text-gray-500">
-                  {orderItems && orderItems.orderId}
+                <p className="text-sm font-semibold text-gray-500 mb-10">
+                  {(orderItems && orderItems.orderId) || 'Order #23423423'}
                 </p>
               </div>
 
-              <p className="text-lg font-normal text-gray-500 mt-5 mb-5">
-                Thanks, {customerName}! We will text you when your order is
-                ready.
+              <p className="text-lg text-black font-medium mt-5 ">
+                Give your name at the cashier
+              </p>
+              <p className="text-sm text-gray-500  mb-10">
+                The cashier will help you complete your payment
               </p>
 
               <motion.button
-                onClick={handleGotIt}
+                onClick={handleStartOver}
                 className="w-full bg-black text-white py-4 text-xl font-medium rounded-xl hover:bg-gray-900 transition-colors duration-200"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Got it
+                Start New Order
               </motion.button>
             </motion.div>
           </div>
 
           {showTimer && (
-          <div className="absolute top-4 right-4">
-            <Timer
-              seconds={timeLeft}
-              isActive={isTimerActive}
-              variant="light"
-              onStartOver={handleStartOver}
+            <div className="absolute top-4 right-4">
+              <Timer
+                seconds={timeLeft}
+                isActive={isTimerActive}
+                variant="light"
+                onStartOver={handleStartOver}
                 onComplete={handleStartOver}
-            />
-          </div>
+              />
+            </div>
           )}
         </div>
       )}
@@ -460,4 +501,3 @@ export function PaymentModal() {
 }
 
 export default PaymentModal;
-
