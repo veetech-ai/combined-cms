@@ -20,7 +20,7 @@ import { useCustomerStore } from '../stores/customerStore';
 import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
 
-const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:5173';
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000';
 
 // Add dummy data
 const dummyCartItems = [
