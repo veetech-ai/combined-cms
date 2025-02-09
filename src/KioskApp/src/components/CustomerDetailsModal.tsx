@@ -36,7 +36,7 @@ export function CustomerDetailsModal() {
   const handleUserActivity = useCallback(() => {
     setLastActivity(Date.now());
     setIsUserActive(true);
-    
+
     if (showTimer) {
       setShowTimer(false);
       setTimeLeft(30); // Reset countdown when user becomes active
@@ -45,14 +45,20 @@ export function CustomerDetailsModal() {
 
   // Set up activity listeners
   useEffect(() => {
-    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
-    
-    events.forEach(event => {
+    const events = [
+      'mousemove',
+      'mousedown',
+      'keydown',
+      'touchstart',
+      'scroll'
+    ];
+
+    events.forEach((event) => {
       window.addEventListener(event, handleUserActivity);
     });
 
     return () => {
-      events.forEach(event => {
+      events.forEach((event) => {
         window.removeEventListener(event, handleUserActivity);
       });
     };
@@ -62,8 +68,9 @@ export function CustomerDetailsModal() {
   useEffect(() => {
     const inactivityCheck = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActivity;
-      
-      if (timeSinceLastActivity > 10000) { // 10 seconds
+
+      if (timeSinceLastActivity > 10000) {
+        // 10 seconds
         setIsUserActive(false);
         setShowTimer(true);
         setIsTimerActive(true);
@@ -78,7 +85,7 @@ export function CustomerDetailsModal() {
     if (!isTimerActive || !showTimer || timeLeft <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -171,12 +178,12 @@ export function CustomerDetailsModal() {
         customerPhone: phone,
         timestamp: new Date().toISOString(),
         items: orderItems?.items || [],
-        totalBill: orderItems?.totalBill || "0"
+        totalBill: orderItems?.totalBill || '0'
       };
 
       // Use the order service instead of direct fetch
       await orderService.createOrder(orderDetails);
-      
+
       setCustomerName(name);
       navigate(`/kiosk/${id}/payment`);
     } catch (error) {
@@ -201,7 +208,7 @@ export function CustomerDetailsModal() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-white"
       onMouseMove={handleUserActivity}
       onClick={handleUserActivity}
@@ -228,7 +235,9 @@ export function CustomerDetailsModal() {
           <ShoppingCart className="h-4 w-4" />
           <span>{orderItems && orderItems.items.length} items</span>
           <span>|</span>
-          <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
+          <span>
+            ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+          </span>
         </button>
       </div>
 

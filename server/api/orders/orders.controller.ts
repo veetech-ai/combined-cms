@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { asyncHandler } from '../../util/asyn-handler';
 import { ApiError } from '../../util/api.error';
+import { io } from '../..';
 
 const ORDERS_FILE = path.join(process.cwd(), 'data', 'orders.json');
 
@@ -53,7 +54,7 @@ export const getAllOrders = asyncHandler(
 );
 
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
-  const newOrder = req.body;
+  const newOrder = { ...req.body, status: 'pending' };
 
   if (!newOrder.orderId) {
     throw new ApiError(400, 'Order ID is required');
@@ -75,6 +76,18 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
 export const updateOrder = asyncHandler(async (req: Request, res: Response) => {
   const { orderId } = req.params;
   const updateData = req.body;
+  const { status } = updateData;
+
+  if (!orderId) {
+    throw new ApiError(400, 'Missing orderId');
+  }
+
+  if (orderId && status) {
+    io.emit('orderStatusUpdated', {
+      orderId,
+      status
+    });
+  }
 
   const orders = await readOrders();
   const index = orders.findIndex((o: any) => o.orderId === orderId);

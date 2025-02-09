@@ -3,7 +3,8 @@ import {
   CheckCircle,
   ChevronLeft,
   ShoppingCart,
-  CreditCard
+  CreditCard,
+  Check
 } from 'lucide-react';
 import { BackButton } from './ui/BackButton';
 import { Timer } from './ui/Timer';
@@ -17,8 +18,9 @@ import { toast } from 'react-hot-toast';
 import { useCartStore } from '../stores/cartStore';
 import { useCustomerStore } from '../stores/customerStore';
 import { useOrder } from '../../../contexts/OrderContext';
+import { io } from 'socket.io-client';
 
-const BASE_URL = import.meta.env.VITE_BASE_URL || 'http://localhost:5173';
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000';
 
 // Add dummy data
 const dummyCartItems = [
@@ -27,6 +29,12 @@ const dummyCartItems = [
   { name: 'Iced Latte', price: 5.0, quantity: 1 },
   { name: 'Blueberry Muffin', price: 3.25, quantity: 1 }
 ];
+
+const WS_URL = import.meta.env.VITE_WS_URL;
+
+const socket = io(WS_URL, {
+  autoConnect: false
+});
 
 export function PaymentModal() {
   const { orderItems } = useOrder();
@@ -47,6 +55,31 @@ export function PaymentModal() {
     (acc, item) => acc + item.price * item.quantity,
     0
   );
+
+  useEffect(() => {
+    socket.connect();
+    socket.on('connect', () => {
+      console.log('Connected to socket server - payment modal');
+    });
+
+    socket.on('orderStatusUpdated', (data) => {
+      console.log('Order status updated:', data);
+      if (
+        data.orderId === orderItems?.orderId &&
+        data.status === 'payment_processing'
+      ) {
+        setStep(data.status);
+      }
+
+      if (data.orderId === orderItems?.orderId && data.status === 'completed') {
+        setStep('card_paid');
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [orderItems?.orderId]);
 
   // Update QR code generation when orderId changes
   useEffect(() => {
@@ -429,7 +462,6 @@ export function PaymentModal() {
           </div>
         </>
       )}
-
       {step === 'cash' && (
         <div className="h-full flex flex-col">
           <div className="p-6">
@@ -496,6 +528,82 @@ export function PaymentModal() {
           )}
         </div>
       )}
+      {step === 'card_paid' && (
+        <div className="h-full flex flex-col">
+          <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6 overflow-y-auto pb-[100px]">
+            <div className="w-32 h-32 bg-[#06C167] rounded-2xl flex items-center justify-center mb-12 shadow-xl animate-scaleIn">
+              <Check className="w-16 h-16 text-white" />
+            </div>
+            <h2 className="text-4xl font-bold text-center">You've Paid</h2>
+            <div className="text-6xl font-bold tracking-tight">
+              ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+            </div>
+            <p className="text-sm font-semibold text-gray-500 mb-10">
+              Order #{(orderItems && orderItems.orderId) || 'Order #23423423'}
+            </p>
+            <p className="text-xl text-gray-600 text-center">
+              Thanks, {customerName || 'Customer'}! We'll text you when your
+              order is ready.
+            </p>
+            <motion.div>
+              <motion.button
+                onClick={handleStartOver}
+                className="w-full bg-black text-white py-4 text-xl font-medium rounded-xl hover:bg-gray-900 transition-colors duration-200 px-8"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Start New Order
+              </motion.button>
+            </motion.div>
+          </div>
+
+          {showTimer && (
+            <div className="absolute top-4 right-4">
+              <Timer
+                seconds={timeLeft}
+                isActive={isTimerActive}
+                variant="light"
+                onStartOver={handleStartOver}
+                onComplete={handleStartOver}
+              />
+            </div>
+          )}
+        </div>
+      )}
+      {step === 'payment_processing' && (
+        <div className="h-full flex flex-col items-center justify-center bg-black text-white">
+          <div className="flex flex-col items-center justify-center text-center">
+            {/* Circular Loader */}
+            <div className="loader mb-5"></div>
+
+            {/* Processing Message */}
+            <p className="text-2xl font-semibold mb-2">Processing Payment...</p>
+
+            {/* Instruction Message */}
+            <p className="text-sm text-gray-300">
+              Please don't close this window
+            </p>
+          </div>
+        </div>
+      )}
+      /* Add this CSS for the circular loader */
+      <style>
+        {`
+  .loader {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`}
+      </style>
     </div>
   );
 }

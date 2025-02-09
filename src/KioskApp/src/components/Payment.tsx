@@ -58,6 +58,20 @@ export function Payment() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      setIsLoading(true);
+      await orderService.updateOrder(orderId, {
+        status
+      });
+    } catch (err) {
+      console.error('Error updating order status:', err);
+      setError('Failed to update order status');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchOrderDetails = async () => {
       if (!orderId) {
@@ -66,17 +80,20 @@ export function Payment() {
         return;
       }
 
+      // update order
+      updateOrderStatus(orderId, 'payment_processing');
+
       try {
         const orderData = await orderService.getOrder(orderId);
         setOrderData(orderData);
-        
+
         // Set amount after getting order data
         const calculatedAmount = testDummyPayment
           ? 0.01
           : orderData.totalBill
           ? parseFloat(orderData.totalBill)
           : 0;
-        
+
         setAmount(calculatedAmount);
       } catch (err) {
         console.error('Error fetching order details:', err);
@@ -98,6 +115,7 @@ export function Payment() {
     );
     if (response.status === 'succeeded') {
       setCurrentScreen('confirmation');
+      if (orderId) await updateOrderStatus(orderId, 'completed');
     } else {
       setError('Failed to process payment. Please try again.');
       // setCurrentScreen
@@ -119,7 +137,7 @@ export function Payment() {
       // Cleanup if necessary
       console.log('Payment component unmounted');
     };
-  }, [currentScreen]);
+  }, [currentScreen, amount]);
 
   const renderErrorMessage = () =>
     error ? (
@@ -476,6 +494,23 @@ export function Payment() {
       <div className="overflow-y-auto flex-1 pb-[140px]">
         <header className="bg-black p-8 text-white">
           <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <TacoIcon className="w-12 h-12 text-[#06C167]" />
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">MexiKhana</h1>
+                <p className="text-gray-400 text-sm">{orderData?.orderId}</p>
+              </div>
+            </div>
+            <img
+              src="https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=200&h=200"
+              alt="Restaurant"
+              className="w-16 h-16 rounded-lg object-cover shadow-lg"
+            />
+          </div>
+          <div className="h-1 w-24 bg-[#06C167] rounded-full mt-4"></div>
+        </header>
+        {/* <header className="bg-black p-8 text-white">
+          <div className="flex items-center justify-between mb-6">
             <ArrowLeft
               className="w-10 h-10 cursor-pointer transition-transform hover:scale-110"
               onClick={() => setCurrentScreen('apple')}
@@ -487,7 +522,7 @@ export function Payment() {
             <div className="w-10 h-10"></div>
           </div>
           <div className="h-1 w-24 bg-[#06C167] rounded-full mt-4"></div>
-        </header>
+        </header> */}
         {renderErrorMessage()}
 
         <div className="flex-1 p-8 text-left">

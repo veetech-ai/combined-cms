@@ -42,7 +42,7 @@ import storeRoutes from './api/stores/stores.routes';
 import storeModulesRoutes from './api/store-modules/store-modules.routes';
 import displayRoutes from './api/displays/displays.routes';
 import posRoutes from './api/pos/pos.routes';
-import ordersRouter from './api/orders/orders.routes';
+import orderRoutes from './api/orders/orders.routes';
 import { DBService } from './services/db.service';
 import { prisma } from './db';
 import { PrismaClientInitializationError } from '@prisma/client/runtime/library';
@@ -84,7 +84,8 @@ app.use('/api/auth', authRoutes);
 
 // Public routes that don't require authentication
 app.use('/api/v1/displays', displayRoutes);
-app.use('/api/v1/orders', ordersRouter);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1', posRoutes);
 
 // Protected routes middleware
 app.use('/api/v1', ensureValidToken);
@@ -94,7 +95,6 @@ app.use('/api/v1', userRoutes);
 app.use('/api/v1', organizationRoutes);
 app.use('/api/v1', storeRoutes);
 app.use('/api/v1', storeModulesRoutes);
-app.use('/api/v1', posRoutes);
 
 // not found handler for /api endpoints
 app.use('/api/*', (req, res) => {
@@ -141,6 +141,7 @@ const generateRandomCode = () => {
 // Emit a random hex code when the client connects
 io.on('connection', (socket) => {
   console.log('a user connected');
+  console.log(`🔵 Client Connected: ${socket.id}`);
 
   const randomCode = generateRandomCode();
   // Send the generated code to the client
@@ -184,3 +185,5 @@ process.on('unhandledRejection', (err) => {
   console.log(err);
   process.exit(12);
 });
+
+export { io };

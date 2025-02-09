@@ -46,10 +46,6 @@ const apiBasePath = '/pos';
  *       500:
  *         description: Failed to create charge
  */
-router.post(
-  `${apiBasePath}/charge`,
-  checkAccess(ROLES.USER),
-  POSController.createCharge
-);
+router.post(`${apiBasePath}/charge`, POSController.createCharge);
 
 export default router;
