@@ -9,7 +9,7 @@ import { OrganizationService } from '../api/organizations/organizations.service'
 import { User } from '@prisma/client';
 
 interface AuthRequest extends Request {
-  user?: User;
+  user: User;
 }
 
 const authService = new AuthService(prisma);
@@ -83,7 +83,7 @@ export enum ROLES {
 
 // Base middleware factory for role-based access
 export const checkAccess = (requiredAccessLevel: ROLES) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
     const userRoleValue = ROLES[req.user.role];
 
     if (
@@ -120,7 +120,7 @@ export const belongsToEntity = ({
     store: storeService
   };
 
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const entityId =
         entityType === 'organization'

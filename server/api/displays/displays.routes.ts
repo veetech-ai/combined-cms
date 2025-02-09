@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import * as displayController from './displays.controller';
-import { checkAccess, ROLES } from '../../middleware/auth.middleware';
+import {
+  ensureValidToken,
+  checkAccess,
+  ROLES
+} from '../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -8,13 +12,24 @@ const router = Router();
 router.get('/', displayController.getDisplays);
 router.get('/:id', displayController.getDisplay);
 
-// Protected routes (require admin access)
-router.post('/', checkAccess(ROLES.ADMIN), displayController.addDisplay);
+// Protected routes (require auth and admin access)
+router.post(
+  '/',
+  ensureValidToken,
+  checkAccess(ROLES.ADMIN),
+  displayController.addDisplay
+);
 
-router.put('/:id', checkAccess(ROLES.ADMIN), displayController.updateDisplay);
+router.put(
+  '/:id',
+  ensureValidToken,
+  checkAccess(ROLES.ADMIN),
+  displayController.updateDisplay
+);
 
 router.delete(
   '/:id',
+  ensureValidToken,
   checkAccess(ROLES.ADMIN),
   displayController.deleteDisplay
 );
