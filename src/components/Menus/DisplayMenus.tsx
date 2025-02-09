@@ -79,7 +79,7 @@ export const DisplayMenus = () => {
       const data = await displayService.getDisplays();
       // Filter displays for the current store
       const storeDisplays = data.filter(
-        (display) => display.store === store.name
+        (display) => display.storeModule.store.id === store.id
       );
       setDisplays(storeDisplays);
     } catch (error: any) {
@@ -222,9 +222,9 @@ export const DisplayMenus = () => {
                   <Store className="w-4 h-4" />
                   <span>{display.store}</span>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
+                {display.lastSeen && (<p className="text-xs text-gray-400 mt-2">
                   Last seen: {display.lastSeen}
-                </p>
+                </p>)}
                 <p className="text-xs text-gray-400">
                   Hex Code: {display.hexCode}
                 </p>
