@@ -18,8 +18,8 @@ export const getStoreModules = asyncHandler(
 
     // Transform the response to match the frontend expectations
     const transformedModules = modules.map((item) => ({
-      id: item.id,
-      moduleId: item.module.id,
+      id: item.module.id,
+      storeModuleId: item.id,
       name: item.module.name,
       key: item.module.key,
       isEnabled: item.isEnabled,

@@ -94,6 +94,7 @@ export const DisplayMenus = () => {
       // Get store modules to find the kiosk module
       const modules = await displayService.getStoreModules(store.id);
       const kioskModule = modules.find(module => module.key === 'kiosk');
+      console.log({modules, kioskModule});
       
       if (!kioskModule) {
         throw new Error('Kiosk module not found for this store');
@@ -103,7 +104,7 @@ export const DisplayMenus = () => {
       const displayWithStore = {
         ...newDisplay,
         store: store.name,
-        storeModuleId: kioskModule.id
+        storeModuleId: kioskModule.storeModuleId
       };
 
       console.log({ displayWithStore });
