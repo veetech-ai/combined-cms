@@ -22,6 +22,7 @@ export interface OrderItem {
 
 export interface Order {
   orderId: string;
+  status: string;
   customerName: string;
   customerPhone: string;
   timestamp: string;
