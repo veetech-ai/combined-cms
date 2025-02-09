@@ -206,7 +206,6 @@ export const CartItem: FC<CartItemProps> = ({
 
             <div className="text-sm text-gray-600 mt-1">
               {addOnsArray.map((addOn) => {
-                console.log(addOn);
                 return (
                   <div key={addOn.id} className="flex justify-between">
                     <span>+ {addOn.name}</span>

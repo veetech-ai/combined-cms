@@ -15,6 +15,7 @@ import {
 import { OnboardClientModal } from './OnBoardClientModal';
 import { toast, Toaster } from 'react-hot-toast';
 import { displayService, Display } from '../../services/displayService';
+import { QRCodeCard } from './QRCodeCard';
 
 // Add environment variable
 const VITE_HOST_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173';
@@ -113,6 +114,10 @@ export const DisplayMenus = () => {
     window.open(`${VITE_HOST_URL}/kiosk/${hexCode}`, '_blank');
   };
 
+  const generateViewMenuLink = (hexCode: string) => {
+    return `${VITE_HOST_URL}/kiosk/${hexCode}`;
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -163,7 +168,7 @@ export const DisplayMenus = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {displays.map((display) => (
             <div
               key={display.id}
@@ -204,25 +209,33 @@ export const DisplayMenus = () => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <Store className="w-4 h-4" />
-                  <span>{display.store}</span>
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Last seen: {display.lastSeen}
-                </p>
-                <p className="text-xs text-gray-400">
-                  Hex Code: {display.hexCode}
-                </p>
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={() => openDisplayView(display.hexCode)}
-                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>View Display</span>
-                  </button>
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <Store className="w-4 h-4" />
+                      <span>{display.store}</span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Last seen: {display.lastSeen}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Hex Code: {display.hexCode}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end space-y-4">
+                    <QRCodeCard
+                      viewMenuLink={generateViewMenuLink(display.hexCode)}
+                      displayName={display.name}
+                    />
+                    <button
+                      onClick={() => openDisplayView(display.hexCode)}
+                      className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>View Display</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

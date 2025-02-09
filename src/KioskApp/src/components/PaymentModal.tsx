@@ -20,7 +20,7 @@ import { useCustomerStore } from '../stores/customerStore';
 import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
 
-const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000';
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173';
 
 // Add dummy data
 const dummyCartItems = [
@@ -43,7 +43,7 @@ export function PaymentModal() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { clearCart } = useCartStore();
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(120);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
@@ -109,7 +109,7 @@ export function PaymentModal() {
 
     if (showTimer) {
       setShowTimer(false);
-      setTimeLeft(60); // Reset countdown when user becomes active
+      setTimeLeft(120);
     }
   }, [showTimer]);
 
@@ -169,9 +169,9 @@ export function PaymentModal() {
   }, [timeLeft]);
 
   const resetTimer = () => {
-    setTimeLeft(60);
+    setTimeLeft(120);
     setIsTimerActive(true);
-    handleUserActivity(); // Register this as user activity
+    handleUserActivity();
   };
 
   // Update handlers to track activity
@@ -198,7 +198,7 @@ export function PaymentModal() {
   const handleStartOver = () => {
     setIsTimerActive(false);
     setShowTimer(false);
-    setTimeLeft(60); // Reset timer
+    setTimeLeft(120); // Reset timer
     setIsTimerActive(true); // Restart timer
     setLastActivity(Date.now()); // Reset activity timestamp
     clearCart();
@@ -398,24 +398,20 @@ export function PaymentModal() {
 
                   {orderItems?.orderId ? (
                     <div
-                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer"
-                      onClick={() => {
-                        handleQRCodeClick();
-                        handleSuccess();
-                      }}
+                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100"
                     >
                       {qrCode && (
                         <>
                           <img
                             src={qrCode}
                             alt="Order Summary QR Code"
-                            className="w-40 h-40 transition-transform hover:scale-105"
+                            className="w-40 h-40"
                           />
                           <p className="text-sm text-gray-500 mt-2">
                             Order ID: {orderItems.orderId}
                           </p>
                           <p className="text-xs text-gray-400 mt-1">
-                            Click or scan to view summary
+                            Scan to Pay
                           </p>
                         </>
                       )}
@@ -486,14 +482,14 @@ export function PaymentModal() {
               className="text-center max-w-md mx-auto flex flex-col items-center"
             >
               <div className="mt-3">
-                <p className="text-3xl font-semibold">
+                <p className="text-6xl font-semibold">
                   {customerName || 'Hi there'}
                 </p>
               </div>
 
               <div className="mt-3">
                 <p className="text-sm font-semibold text-gray-500 mb-10">
-                  {(orderItems && orderItems.orderId) || 'Order #23423423'}
+                  {'OrderID: ' + (orderItems && orderItems.orderId) || 'Order #23423423'}
                 </p>
               </div>
 

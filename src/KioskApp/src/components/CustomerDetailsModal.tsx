@@ -32,6 +32,10 @@ export function CustomerDetailsModal() {
   // Add cleanup reference
   const timerRef = React.useRef<NodeJS.Timeout>();
 
+  // Add refs for the inputs
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
+  const phoneInputRef = React.useRef<HTMLInputElement>(null);
+
   // Track user activity
   const handleUserActivity = useCallback(() => {
     setLastActivity(Date.now());
@@ -113,9 +117,29 @@ export function CustomerDetailsModal() {
     handleUserActivity();
   };
 
+  // Add name validation function
+  const validateName = (input: string) => {
+    return /^[A-Za-z\s]+$/.test(input) || input === '';
+  };
+
+  // Update handleNameChange with validation
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    if (validateName(newName)) {
+      setName(newName);
+      handleUserActivity();
+    }
+  };
+
+  // Update handleNameSubmit with better validation
   const handleNameSubmit = () => {
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       toast.error('Please enter your name');
+      return;
+    }
+    if (trimmedName.length < 2) {
+      toast.error('Name must be at least 2 characters long');
       return;
     }
     setStep('phone');
@@ -137,11 +161,6 @@ export function CustomerDetailsModal() {
   };
 
   // Update input handlers to use handleUserActivity
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-    handleUserActivity();
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = value.replace(/\D/g, '');
@@ -207,6 +226,20 @@ export function CustomerDetailsModal() {
     navigate(`/kiosk/${id}/kiosk`);
   };
 
+  // Add effect to focus inputs when step changes
+  useEffect(() => {
+    // Small delay to ensure the input is mounted and keyboard shows up
+    const timer = setTimeout(() => {
+      if (step === 'name' && nameInputRef.current) {
+        nameInputRef.current.focus();
+      } else if (step === 'phone' && phoneInputRef.current) {
+        phoneInputRef.current.focus();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [step]);
+
   return (
     <div
       className="min-h-screen bg-white"
@@ -253,12 +286,16 @@ export function CustomerDetailsModal() {
               </div>
               <div className="relative">
                 <input
+                  ref={nameInputRef}
                   type="text"
+                  inputMode="text"
+                  pattern="[A-Za-z\s]*"
                   placeholder="Your name"
                   value={name}
                   onChange={handleNameChange}
                   className="w-full text-5xl bg-transparent focus:outline-none placeholder-gray-300 py-4 focus:ring-0"
                   autoFocus
+                  autoComplete="off"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && name.trim()) {
                       handleNameSubmit();
@@ -281,12 +318,17 @@ export function CustomerDetailsModal() {
               </div>
               <div className="relative">
                 <input
+                  ref={phoneInputRef}
                   type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   placeholder="(XXX) XXX-XXXX"
                   value={phone}
                   onChange={handlePhoneChange}
                   className="w-full text-5xl bg-transparent focus:outline-none placeholder-gray-300 py-4 focus:ring-0"
                   maxLength={14}
+                  autoFocus
+                  autoComplete="off"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && phone.trim()) {
                       handlePhoneSubmit();
