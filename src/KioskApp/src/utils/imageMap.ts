@@ -2,7 +2,7 @@ export const itemImageMap: Record<string, string> = {
   "reg kebab": "https://i.imgur.com/63PvMan.png",
   "weekend special rice bowl": "https://i.ibb.co/n8SSyCY/Weekend-Special-Rice-Bowl.jpg",
   "weekend special burrito": "https://i.ibb.co/fCZ9xBP/Weekend-Special-Burrito.jpg",
-  "jarritos": "https://i.ibb.co/XCXqFNv/Jarritos.jpg",
+  "jarritos": "https://images.squarespace-cdn.com/content/v1/5c803b39c2ff6147e65c841c/1633488663715-FQG6RBEVB0LQ8I59N9MS/jarritos-duonew.jpg",
   "weekend special - pink kashmiri chai": "https://i.ibb.co/GRpSPPc/Weekend-Special-Pink-Kashmiri-Chai.jpg",
   "breakfast burrito": "https://i.ibb.co/vXF61xM/Breakfast-Burrito.jpg",
   "bun kebab": "https://i.ibb.co/Mn1zpDH/Bun-Kebab.jpg",
@@ -46,7 +46,20 @@ export const itemImageMap: Record<string, string> = {
   "beef nihari (traditional)": "https://i.ibb.co/sq96cFS/Beef-Nihari-Burrito.webp",
   "side nihari soup w/ beef": "https://i.ibb.co/f125fsj/Side-Nihari-Soup.jpg",
   "can": "https://i.ibb.co/XCXqFNv/Jarritos.jpg",
-  "aloo quesadilla": "https://i.ibb.co/3ky267g/Cheese-Quesadilla.webp"
+  "aloo quesadilla": "https://i.ibb.co/3ky267g/Cheese-Quesadilla.webp",
+
+  //newly added images
+  'chicken rice bowl with cheese':
+  'https://www.afpllc.com/wp-content/uploads/cheesey-chicken-rice-bowl-recipe-1343.jpg',
+'extra puri':
+  'https://www.awesomecuisine.com/wp-content/uploads/2020/03/poori-masala-kizhangu-500x375.jpg',
+'puri chane':
+  'https://img-global.cpcdn.com/recipes/213596010438c266/680x482cq70/chane-ki-sabzi-with-puri-recipe-main-photo.jpg',
+'poori':
+  'https://studentbiryanibuckingham.co.uk/sbb-content/uploads/2024/06/Puri-2.webp ',
+'tikka': 'https://cookingfrog.com/wp-content/uploads/2021/11/Original-Pakistani-Chicken-Tikka-Recipe.jpg'
+
+
 };
 
 // Update default image to a hosted URL

@@ -50,7 +50,7 @@ export function PaymentModal() {
   const handleUserActivity = useCallback(() => {
     setLastActivity(Date.now());
     setIsUserActive(true);
-    
+
     if (showTimer) {
       setShowTimer(false);
       setTimeLeft(60); // Reset countdown when user becomes active
@@ -60,7 +60,7 @@ export function PaymentModal() {
   // Set up activity listeners
   useEffect(() => {
     const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
-    
+
     events.forEach(event => {
       window.addEventListener(event, handleUserActivity);
     });
@@ -76,7 +76,7 @@ export function PaymentModal() {
   useEffect(() => {
     const inactivityCheck = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActivity;
-      
+
       if (timeSinceLastActivity > 10000) { // 10 seconds
         setIsUserActive(false);
         setShowTimer(true);
@@ -126,7 +126,7 @@ export function PaymentModal() {
 
   const handleClose = () => {
     // Navigate back to phone number step without clearing cart
-    navigate(`/kiosk/${id}/details`, { 
+    navigate(`/kiosk/${id}/details`, {
       state: { step: 'phone' } // Pass step information
     });
   };
@@ -186,12 +186,12 @@ export function PaymentModal() {
             <div className="w-full lg:w-[45%] lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full">
               <div className="p-6">
                 <div className="mb-4">
-                      <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-medium">Order Summary</h2>
                     <span className="text-gray-500">
                       ({orderItems && orderItems.items.length} {orderItems.items.length === 1 ? 'Item' : 'Items'})
                     </span>
-                      </div>
+                  </div>
                   <div className="text-gray-500">{orderItems && orderItems.orderId}</div>
                 </div>
 
@@ -209,7 +209,7 @@ export function PaymentModal() {
                           </div>
                           <span className="font-medium">
                             ${(item.price * item.quantity).toFixed(2)}
-                  </span>
+                          </span>
                         </div>
 
                         {/* Customizations */}
@@ -290,31 +290,31 @@ export function PaymentModal() {
                   <div className="flex flex-col items-center text-center mb-3">
                     <h3 className="text-2xl font-medium mb-1">Quick Pay</h3>
                     <p className="text-gray-500">Scan with your phone</p>
-              </div>
+                  </div>
 
                   <div className="flex justify-center gap-4 mb-3">
                     <div className="transform transition-transform group-hover:scale-105">
-                  <GooglePayLogo />
+                      <GooglePayLogo />
                     </div>
                     <div className="transform transition-transform group-hover:scale-105">
-                  <ApplePayLogo />
+                      <ApplePayLogo />
                     </div>
-                </div>
+                  </div>
 
-                <div
+                  <div
                     className="flex justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer"
                     onClick={() => {
                       handleQRCodeClick();
                       handleSuccess();
                     }}
-                >
-                  {qrCode && (
-                    <img
-                      src={qrCode}
-                      alt="Payment QR Code"
+                  >
+                    {qrCode && (
+                      <img
+                        src={qrCode}
+                        alt="Payment QR Code"
                         className="w-40 h-40 transition-transform hover:scale-105"
-                    />
-                  )}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -375,50 +375,49 @@ export function PaymentModal() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center max-w-md mx-auto flex flex-col items-center"
             >
-              {/* Centering CheckCircle */}
-              <div className="flex items-center justify-center">
-                <CheckCircle className="h-14 w-14 text-green-500" />
-              </div>
+
 
               <div className="mt-3">
-                <p className="text-lg font-semibold">You've Paid</p>
+
                 <p className="text-3xl font-semibold">
-                  ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+                  {customerName || "Hi there"}
                 </p>
               </div>
 
               <div className="mt-3">
-                <p className="text-sm font-semibold text-gray-500">
-                  {orderItems && orderItems.orderId}
+                <p className="text-sm font-semibold text-gray-500 mb-10">
+                  {orderItems && orderItems.orderId || "Order #23423423"}
                 </p>
               </div>
 
-              <p className="text-lg font-normal text-gray-500 mt-5 mb-5">
-                Thanks, {customerName}! We will text you when your order is
-                ready.
+              <p className="text-lg text-black font-medium mt-5 ">
+                Give your name at the cashier
+              </p>
+              <p className="text-sm text-gray-500  mb-10">
+                The cashier will help you complete your payment
               </p>
 
               <motion.button
-                onClick={handleGotIt}
+                onClick={handleStartOver}
                 className="w-full bg-black text-white py-4 text-xl font-medium rounded-xl hover:bg-gray-900 transition-colors duration-200"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Got it
+                Start New Order
               </motion.button>
             </motion.div>
           </div>
 
           {showTimer && (
-          <div className="absolute top-4 right-4">
-            <Timer
-              seconds={timeLeft}
-              isActive={isTimerActive}
-              variant="light"
-              onStartOver={handleStartOver}
+            <div className="absolute top-4 right-4">
+              <Timer
+                seconds={timeLeft}
+                isActive={isTimerActive}
+                variant="light"
+                onStartOver={handleStartOver}
                 onComplete={handleStartOver}
-            />
-          </div>
+              />
+            </div>
           )}
         </div>
       )}

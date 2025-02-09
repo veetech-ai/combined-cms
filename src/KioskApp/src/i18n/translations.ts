@@ -57,7 +57,7 @@ export const translations = {
       addToCart: 'Add to cart',
       priceNote:
         'Prices and items may vary by location. Additional charges may apply.',
-      quantity: 'Quantity',
+      quantity: 'Qty',
       editInstructions: 'Edit Instructions',
       additionalNotes: 'Additional Notes',
       notesPlaceholder: 'Any special requests?',
