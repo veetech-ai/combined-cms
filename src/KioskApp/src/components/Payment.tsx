@@ -6,19 +6,50 @@ import {
   Check,
   TagIcon as TacoIcon
 } from 'lucide-react';
-import { useOrder } from '../../../contexts/OrderContext';
 import { useCustomerStore } from '../stores/customerStore';
 import { createCharge } from '../api/clover';
 import { useLocation } from 'react-router-dom';
+import { orderService } from '../../../services/orderService';
+
+interface OrderData {
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  timestamp: string;
+  items: Array<{
+    id: number | string;
+    name: {
+      en: string;
+      es: string;
+    };
+    price: number;
+    quantity: number;
+    addons: Array<{
+      id: string;
+      name: string;
+      price: number;
+    }>;
+    customization: Record<string, string>;
+    extras: Array<{
+      id: string;
+      name: string;
+      price: number;
+    }>;
+    instructions?: string;
+  }>;
+  totalBill: string;
+}
 
 export function Payment() {
   const location = useLocation();
 
   const queryParams = new URLSearchParams(location.search);
   const testDummyPayment = queryParams.get('testDummyPayment') === 'true';
+  const orderId = queryParams.get('orderId');
 
-  const { orderItems } = useOrder();
-  const { customerName } = useCustomerStore();
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
+  const [amount, setAmount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<
     'apple' | 'google' | 'processing' | 'confirmation'
   >('apple');
@@ -26,6 +57,37 @@ export function Payment() {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      if (!orderId) {
+        setError('Order ID is required');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const orderData = await orderService.getOrder(orderId);
+        setOrderData(orderData);
+        
+        // Set amount after getting order data
+        const calculatedAmount = testDummyPayment
+          ? 0.01
+          : orderData.totalBill
+          ? parseFloat(orderData.totalBill)
+          : 0;
+        
+        setAmount(calculatedAmount);
+      } catch (err) {
+        console.error('Error fetching order details:', err);
+        setError('Failed to load order details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrderDetails();
+  }, [orderId, testDummyPayment]);
 
   const processPayment = async (token: string) => {
     const response: any = await createCharge(
@@ -66,15 +128,7 @@ export function Payment() {
   console.log(
     'Payment component mounted - pass testDummyPayment=true to test 0.01 usd payment'
   );
-  const items = orderItems?.items || [];
-  const amount = testDummyPayment
-    ? 0.01
-    : orderItems?.totalBill
-    ? parseFloat(orderItems.totalBill)
-    : 0;
-
-  // const amount = orderItems ? parseFloat(orderItems.totalBill) : 0;
-  const orderId = orderItems?.orderId || '';
+  const items = orderData?.items || [];
 
   const handleStarClick = (value: number) => {
     setRating(value);
@@ -85,7 +139,7 @@ export function Payment() {
 
   const handleApplePay = async () => {
     try {
-      if (!amount || amount <= 0) {
+      if (!amount || amount <= 0 || !orderData) {
         console.error('Invalid amount, cannot proceed with Apple Pay.');
         setError('Payment amount is required.');
         return;
@@ -189,8 +243,8 @@ export function Payment() {
 
   const handleGooglePay = async () => {
     try {
-      if (!amount || amount <= 0) {
-        console.error('Invalid amount, cannot proceed with Apple Pay.');
+      if (!amount || amount <= 0 || !orderData) {
+        console.error('Invalid amount, cannot proceed with Google Pay.');
         setError('Payment amount is required.');
         return;
       }
@@ -306,7 +360,7 @@ export function Payment() {
               <TacoIcon className="w-12 h-12 text-[#06C167]" />
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">MexiKhana</h1>
-                <p className="text-gray-400 text-sm">{orderId}</p>
+                <p className="text-gray-400 text-sm">{orderData?.orderId}</p>
               </div>
             </div>
             <img
@@ -333,11 +387,11 @@ export function Payment() {
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-[#06C167] rounded-full flex items-center justify-center">
                   <span className="text-white font-medium">
-                    {customerName.charAt(0)}
+                    {orderData?.customerName.charAt(0)}
                   </span>
                 </div>
                 <span className="text-lg text-gray-700 font-medium">
-                  {customerName}
+                  {orderData?.customerName}
                 </span>
               </div>
             </div>
@@ -397,9 +451,9 @@ export function Payment() {
         <button
           id="apple-pay-button"
           className={`w-full h-14 bg-black text-white text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 shadow-md transition-all hover:bg-gray-800 hover:shadow-lg active:scale-95 font-roboto ${
-            amount ? '' : 'cursor-not-allowed opacity-50'
+            amount > 0 ? '' : 'cursor-not-allowed opacity-50'
           }`}
-          disabled={!amount}
+          disabled={!amount || !orderData}
         >
           Pay with Apple Pay
         </button>
@@ -409,7 +463,7 @@ export function Payment() {
           className={`w-full bg-white border-2 border-black text-lg font-medium rounded-2xl py-4 transition-colors hover:bg-gray-50 ${
             amount ? '' : 'cursor-not-allowed opacity-50'
           }`}
-          disabled={!amount}
+          disabled={!amount || !orderData}
         >
           Switch to Google Pay
         </button>
@@ -453,11 +507,11 @@ export function Payment() {
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-[#06C167] rounded-full flex items-center justify-center">
                   <span className="text-white font-medium">
-                    {customerName.charAt(0)}
+                    {orderData?.customerName.charAt(0)}
                   </span>
                 </div>
                 <span className="text-lg text-gray-700 font-medium font-roboto">
-                  {customerName}
+                  {orderData?.customerName}
                 </span>
               </div>
             </div>
@@ -512,16 +566,16 @@ export function Payment() {
         <button
           id="google-pay-button"
           className={`w-full h-14 bg-black text-white text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 shadow-md transition-all hover:bg-gray-800 hover:shadow-lg active:scale-95 font-roboto ${
-            amount ? '' : 'cursor-not-allowed opacity-50'
+            amount > 0 ? '' : 'cursor-not-allowed opacity-50'
           }`}
-          disabled={!amount}
+          disabled={!amount || !orderData}
         ></button>
         <button
           onClick={() => setCurrentScreen('apple')}
           className={`w-full bg-white border-2 border-[#06C167] text-[#06C167] text-lg font-medium rounded-2xl py-4 transition-colors hover:bg-green-50 font-roboto ${
-            amount ? '' : 'cursor-not-allowed opacity-50'
+            amount > 0 ? '' : 'cursor-not-allowed opacity-50'
           }`}
-          disabled={!amount}
+          disabled={!amount || !orderData}
         >
           Switch to Apple Pay
         </button>
@@ -536,7 +590,7 @@ export function Payment() {
           <TacoIcon className="w-12 h-12 text-[#06C167]" />
           <div>
             <h1 className="text-2xl font-bold tracking-tight">MexiKhana</h1>
-            <p className="text-gray-400 text-sm">Order #{orderId}</p>
+            <p className="text-gray-400 text-sm">Order {orderId}</p>
           </div>
         </div>
         <div className="h-1 w-24 bg-[#06C167] rounded-full mt-4"></div>
@@ -651,6 +705,48 @@ export function Payment() {
       </div>
     </div>
   );
+
+  if (isLoading) {
+    return (
+      <div className="h-[100dvh] max-w-lg mx-auto bg-white shadow-2xl overflow-hidden">
+        <div className="flex flex-col h-full items-center justify-center p-8">
+          <div className="w-16 h-16 border-4 border-[#06C167] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-xl text-gray-600">Loading order details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !orderData) {
+    return (
+      <div className="h-[100dvh] max-w-lg mx-auto bg-white shadow-2xl overflow-hidden">
+        <div className="flex flex-col h-full items-center justify-center p-8">
+          <div className="w-16 h-16 text-red-500 mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <p className="text-xl text-red-600 text-center mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-[#06C167] text-white rounded-lg hover:bg-[#05a057] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[100dvh] max-w-lg mx-auto bg-white shadow-2xl overflow-hidden">

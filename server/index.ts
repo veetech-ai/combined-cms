@@ -42,6 +42,7 @@ import storeRoutes from './api/stores/stores.routes';
 import storeModulesRoutes from './api/store-modules/store-modules.routes';
 import displayRoutes from './api/displays/displays.routes';
 import posRoutes from './api/pos/pos.routes';
+import ordersRouter from './api/orders/orders.routes';
 import { DBService } from './services/db.service';
 import { prisma } from './db';
 import { PrismaClientInitializationError } from '@prisma/client/runtime/library';
@@ -81,14 +82,18 @@ app.use(express.static(clientBuildPath));
 // Auth routes (public)
 app.use('/api/auth', authRoutes);
 
-// Protected routes example
-app.use('/api/v1', ensureValidToken); // Protect all routes under /api
+// Public routes that don't require authentication
+app.use('/api/v1/displays', displayRoutes);
+app.use('/api/v1/orders', ordersRouter);
 
+// Protected routes middleware
+app.use('/api/v1', ensureValidToken);
+
+// Protected routes that require authentication
 app.use('/api/v1', userRoutes);
 app.use('/api/v1', organizationRoutes);
 app.use('/api/v1', storeRoutes);
 app.use('/api/v1', storeModulesRoutes);
-app.use('/api/v1', displayRoutes);
 app.use('/api/v1', posRoutes);
 
 // not found handler for /api endpoints
@@ -98,6 +103,14 @@ app.use('/api/*', (req, res) => {
 
 // Serve React app for all other routes
 app.get('*', (req, res) => {
+  // Check if it's an API route
+  if (req.url.startsWith('/api/')) {
+    return res
+      .status(404)
+      .json({ error: `Resource not found: ${req.originalUrl}` });
+  }
+
+  // For all other routes, serve the React app
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
@@ -108,7 +121,8 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: '*' // Adjust to restrict cross-origin requests to specific domains.
+    origin: '*', // Adjust to restrict cross-origin requests to specific domains.
+    credentials: false // Don't require credentials for socket connection
   }
 });
 
@@ -139,10 +153,11 @@ io.on('connection', (socket) => {
     console.log('New code generated and sent:', newCode);
   });
 
-  // Handle disconnect
+  // Handle disconnect - remove redirect on disconnect
   socket.on('disconnect', () => {
     console.log('user disconnected');
-    socket.emit('redirect', { url: '/login' });
+    // Remove the redirect on disconnect
+    // socket.emit('redirect', { url: '/login' });
   });
 });
 

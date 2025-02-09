@@ -92,3 +92,15 @@ export const deleteDisplay = asyncHandler(
     res.status(204).send();
   }
 );
+
+export const getDisplay = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const displays = await readDisplays();
+  const display = displays.find((d: any) => d.id === id);
+
+  if (!display) {
+    throw new ApiError(404, 'Display not found');
+  }
+
+  res.json(display);
+});

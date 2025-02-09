@@ -4,28 +4,19 @@ import { checkAccess, ROLES } from '../../middleware/auth.middleware';
 
 const router = Router();
 
-router.get(
-  '/displays',
-  checkAccess(ROLES.ADMIN),
-  displayController.getDisplays
-);
+// Public routes (no auth required)
+router.get('/', displayController.getDisplays);
+router.get('/:id', displayController.getDisplay);
 
-router.post(
-  '/displays',
-  checkAccess(ROLES.ADMIN),
-  displayController.addDisplay
-);
+// Protected routes (require admin access)
+router.post('/', checkAccess(ROLES.ADMIN), displayController.addDisplay);
 
-router.put(
-  '/displays/:id',
-  checkAccess(ROLES.ADMIN),
-  displayController.updateDisplay
-);
+router.put('/:id', checkAccess(ROLES.ADMIN), displayController.updateDisplay);
 
 router.delete(
-  '/displays/:id',
+  '/:id',
   checkAccess(ROLES.ADMIN),
   displayController.deleteDisplay
 );
 
-export default router; 
+export default router;
