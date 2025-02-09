@@ -4,28 +4,26 @@ import { checkAccess, ROLES } from '../../middleware/auth.middleware';
 
 const router = Router();
 
-router.get(
-  '/displays',
-  checkAccess(ROLES.ADMIN),
-  displayController.getDisplays
-);
+router.get('/displays', checkAccess(ROLES.ADMIN), displayController.getDevices);
 
-router.post(
-  '/displays',
-  checkAccess(ROLES.ADMIN),
-  displayController.addDisplay
-);
+router.post('/displays', checkAccess(ROLES.ADMIN), displayController.addDevice);
 
 router.put(
   '/displays/:id',
   checkAccess(ROLES.ADMIN),
-  displayController.updateDisplay
+  displayController.updateDevice
 );
 
 router.delete(
   '/displays/:id',
   checkAccess(ROLES.ADMIN),
-  displayController.deleteDisplay
+  displayController.deleteDevice
 );
 
-export default router; 
+router.get(
+  '/displays/store/:storeId',
+  checkAccess(ROLES.ADMIN),
+  displayController.getStoreDevices
+);
+
+export default router;
