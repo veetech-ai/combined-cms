@@ -64,10 +64,10 @@ export const QRCodeCard: React.FC<QRCodeCardProps> = ({ viewMenuLink, displayNam
               src={qrCodeUrl}
               alt="Menu QR Code"
               className="w-[120px] h-[120px]"
-              style={{
-                imageRendering: '-webkit-optimize-contrast',
-                imageRendering: 'crisp-edges'
-              }}
+              // style={{
+              //   imageRendering: '-webkit-optimize-contrast',
+              //   imageRendering: 'crisp-edges'
+              // }}
             />
           </div>
         </div>

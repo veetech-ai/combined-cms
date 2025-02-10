@@ -10,7 +10,7 @@ import { BackButton } from './ui/BackButton';
 import { Timer } from './ui/Timer';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ApplePayLogo } from './ui/ApplePayLogo';
 import { GooglePayLogo } from './ui/GooglePayLogo';
 import { toast } from 'react-hot-toast';
@@ -21,7 +21,7 @@ import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
 import { orderService } from '../../../services/orderService';
 
-const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000'; //5173 on localhost
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173'; //5173 on localhost
 
 // Add dummy data
 const dummyCartItems = [
@@ -189,9 +189,12 @@ export function PaymentModal() {
   };
 
   const handleClose = () => {
-    // Navigate back to phone number step without clearing cart
+    // Navigate back to phone number step with state to prevent auto-submission
     navigate(`/kiosk/${id}/details`, {
-      state: { step: 'phone' } // Pass step information
+      state: { 
+        step: 'phone',
+        fromPayment: true  // Add this flag
+      }
     });
   };
 

@@ -58,11 +58,11 @@ export function KioskApp() {
   const [showTimer, setShowTimer] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [isUserActive, setIsUserActive] = useState(true);
-  useEffect(() => {
-    QRCode.toDataURL('https://payment.example.com/order/123')
-      .then((url) => setQrCode(url))
-      .catch((err) => console.error('Failed to generate QR code:', err));
-  }, []);
+  // useEffect(() => {
+  //   QRCode.toDataURL('https://payment.example.com/order/123')
+  //     .then((url) => setQrCode(url))
+  //     .catch((err) => console.error('Failed to generate QR code:', err));
+  // }, []);
 
   // Track user activity
   const handleUserActivity = useCallback(() => {
