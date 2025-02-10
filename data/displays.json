@@ -208,5 +208,15 @@
     "status": "Online",
     "lastSeen": "2025-02-09T20:34:30.342Z",
     "hexCode": "FDSSDFSD"
+  },
+  {
+    "id": "2e82fd29-e0f7-4c3f-ba02-c530572a30e7",
+    "name": "Kiosk-1",
+    "location": "Pending Setup",
+    "store": "Danish",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-10T10:42:01.402Z",
+    "hexCode": "F274DFA1"
   }
 ]
