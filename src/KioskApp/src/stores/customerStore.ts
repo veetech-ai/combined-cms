@@ -17,6 +17,8 @@ interface CustomerStore {
   clear: () => void;
   customerName: string;
   setCustomerName: (name: string) => void;
+  customerPhone: string;
+  setCustomerPhone: (phone: string) => void;
 }
 
 export const useCustomerStore = create<CustomerStore>((set) => ({
@@ -24,6 +26,7 @@ export const useCustomerStore = create<CustomerStore>((set) => ({
   isLoading: false,
   error: null,
   customerName: '',
+  customerPhone: '',
 
   findOrCreate: async (name: string, phone: string) => {
     set({ isLoading: true, error: null });
@@ -57,5 +60,7 @@ export const useCustomerStore = create<CustomerStore>((set) => ({
     set({ customer: null, error: null, isLoading: false });
   },
 
-  setCustomerName: (name) => set({ customerName: name })
+  setCustomerName: (name) => set({ customerName: name }),
+  
+  setCustomerPhone: (phone) => set({ customerPhone: phone })
 }));

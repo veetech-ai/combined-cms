@@ -10,7 +10,7 @@ import { BackButton } from './ui/BackButton';
 import { Timer } from './ui/Timer';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ApplePayLogo } from './ui/ApplePayLogo';
 import { GooglePayLogo } from './ui/GooglePayLogo';
 import { toast } from 'react-hot-toast';
@@ -21,7 +21,7 @@ import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
 import { orderService } from '../../../services/orderService';
 
-const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000'; //5173 on localhost
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173'; //5173 on localhost
 
 // Add dummy data
 const dummyCartItems = [
@@ -187,9 +187,12 @@ export function PaymentModal() {
   };
 
   const handleClose = () => {
-    // Navigate back to phone number step without clearing cart
+    // Navigate back to phone number step with state to prevent auto-submission
     navigate(`/kiosk/${id}/details`, {
-      state: { step: 'phone' } // Pass step information
+      state: { 
+        step: 'phone',
+        fromPayment: true  // Add this flag
+      }
     });
   };
 
@@ -208,16 +211,18 @@ export function PaymentModal() {
     handleUserActivity();
     // Set processing state
     setStep('payment_processing');
-    
+
     // Update order status to payment_processing
     if (orderItems?.orderId) {
-      orderService.updateOrder(orderItems.orderId, {
-        status: 'payment_processing'
-      }).catch(error => {
-        console.error('Error updating order status:', error);
-        toast.error('Failed to process payment');
-        setStep('initial');
-      });
+      orderService
+        .updateOrder(orderItems.orderId, {
+          status: 'payment_processing'
+        })
+        .catch((error) => {
+          console.error('Error updating order status:', error);
+          toast.error('Failed to process payment');
+          setStep('initial');
+        });
     }
   };
 
@@ -501,7 +506,8 @@ export function PaymentModal() {
 
               <div className="mt-3">
                 <p className="text-sm font-semibold text-gray-500 mb-10">
-                  {'OrderID: ' + (orderItems && orderItems.orderId) || 'Order #23423423'}
+                  {'OrderID: ' + (orderItems && orderItems.orderId) ||
+                    'Order #23423423'}
                 </p>
               </div>
 
@@ -588,7 +594,9 @@ export function PaymentModal() {
             </p>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-              <p className="text-sm text-gray-400">Securely processing your payment</p>
+              <p className="text-sm text-gray-400">
+                Securely processing your payment
+              </p>
             </div>
           </div>
         </div>
