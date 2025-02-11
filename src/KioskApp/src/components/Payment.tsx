@@ -91,6 +91,8 @@ export function Payment() {
   const [isGooglePaySupported, setIsGooglePaySupported] = useState(true);
   const [isPaymentButtonsLoading, setIsPaymentButtonsLoading] = useState(false);
 
+  const WS_URL = import.meta.env.VITE_WS_URL;
+
   // Initialize socket connection and handle payment processing
   useEffect(() => {
     const socket = io(WS_URL);
