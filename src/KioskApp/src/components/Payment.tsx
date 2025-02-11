@@ -443,6 +443,17 @@ export function Payment() {
               No supported payment methods available.
             </div>
           )}
+
+          {/* Iframe styling adjustments */}
+          <style>{`
+          #apple-pay-button iframe,
+          #google-pay-button iframe {
+            height: 56px !important;
+            width: 100% !important;
+            border: none !important;
+            border-radius: 12px !important;
+          }
+        `}</style>
         </>
       )}
     </div>
