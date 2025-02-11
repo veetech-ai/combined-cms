@@ -1,11 +1,7 @@
-import { ROLES } from "../server/middleware/auth.middleware";
+import { User } from '@prisma/client';
 
-declare namespace Express {
-	export interface Request {
-		user?: {
-			role: keyof typeof ROLES;
-			organizationId?: string;
-			storeId?: string;
-		};
-	}
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: User;
+  }
 }

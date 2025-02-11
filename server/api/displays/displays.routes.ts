@@ -8,9 +8,19 @@ import {
 
 const router = Router();
 
-router.get('/', checkAccess(ROLES.ADMIN), displayController.getDevices);
+router.get(
+  '/',
+  ensureValidToken,
+  checkAccess(ROLES.ADMIN),
+  displayController.getDevices
+);
 
-router.post('/', checkAccess(ROLES.ADMIN), displayController.addDevice);
+router.post(
+  '/',
+  ensureValidToken,
+  checkAccess(ROLES.ADMIN),
+  displayController.addDevice
+);
 
 router.put(
   '/:id',
