@@ -91,92 +91,79 @@ export const useCartStore = create<CartStore>()(
       phoneDiscount: false,
 
       addItem: (item) => {
-        const cartId = `${item.id}-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2)}`;
-
-        // Initialize price maps
-        const addOnPrices: { [key: string]: number } = {};
-        const beveragePrices: { [key: string]: number } = {};
-        const sidePrices: { [key: string]: number } = {};
-        const dessertPrices: { [key: string]: number } = {};
-
+        const cartId = `${item.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      
         // Parse the instructions JSON if it exists
         let parsedInstructions;
         try {
-          parsedInstructions = item.instructions
-            ? JSON.parse(item.instructions)
-            : {};
+          parsedInstructions = item.instructions ? JSON.parse(item.instructions) : {};
         } catch (e) {
           parsedInstructions = {};
         }
-
-        // Calculate add-on prices
-        if (parsedInstructions.addOns?.length) {
-          parsedInstructions.addOns.forEach((addOnId: string) => {
-            switch (addOnId) {
-              case 'extra-cheese':
-                addOnPrices[addOnId] = 1.5;
-                break;
-              case 'extra-sauce':
-                addOnPrices[addOnId] = 0.75;
-                break;
-            }
+      
+        // Helper function to deeply compare arrays of objects
+        const areArraysEqual = (arr1: any[], arr2: any[]) => {
+          if (arr1.length !== arr2.length) return false;
+          return arr1.every((item1, index) => {
+            const item2 = arr2[index];
+            return JSON.stringify(item1) === JSON.stringify(item2);
           });
+        };
+      
+        // Check if the same product with the same add-ons, customizations, and extras already exists in the cart
+        const existingItem = get().items.find((existing) => {
+          if (existing.id !== item.id) return false;
+      
+          // Compare add-ons
+          const existingAddOns = existing.addOns || [];
+          const newAddOns = parsedInstructions.addOns || [];
+          if (!areArraysEqual(existingAddOns, newAddOns)) return false;
+      
+          // Compare customizations
+          const existingCustomizations = existing.customizations || [];
+          const newCustomizations = parsedInstructions.customizations || [];
+          if (!areArraysEqual(existingCustomizations, newCustomizations)) return false;
+      
+          // Compare extras
+          const existingExtras = existing.extras || [];
+          const newExtras = parsedInstructions.extras || [];
+          if (!areArraysEqual(existingExtras, newExtras)) return false;
+      
+          return true;
+        });
+      
+        if (existingItem) {
+          // If the same product with the same add-ons, customizations, and extras exists, increase its quantity
+          set((state) => ({
+            items: state.items.map((existing) =>
+              existing.cartId === existingItem.cartId
+                ? { ...existing, quantity: existing.quantity + (item.quantity || 1) }
+                : existing
+            ),
+          }));
+        } else {
+          // If the product is different or has different customizations, add it as a new item
+          set((state) => ({
+            items: [
+              ...state.items,
+              {
+                ...item,
+                cartId,
+                imageUrl: item.imageUrl,
+                addOns: parsedInstructions.addOns || [],
+                customizations: parsedInstructions.customizations || [],
+                beverages: parsedInstructions.beverages || [],
+                sides: parsedInstructions.sides || [],
+                desserts: parsedInstructions.desserts || [],
+                quantity: parsedInstructions.quantity || item.quantity || 1,
+                addOnPrices: {},
+                beveragePrices: {},
+                sidePrices: {},
+                dessertPrices: {},
+              },
+            ],
+          }));
         }
-
-        // Calculate beverage prices
-        if (parsedInstructions.beverages?.length) {
-          parsedInstructions.beverages.forEach((bevId: string) => {
-            switch (bevId) {
-              case 'soda':
-                beveragePrices[bevId] = 2.0;
-                break;
-              case 'water':
-                beveragePrices[bevId] = 1.0;
-                break;
-            }
-          });
-        }
-
-        // Calculate side prices
-        if (parsedInstructions.sides?.length) {
-          parsedInstructions.sides.forEach((sideId: string) => {
-            if (sideId === 'fries') {
-              sidePrices[sideId] = 3.0;
-            }
-          });
-        }
-
-        // Calculate dessert prices
-        if (parsedInstructions.desserts?.length) {
-          parsedInstructions.desserts.forEach((dessertId: string) => {
-            if (dessertId === 'ice-cream') {
-              dessertPrices[dessertId] = 2.5;
-            }
-          });
-        }
-
-        set((state) => ({
-          items: [
-            ...state.items,
-            {
-              ...item,
-              cartId,
-              imageUrl: item.imageUrl,
-              addOns: parsedInstructions.addOns || [],
-              customizations: parsedInstructions.customizations || [],
-              beverages: parsedInstructions.beverages || [],
-              sides: parsedInstructions.sides || [],
-              desserts: parsedInstructions.desserts || [],
-              quantity: parsedInstructions.quantity || item.quantity || 1,
-              addOnPrices,
-              beveragePrices,
-              sidePrices,
-              dessertPrices
-            }
-          ]
-        }));
       },
 
       removeItem: (cartId) => {
