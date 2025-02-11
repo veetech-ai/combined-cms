@@ -94,9 +94,9 @@ export const DisplayMenus = () => {
     try {
       // Get store modules to find the kiosk module
       const modules = await displayService.getStoreModules(store.id);
-      const kioskModule = modules.find(module => module.key === 'kiosk');
-      console.log({modules, kioskModule});
-      
+      const kioskModule = modules.find((module) => module.key === 'kiosk');
+      console.log({ modules, kioskModule });
+
       if (!kioskModule) {
         throw new Error('Kiosk module not found for this store');
       }
@@ -227,27 +227,28 @@ export const DisplayMenus = () => {
                   <Store className="w-4 h-4" />
                   <span>{display.store}</span>
                 </div>
-                {display.lastSeen && (<p className="text-xs text-gray-400 mt-2">
-                  Last seen: {display.lastSeen}
-                </p>)}
+                {display.lastSeen && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Last seen: {display.lastSeen}
+                  </p>
+                )}
                 <p className="text-xs text-gray-400">
                   Hex Code: {display.hexCode}
                 </p>
                 <div className="mt-4 flex justify-end">
-                  <div className='flex flex-col gap-2 items-center'>
-<QRCodeCard
+                  <div className="flex flex-col gap-2 items-center">
+                    <QRCodeCard
                       viewMenuLink={generateViewMenuLink(display.hexCode)}
                       displayName={display.name}
                     />
-                  <button
-                    onClick={() => openDisplayView(display.hexCode)}
-                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>View Display</span>
-                  </button>
-                    </div>
-                  
+                    <button
+                      onClick={() => openDisplayView(display.hexCode)}
+                      className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>View Display</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
