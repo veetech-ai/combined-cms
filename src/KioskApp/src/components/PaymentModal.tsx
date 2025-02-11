@@ -21,7 +21,7 @@ import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
 import { orderService } from '../../../services/orderService';
 
-const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173'; //5173 on localhost
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000'; //5173 on localhost
 
 // Add dummy data
 const dummyCartItems = [
