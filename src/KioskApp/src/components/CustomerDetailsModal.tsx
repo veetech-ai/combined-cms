@@ -11,11 +11,12 @@ import { orderService } from '../../..//services/orderService';
 type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
-  const { orderItems, setOrder } = useOrder();
+  const { orderItems } = useOrder();
   const location = useLocation();
-
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [step, setStep] = useState<Step>(
-    location.state?.fromPayment ? 'name' : location.state?.step === 'phone' ? 'phone' : 'name'
+    location.state?.step === 'phone' ? 'phone' : 'name'
   );
   const [timeLeft, setTimeLeft] = useState(30);
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -26,10 +27,7 @@ export function CustomerDetailsModal() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { clearCart } = useCartStore();
-  const { setCustomerName, customerName } = useCustomerStore();
-
-  const [name, setName] = useState(orderItems?.customerName || '');
-  const [phone, setPhone] = useState(orderItems?.customerPhone || '');
+  const { setCustomerName } = useCustomerStore();
 
   // Add cleanup reference
   const timerRef = React.useRef<NodeJS.Timeout>();
@@ -103,6 +101,15 @@ export function CustomerDetailsModal() {
       handleStartOver();
     }
   }, [timeLeft]);
+
+  useEffect(() => {
+    if (step === 'phone') {
+      const cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.length === 10 && /^[2-9]\d{9}$/.test(cleanPhone)) {
+        handlePhoneSubmit();
+      }
+    }
+  }, [phone, step]);
 
   const resetTimer = () => {
     setTimeLeft(30);
@@ -180,66 +187,25 @@ export function CustomerDetailsModal() {
     }
   };
 
-  const generateOrderId = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let randomPart = '';
-
-    // Generate a 6-character random string
-    for (let i = 0; i < 6; i++) {
-      randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    // Get current date in YYYYMMDD format
-    const now = new Date();
-    const datePart =
-      now.getFullYear().toString() +
-      String(now.getMonth() + 1).padStart(2, '0') +
-      String(now.getDate()).padStart(2, '0');
-
-    return `${datePart}-${randomPart}`;
-  };
-
   const handlePhoneSubmit = async () => {
     const cleanPhone = phone.replace(/\D/g, '');
 
     try {
-      let orderData;
-      
-      if (location.state?.fromPayment && orderItems?.orderId) {
-        // Update existing order
-        const orderDetails = {
-          customerName: name,
-          customerPhone: phone
-        };
+      const orderDetails = {
+        orderId: orderItems?.orderId,
+        customerName: name,
+        customerPhone: phone,
+        timestamp: new Date().toISOString(),
+        items: orderItems?.items || [],
+        totalBill: orderItems?.totalBill || '0'
+      };
 
-        console.log('Updating order:', {
-          orderId: orderItems.orderId,
-          orderDetails
-        });
+      // Use the order service instead of direct fetch
+      await orderService.createOrder(orderDetails);
 
-        orderData = await orderService.updateOrder(orderItems.orderId, orderDetails);
-      } else {
-        // Create new order
-        const orderDetails: Order = {
-          status: 'pending',
-          orderId: generateOrderId(),
-          customerName: name,
-          customerPhone: phone,
-          timestamp: new Date().toISOString(),
-          items: orderItems?.items || [],
-          totalBill: orderItems?.totalBill || '0'
-        };
-
-        orderData = await orderService.createOrder(orderDetails);
-      }
-
-      // Update both customer name and order context with the response data
       setCustomerName(name);
-      setOrder(orderData); // Update the entire order object with server response
-
       navigate(`/kiosk/${id}/payment`);
     } catch (error) {
-      console.error('Error in handlePhoneSubmit:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to save customer data'
       );
@@ -274,45 +240,9 @@ export function CustomerDetailsModal() {
     return () => clearTimeout(timer);
   }, [step]);
 
-  // Add effect to update form when orderItems changes
-  useEffect(() => {
-    if (orderItems) {
-      setName(orderItems.customerName || '');
-      setPhone(orderItems.customerPhone || '');
-    }
-  }, [orderItems]);
-
-  // Add back the phone input effect but with the fromPayment check
-  useEffect(() => {
-    if (step === 'phone' && !location.state?.fromPayment) {
-      const cleanPhone = phone.replace(/\D/g, '');
-      const isValidPhone = cleanPhone.length === 10 && /^[2-9]\d{9}$/.test(cleanPhone);
-      
-      if (isValidPhone) {
-        handlePhoneSubmit();
-      }
-    }
-  }, [phone, step, location.state?.fromPayment]);
-
-  // Update the name input keydown handler to work in both cases
-  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && name.trim()) {
-      handleNameSubmit();
-      resetTimer();
-    }
-  };
-
-  // Update the phone input keydown handler to work in both cases
-  const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && phone.trim()) {
-      handlePhoneSubmit();
-      resetTimer();
-    }
-  };
-
   return (
     <div
-      className="min-h-screen bg-white relative"
+      className="min-h-screen bg-white"
       onMouseMove={handleUserActivity}
       onClick={handleUserActivity}
     >
@@ -344,8 +274,8 @@ export function CustomerDetailsModal() {
         </button>
       </div>
 
-      <div className="flex-1 px-6">
-        <div className="w-full max-w-4xl mx-auto grid grid-cols-2 gap-12 items-start"> {/* Changed items-center to items-start */}
+      <div className="flex-1 px-6 relative">
+        <div className="w-full max-w-4xl mx-auto grid grid-cols-2 gap-12 items-center">
           {step === 'name' ? (
             <>
               <div>
@@ -354,23 +284,26 @@ export function CustomerDetailsModal() {
                   We will call your name when your order is ready
                 </p>
               </div>
-              <div className="space-y-4"> {/* Added container with spacing */}
-                <div className="relative">
-                  <input
-                    ref={nameInputRef}
-                    type="text"
-                    inputMode="text"
-                    pattern="[A-Za-z\s]*"
-                    placeholder="Your name"
-                    value={name}
-                    onChange={handleNameChange}
-                    className="w-full text-5xl bg-transparent focus:outline-none placeholder-gray-300 py-4 focus:ring-0"
-                    autoFocus
-                    autoComplete="off"
-                    onKeyDown={handleNameKeyDown}
-                  />
-                  <div className="absolute left-0 right-0 h-0.5 bg-gray-200 bottom-0" />
-                </div>
+              <div className="relative">
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  inputMode="text"
+                  pattern="[A-Za-z\s]*"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={handleNameChange}
+                  className="w-full text-5xl bg-transparent focus:outline-none placeholder-gray-300 py-4 focus:ring-0"
+                  autoFocus
+                  autoComplete="off"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && name.trim()) {
+                      handleNameSubmit();
+                      resetTimer();
+                    }
+                  }}
+                />
+                <div className="absolute left-0 right-0 h-0.5 bg-gray-200 bottom-0" />
               </div>
             </>
           ) : (
@@ -383,24 +316,27 @@ export function CustomerDetailsModal() {
                   We will also text you when your order is ready
                 </p>
               </div>
-              <div className="space-y-4"> {/* Added container with spacing */}
-                <div className="relative">
-                  <input
-                    ref={phoneInputRef}
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    placeholder="(XXX) XXX-XXXX"
-                    value={phone}
-                    onChange={handlePhoneChange}
-                    className="w-full text-5xl bg-transparent focus:outline-none placeholder-gray-300 py-4 focus:ring-0"
-                    maxLength={14}
-                    autoFocus
-                    autoComplete="off"
-                    onKeyDown={handlePhoneKeyDown}
-                  />
-                  <div className="absolute left-0 right-0 h-0.5 bg-gray-200 bottom-0" />
-                </div>
+              <div className="relative">
+                <input
+                  ref={phoneInputRef}
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="(XXX) XXX-XXXX"
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  className="w-full text-5xl bg-transparent focus:outline-none placeholder-gray-300 py-4 focus:ring-0"
+                  maxLength={14}
+                  autoFocus
+                  autoComplete="off"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && phone.trim()) {
+                      handlePhoneSubmit();
+                      resetTimer();
+                    }
+                  }}
+                />
+                <div className="absolute left-0 right-0 h-0.5 bg-gray-200 bottom-0" />
               </div>
             </>
           )}

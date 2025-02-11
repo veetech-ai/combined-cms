@@ -51,6 +51,9 @@ export function PaymentModal() {
   const [isUserActive, setIsUserActive] = useState(true);
   const { customerName } = useCustomerStore();
   const [orderTotal, setOrderTotal] = useState();
+  const [isQRScanned, setIsQRScanned] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [processingTimeout, setProcessingTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const total = dummyCartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -66,20 +69,36 @@ export function PaymentModal() {
     socket.on('orderStatusUpdated', (data) => {
       console.log('Order status updated:', data);
       if (data.orderId === orderItems?.orderId) {
+        if (processingTimeout) {
+          clearTimeout(processingTimeout);
+        }
+
         if (data.status === 'payment_processing') {
           setStep('payment_processing');
         } else if (data.status === 'completed') {
           setStep('card_paid');
         } else if (data.status === 'failed_retry') {
           setStep('initial_retry');
+        } else if (data.status === 'payment_failed') {
+          setStep('payment_retry');
         }
       }
     });
 
+    socket.on('qrCodeScanned', (data) => {
+      if (data.orderId === orderItems?.orderId) {
+        setIsQRScanned(true);
+        setStep('payment_processing');
+      }
+    });
+
     return () => {
+      if (processingTimeout) {
+        clearTimeout(processingTimeout);
+      }
       socket.disconnect();
     };
-  }, [orderItems?.orderId]);
+  }, [orderItems?.orderId, processingTimeout]);
 
   // Update QR code generation when orderId changes
   useEffect(() => {
@@ -209,29 +228,60 @@ export function PaymentModal() {
   };
 
   const handleQRCodeClick = () => {
-    resetTimer();
-    handleUserActivity();
+    // Reset any previous errors
+    setError(null);
+    
+    // Clear any existing timeout
+    if (processingTimeout) {
+      clearTimeout(processingTimeout);
+    }
+    
     // Set processing state
     setStep('payment_processing');
 
-    // Update order status to payment_processing
-    if (orderItems?.orderId) {
-      orderService
-        .updateOrder(orderItems.orderId, {
-          status: 'payment_processing'
-        })
-        .catch((error) => {
-          console.error('Error updating order status:', error);
-          toast.error('Failed to process payment');
-          setStep('initial');
-        });
-    }
+    // Emit socket event to notify server that QR was scanned
+    socket.emit('qrCodeScanned', {
+      orderId: orderItems?.orderId,
+      status: 'payment_processing',
+      isRetry: true // Flag to indicate this is a retry attempt
+    });
   };
 
   // Update handler for order button click - remove clearCart
   const handleOrderClick = () => {
     navigate(`/kiosk/${id}/kiosk`);
   };
+  // I added this functionality to check failed payment screen but we can use it for timeout failure as well.
+  // Add useEffect to handle processing timeout
+  useEffect(() => {
+    // Clear any existing timeout when step changes
+    if (processingTimeout) {
+      clearTimeout(processingTimeout);
+    }
+
+    // Set new timeout when entering processing state
+    if (step === 'payment_processing') {
+      const timeout = setTimeout(() => {
+        // Update order status to failed
+        if (orderItems?.orderId) {
+          socket.emit('orderStatusUpdated', {
+            orderId: orderItems.orderId,
+            status: 'payment_failed'
+          });
+        }
+        setStep('payment_retry');
+      }, 120000); // 120 seconds
+
+      setProcessingTimeout(timeout);
+    }
+
+    // Cleanup timeout on unmount or step change
+    return () => {
+      if (processingTimeout) {
+        clearTimeout(processingTimeout);
+      }
+    };
+  }, [step, orderItems?.orderId]);
 
   return (
     <div className="fixed inset-0 bg-white">
@@ -416,8 +466,8 @@ export function PaymentModal() {
 
                   {orderItems?.orderId ? (
                     <div
-                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100"
-                      onClick={handleQRCodeClick}
+                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors"
+                      onClick={handleQRCodeClick} //Remove it on deployment so click dont open processing screen using it for testing #zain
                     >
                       {qrCode && (
                         <>
@@ -661,7 +711,7 @@ export function PaymentModal() {
 
                   {orderItems?.orderId ? (
                     <div
-                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100"
+                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors"
                       onClick={handleQRCodeClick}
                     >
                       {qrCode && (
@@ -844,6 +894,59 @@ export function PaymentModal() {
               <p className="text-sm text-gray-400">
                 Securely processing your payment
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+      {step === 'payment_retry' && (
+        <div className="h-full flex flex-col items-center justify-center bg-black text-white">
+          <div className="flex flex-col items-center justify-center text-center p-8">
+            {/* Order Details Header */}
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold">Payment Failed</h2>
+              <p className="text-lg text-gray-300 mt-2">
+                Order #{orderItems?.orderId}
+              </p>
+              <p className="text-2xl font-semibold mt-4">
+                ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+              </p>
+            </div>
+
+            {/* QR Code Section */}
+            {orderItems?.orderId && qrCode ? (
+              <div 
+                className="flex flex-col items-center justify-center relative bg-white rounded-xl p-6 border-2 border-gray-700 cursor-pointer hover:border-gray-500 transition-colors"
+                onClick={handleQRCodeClick}
+              >
+                <img
+                  src={qrCode}
+                  alt="Order Payment QR Code"
+                  className="w-48 h-48 mb-4"
+                />
+                <div className="text-black">
+                  <p className="font-medium mb-1">Scan to Retry Payment</p>
+                  <p className="text-sm text-gray-500">
+                    Use your phone's camera to scan and complete payment
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center p-4 text-gray-400">
+                Loading payment details...
+              </div>
+            )}
+
+            {/* Alternative Payment Options */}
+            <div className="mt-8">
+              <p className="text-gray-400 mb-4">Or pay using</p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setStep('initial')}
+                  className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  Other Payment Methods
+                </button>
+              </div>
             </div>
           </div>
         </div>
