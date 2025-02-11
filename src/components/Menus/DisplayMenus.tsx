@@ -80,7 +80,7 @@ export const DisplayMenus = () => {
       const data = await displayService.getDisplays();
       // Filter displays for the current store
       const storeDisplays = data.filter(
-        (display) => display.store === store.name
+        (display) => display.storeModule.store.id === store.id
       );
       setDisplays(storeDisplays);
     } catch (error: any) {
@@ -92,11 +92,24 @@ export const DisplayMenus = () => {
 
   const handleDisplaySubmit = async (newDisplay: Display) => {
     try {
-      // Set the store information in the new display
+      // Get store modules to find the kiosk module
+      const modules = await displayService.getStoreModules(store.id);
+      const kioskModule = modules.find((module) => module.key === 'kiosk');
+      console.log({ modules, kioskModule });
+
+      if (!kioskModule) {
+        throw new Error('Kiosk module not found for this store');
+      }
+
+      // Set the store information and storeModuleId in the new display
       const displayWithStore = {
         ...newDisplay,
-        store: store.name
+        store: store.name,
+        storeModuleId: kioskModule.storeModuleId
       };
+
+      console.log({ displayWithStore });
+
       await displayService.addDisplay(displayWithStore);
       setDisplays((prevDisplays) => [...prevDisplays, displayWithStore]);
       toast.success('Display added successfully');
@@ -209,21 +222,21 @@ export const DisplayMenus = () => {
                 </div>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
-                      <Store className="w-4 h-4" />
-                      <span>{display.store}</span>
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      Last seen: {display.lastSeen}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Hex Code: {display.hexCode}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end space-y-4">
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <Store className="w-4 h-4" />
+                  <span>{display.store}</span>
+                </div>
+                {display.lastSeen && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Last seen: {display.lastSeen}
+                  </p>
+                )}
+                <p className="text-xs text-gray-400">
+                  Hex Code: {display.hexCode}
+                </p>
+                <div className="mt-4 flex justify-end">
+                  <div className="flex flex-col gap-2 items-center">
                     <QRCodeCard
                       viewMenuLink={generateViewMenuLink(display.hexCode)}
                       displayName={display.name}

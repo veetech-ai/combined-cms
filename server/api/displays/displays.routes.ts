@@ -8,30 +8,38 @@ import {
 
 const router = Router();
 
-// Public routes (no auth required)
-router.get('/', displayController.getDisplays);
-router.get('/:id', displayController.getDisplay);
+router.get(
+  '/',
+  ensureValidToken,
+  checkAccess(ROLES.ADMIN),
+  displayController.getDevices
+);
 
-// Protected routes (require auth and admin access)
 router.post(
   '/',
   ensureValidToken,
   checkAccess(ROLES.ADMIN),
-  displayController.addDisplay
+  displayController.addDevice
 );
 
 router.put(
   '/:id',
   ensureValidToken,
   checkAccess(ROLES.ADMIN),
-  displayController.updateDisplay
+  displayController.updateDevice
 );
 
 router.delete(
   '/:id',
   ensureValidToken,
   checkAccess(ROLES.ADMIN),
-  displayController.deleteDisplay
+  displayController.deleteDevice
+);
+
+router.get(
+  '/store/:storeId',
+  checkAccess(ROLES.ADMIN),
+  displayController.getStoreDevices
 );
 
 export default router;
