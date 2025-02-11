@@ -8,14 +8,10 @@ import { StoreService } from '../api/stores/stores.service';
 import { OrganizationService } from '../api/organizations/organizations.service';
 import { User } from '@prisma/client';
 
-interface AuthRequest extends Request {
-  user: User;
-}
-
 const authService = new AuthService(prisma);
 
 export const ensureValidToken = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -60,7 +56,7 @@ export const ensureValidToken = async (
       return res.status(401).json({ message: 'Account is inactive' });
     }
 
-    req.user = user;
+    req.user = user as User;
 
     next();
   } catch (error) {
@@ -83,8 +79,8 @@ export enum ROLES {
 
 // Base middleware factory for role-based access
 export const checkAccess = (requiredAccessLevel: ROLES) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
-    const userRoleValue = ROLES[req.user.role];
+  return (req: Request, res: Response, next: NextFunction) => {
+    const userRoleValue = ROLES[req.user?.role as keyof typeof ROLES];
 
     if (
       typeof userRoleValue === 'number' &&

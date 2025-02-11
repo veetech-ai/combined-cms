@@ -15,7 +15,11 @@ export function CustomerDetailsModal() {
   const location = useLocation();
 
   const [step, setStep] = useState<Step>(
-    location.state?.fromPayment ? 'name' : location.state?.step === 'phone' ? 'phone' : 'name'
+    location.state?.fromPayment
+      ? 'name'
+      : location.state?.step === 'phone'
+      ? 'phone'
+      : 'name'
   );
   const [timeLeft, setTimeLeft] = useState(30);
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -204,7 +208,7 @@ export function CustomerDetailsModal() {
 
     try {
       let orderData;
-      
+
       if (location.state?.fromPayment && orderItems?.orderId) {
         // Update existing order
         const orderDetails = {
@@ -217,7 +221,10 @@ export function CustomerDetailsModal() {
           orderDetails
         });
 
-        orderData = await orderService.updateOrder(orderItems.orderId, orderDetails);
+        orderData = await orderService.updateOrder(
+          orderItems.orderId,
+          orderDetails
+        );
       } else {
         // Create new order
         const orderDetails: Order = {
@@ -286,8 +293,9 @@ export function CustomerDetailsModal() {
   useEffect(() => {
     if (step === 'phone' && !location.state?.fromPayment) {
       const cleanPhone = phone.replace(/\D/g, '');
-      const isValidPhone = cleanPhone.length === 10 && /^[2-9]\d{9}$/.test(cleanPhone);
-      
+      const isValidPhone =
+        cleanPhone.length === 10 && /^[2-9]\d{9}$/.test(cleanPhone);
+
       if (isValidPhone) {
         handlePhoneSubmit();
       }
@@ -345,7 +353,9 @@ export function CustomerDetailsModal() {
       </div>
 
       <div className="flex-1 px-6">
-        <div className="w-full max-w-4xl mx-auto grid grid-cols-2 gap-12 items-start"> {/* Changed items-center to items-start */}
+        <div className="w-full max-w-4xl mx-auto grid grid-cols-2 gap-12 items-start">
+          {' '}
+          {/* Changed items-center to items-start */}
           {step === 'name' ? (
             <>
               <div>
@@ -354,7 +364,9 @@ export function CustomerDetailsModal() {
                   We will call your name when your order is ready
                 </p>
               </div>
-              <div className="space-y-4"> {/* Added container with spacing */}
+              <div className="space-y-4">
+                {' '}
+                {/* Added container with spacing */}
                 <div className="relative">
                   <input
                     ref={nameInputRef}
@@ -383,7 +395,9 @@ export function CustomerDetailsModal() {
                   We will also text you when your order is ready
                 </p>
               </div>
-              <div className="space-y-4"> {/* Added container with spacing */}
+              <div className="space-y-4">
+                {' '}
+                {/* Added container with spacing */}
                 <div className="relative">
                   <input
                     ref={phoneInputRef}

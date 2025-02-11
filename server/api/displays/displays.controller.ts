@@ -1,106 +1,119 @@
 import { Request, Response } from 'express';
-import fs from 'fs/promises';
-import path from 'path';
 import { asyncHandler } from '../../util/asyn-handler';
 import { ApiError } from '../../util/api.error';
+import { DeviceService } from './displays.service';
+import { z } from 'zod';
+import { StoreService } from '../stores/stores.service';
 
-const DISPLAYS_FILE = path.join(process.cwd(), 'data', 'displays.json');
+const deviceService = new DeviceService();
+const storeService = new StoreService();
 
-// Ensure the data directory exists
-async function ensureDataDir() {
-  const dir = path.dirname(DISPLAYS_FILE);
-  await fs.mkdir(dir, { recursive: true });
-}
-
-// Read displays from file
-async function readDisplays() {
-  try {
-    await ensureDataDir();
-    const data = await fs.readFile(DISPLAYS_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    // If file doesn't exist, return empty array
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-}
-
-// Write displays to file
-async function writeDisplays(displays: any[]) {
-  await ensureDataDir();
-  await fs.writeFile(DISPLAYS_FILE, JSON.stringify(displays, null, 2));
-}
-
-export const getDisplays = asyncHandler(async (req: Request, res: Response) => {
-  const displays = await readDisplays();
-  res.json(displays);
+const newDeviceSchema = z.object({
+  name: z.string(),
+  hexCode: z.string(),
+  storeModuleId: z.string()
 });
 
-export const addDisplay = asyncHandler(async (req: Request, res: Response) => {
-  const newDisplay = req.body;
-
-  if (!newDisplay.id || !newDisplay.hexCode) {
-    throw new ApiError(400, 'Display ID and hex code are required');
-  }
-
-  const displays = await readDisplays();
-
-  // Check if display with same hex code already exists
-  if (displays.some((d: any) => d.hexCode === newDisplay.hexCode)) {
-    throw new ApiError(400, 'Display with this hex code already exists');
-  }
-
-  displays.push(newDisplay);
-  await writeDisplays(displays);
-
-  res.status(201).json(newDisplay);
+const updateDeviceSchema = z.object({
+  name: z.string().optional(),
+  hexCode: z.string().optional(),
+  status: z.string().optional(),
+  location: z.string().optional(),
+  storeModuleId: z.string().optional()
 });
 
-export const updateDisplay = asyncHandler(
+export const getDevices = asyncHandler(async (req: Request, res: Response) => {
+  const devices = await deviceService.getDevices();
+  res.json(devices);
+});
+
+export const addDevice = asyncHandler(async (req: Request, res: Response) => {
+  const newDevice = req.body;
+
+  // validate newDevice
+  const validatedDevice = newDeviceSchema.safeParse(newDevice);
+  if (!validatedDevice.success) {
+    throw new ApiError(400, validatedDevice.error.message);
+  }
+
+  // check if device with same hex code already exists
+  const existingDevice = await deviceService.getDevices({
+    where: { hexCode: validatedDevice.data.hexCode }
+  });
+
+  if (existingDevice && existingDevice.length > 0) {
+    throw new ApiError(400, 'Device with this hex code already exists');
+  }
+
+  const device = await deviceService.createDevice(newDevice);
+  res.status(201).json(device);
+});
+
+export const updateDevice = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    const displays = await readDisplays();
-    const index = displays.findIndex((d: any) => d.id === id);
-
-    if (index === -1) {
-      throw new ApiError(404, 'Display not found');
+    // validate updateData
+    const validatedUpdateData = updateDeviceSchema.safeParse(updateData);
+    if (!validatedUpdateData.success) {
+      throw new ApiError(400, validatedUpdateData.error.message);
     }
 
-    displays[index] = { ...displays[index], ...updateData };
-    await writeDisplays(displays);
+    // check if device exists
+    const device = await deviceService.getDevices({ where: { id } });
 
-    res.json(displays[index]);
+    if (!device) {
+      throw new ApiError(404, 'Device not found');
+    }
+
+    const updatedDevice = await deviceService.updateDevice(id, updateData);
+    res.json(updatedDevice);
   }
 );
 
-export const deleteDisplay = asyncHandler(
+export const deleteDevice = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const displays = await readDisplays();
-    const filteredDisplays = displays.filter((d: any) => d.id !== id);
+    // check if device exists
+    const device = await deviceService.getDevices({ where: { id } });
 
-    if (displays.length === filteredDisplays.length) {
-      throw new ApiError(404, 'Display not found');
+    if (!device) {
+      throw new ApiError(404, 'Device not found');
     }
 
-    await writeDisplays(filteredDisplays);
+    await deviceService.deleteDevice(id);
     res.status(204).send();
   }
 );
 
-export const getDisplay = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const displays = await readDisplays();
-  const display = displays.find((d: any) => d.id === id);
-
-  if (!display) {
-    throw new ApiError(404, 'Display not found');
+export const getDisplayById = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const device = await deviceService.getDevices({ where: { id } });
+    res.json(device);
   }
+);
 
-  res.json(display);
-});
+export const getStoreDevices = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { storeId } = req.params;
+
+    // check if store exists
+    const store = await storeService.getStores({ where: { id: storeId } });
+    if (!store) {
+      throw new ApiError(404, 'Store not found');
+    }
+
+    // check if devices exist
+    const devices = await deviceService.getDevices({
+      where: { storeModule: { storeId } }
+    });
+    if (!devices) {
+      throw new ApiError(404, 'No devices found');
+    }
+
+    res.json(devices);
+  }
+);

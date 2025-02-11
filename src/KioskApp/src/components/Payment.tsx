@@ -10,6 +10,7 @@ import { useCustomerStore } from '../stores/customerStore';
 import { createCharge } from '../api/clover';
 import { useLocation } from 'react-router-dom';
 import { orderService } from '../../../services/orderService';
+import io from 'socket.io-client';
 
 declare global {
   interface Window {
@@ -89,6 +90,43 @@ export function Payment() {
   const [isApplePaySupported, setIsApplePaySupported] = useState(true);
   const [isGooglePaySupported, setIsGooglePaySupported] = useState(true);
   const [isPaymentButtonsLoading, setIsPaymentButtonsLoading] = useState(false);
+
+  // Initialize socket connection and handle payment processing
+  useEffect(() => {
+    const socket = io(WS_URL);
+
+    // Connect to WebSocket server
+    socket.connect();
+
+    // Handle successful connection
+    socket.on('connect', () => {
+      console.log('Payment component connected to socket server');
+    });
+
+    // Handle payment processing status updates
+    socket.on('paymentStatus', (data) => {
+      if (data.orderId === orderId) {
+        switch (data.status) {
+          case 'processing':
+            setCurrentScreen('processing');
+            break;
+          case 'success':
+            setCurrentScreen('confirmation');
+            break;
+          case 'failed':
+            // Show error and allow retry
+            setError(data.error || 'Payment failed');
+            setRetryPayment(true);
+            break;
+        }
+      }
+    });
+
+    // Cleanup socket connection
+    return () => {
+      socket.disconnect();
+    };
+  }, [orderId]);
 
   const initializeClover = async () => {
     if (!window.Clover) {
@@ -252,15 +290,15 @@ export function Payment() {
       applePayButton.mount('#apple-pay-button');
 
       // Ensure iframe inside container has correct height
-      // setTimeout(() => {
-      //   const iframe = applePayContainer.querySelector('iframe');
-      //   if (iframe) {
-      //     iframe.style.height = '50px'; // Adjust height
-      //     iframe.style.width = '100%'; // Ensure full width
-      //     iframe.style.border = 'none'; // Remove border
-      //     iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
-      //   }
-      // }, 500);
+      setTimeout(() => {
+        const iframe = applePayContainer.querySelector('iframe');
+        if (iframe) {
+          iframe.style.height = '50px'; // Adjust height
+          iframe.style.width = '100%'; // Ensure full width
+          iframe.style.border = 'none'; // Remove border
+          iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
+        }
+      }, 500);
 
       // ✅ Apple Pay Button
       // const applePayData = {
@@ -456,23 +494,52 @@ export function Payment() {
     fetchOrderDetails();
   }, [orderId, testDummyPayment]);
 
+  // Handle payment processing
   const processPayment = async (token: string) => {
-    const response: any = await createCharge(
-      amount * 100,
-      token,
-      'Payment for order',
-      'usd'
-    );
-    if (response.status === 'succeeded') {
-      setCurrentScreen('confirmation');
-      if (orderId) await updateOrderStatus(orderId, 'completed');
-    } else {
-      if (orderId) await updateOrderStatus(orderId, 'failed_retry');
-      setRetryPayment(true);
-      // setCurrentScreen('retry');
-      setError('Failed to process payment. Please try again.');
-      // setCurrentScreen
+    try {
+      // Attempt to create charge
+      const response: any = await createCharge(
+        amount * 100,
+        token,
+        'Payment for order',
+        'usd'
+      );
+
+      if (response.status === 'succeeded') {
+        // Payment successful
+        setCurrentScreen('confirmation');
+        if (orderId) {
+          await updateOrderStatus(orderId, 'completed');
+        }
+      } else {
+        // Payment failed - update order status and show retry screen
+        if (orderId) {
+          await updateOrderStatus(orderId, 'failed_retry');
+        }
+        setRetryPayment(true);
+        setError('Payment failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      setError('Payment processing failed. Please try again.');
+      // Emit socket event for payment failure
+      socket.emit('paymentFailed', {
+        orderId,
+        error: 'Payment processing failed'
+      });
     }
+  };
+
+  // Handle retry payment attempts
+  const handleRetryPayment = async () => {
+    setError(null);
+    setRetryPayment(false);
+    setCurrentScreen('initial');
+    // Emit event to show QR code retry screen in PaymentModal
+    socket.emit('orderStatusUpdated', {
+      orderId,
+      status: 'payment_retry'
+    });
   };
 
   useEffect(() => {

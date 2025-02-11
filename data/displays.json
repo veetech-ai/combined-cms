@@ -208,5 +208,15 @@
     "status": "Online",
     "lastSeen": "2025-02-09T20:34:30.342Z",
     "hexCode": "FDSSDFSD"
+  },
+  {
+    "id": "f0186a2a-b9c1-4ead-b5b1-8d5fbf3c66e9",
+    "name": "Zain",
+    "location": "Pending Setup",
+    "store": "Muhammad Ali",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-11T15:44:06.956Z",
+    "hexCode": "F274DFA1"
   }
 ]

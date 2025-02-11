@@ -8,6 +8,7 @@ export interface ModuleStats {
 
 export interface Module {
   id: string;
+  moduleId: string;
   name: string;
   key: string;
   isEnabled: boolean;
