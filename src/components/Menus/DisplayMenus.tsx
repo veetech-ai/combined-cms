@@ -234,7 +234,8 @@ export const DisplayMenus = () => {
                   Hex Code: {display.hexCode}
                 </p>
                 <div className="mt-4 flex justify-end">
-                  <QRCodeCard
+                  <div className='flex flex-col gap-2 items-center'>
+<QRCodeCard
                       viewMenuLink={generateViewMenuLink(display.hexCode)}
                       displayName={display.name}
                     />
@@ -245,6 +246,8 @@ export const DisplayMenus = () => {
                     <ExternalLink className="w-4 h-4" />
                     <span>View Display</span>
                   </button>
+                    </div>
+                  
                 </div>
               </div>
             </div>
