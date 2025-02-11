@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import * as displayController from './displays.controller';
-import { checkAccess, ROLES } from '../../middleware/auth.middleware';
+import {
+  ensureValidToken,
+  checkAccess,
+  ROLES
+} from '../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -9,13 +13,15 @@ router.get('/displays', checkAccess(ROLES.ADMIN), displayController.getDevices);
 router.post('/displays', checkAccess(ROLES.ADMIN), displayController.addDevice);
 
 router.put(
-  '/displays/:id',
+  '/:id',
+  ensureValidToken,
   checkAccess(ROLES.ADMIN),
   displayController.updateDevice
 );
 
 router.delete(
-  '/displays/:id',
+  '/:id',
+  ensureValidToken,
   checkAccess(ROLES.ADMIN),
   displayController.deleteDevice
 );

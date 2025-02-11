@@ -15,6 +15,7 @@ import {
 import { OnboardClientModal } from './OnBoardClientModal';
 import { toast, Toaster } from 'react-hot-toast';
 import { displayService, Display } from '../../services/displayService';
+import { QRCodeCard } from './QRCodeCard';
 
 // Add environment variable
 const VITE_HOST_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173';
@@ -126,6 +127,10 @@ export const DisplayMenus = () => {
     window.open(`${VITE_HOST_URL}/kiosk/${hexCode}`, '_blank');
   };
 
+  const generateViewMenuLink = (hexCode: string) => {
+    return `${VITE_HOST_URL}/kiosk/${hexCode}`;
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -176,7 +181,7 @@ export const DisplayMenus = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {displays.map((display) => (
             <div
               key={display.id}
@@ -229,6 +234,10 @@ export const DisplayMenus = () => {
                   Hex Code: {display.hexCode}
                 </p>
                 <div className="mt-4 flex justify-end">
+                  <QRCodeCard
+                      viewMenuLink={generateViewMenuLink(display.hexCode)}
+                      displayName={display.name}
+                    />
                   <button
                     onClick={() => openDisplayView(display.hexCode)}
                     className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"

@@ -206,7 +206,6 @@ export const CartItem: FC<CartItemProps> = ({
 
             <div className="text-sm text-gray-600 mt-1">
               {addOnsArray.map((addOn) => {
-                console.log(addOn);
                 return (
                   <div key={addOn.id} className="flex justify-between">
                     <span>+ {addOn.name}</span>
@@ -233,7 +232,7 @@ export const CartItem: FC<CartItemProps> = ({
 
             <div className="mt-2 text-right space-y-1">
               <p className="text-sm text-gray-500">
-                Quantity: {quantity} × $
+                Qty: {quantity} × $
                 {(price + calculateAddOnsTotal()).toFixed(2)}
               </p>
               <p className="font-semibold text-base">

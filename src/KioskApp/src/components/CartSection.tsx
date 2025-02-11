@@ -9,6 +9,7 @@ import { useCartStore } from '../stores/cartStore';
 import { useMenuStore } from '../stores/menuStore';
 import { useNavigate, useParams } from 'react-router-dom'; // Import useParams
 import { useOrder } from '../../../contexts/OrderContext';
+import { useCustomerStore } from '../stores/customerStore';
 
 interface CartSectionProps {
   onStartOver: () => void;
@@ -31,6 +32,8 @@ export function CartSection({ onStartOver }: CartSectionProps) {
     isEligibleForPhoneDiscount
   } = useCartStore();
 
+  const { setCustomerName, setCustomerPhone } = useCustomerStore();
+
   const menuItems = useMenuStore((state) => state.menuItems);
   const [discountCode, setLocalDiscountCode] = useState('');
 
@@ -44,22 +47,36 @@ export function CartSection({ onStartOver }: CartSectionProps) {
 
   const generateOrderId = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let orderId = 'Order #';
+    let randomPart = '';
 
-    for (let i = 0; i < 12; i++) {
-      orderId += chars.charAt(Math.floor(Math.random() * chars.length));
+    // Generate a 6-character random string
+    for (let i = 0; i < 6; i++) {
+      randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
-    return orderId; // Example: ORD-X7A9Z2
+    // Get current date in YYYYMMDD format
+    const now = new Date();
+    const datePart =
+      now.getFullYear().toString() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0');
+
+    return `${datePart}-${randomPart}`;
   };
 
+  // Example Output: ORD-20250208-X7A9Z2
+
   const handleStartOrder = () => {
+    // reset customer naem and phone context
+    setCustomerName('');
+    setCustomerPhone('');
+
     if (items && items.length > 0) {
       const orderId = generateOrderId();
       const totalBill = calculateSubtotal();
 
       // Transform cart items to include all details
-      const transformedItems = items.map(item => {
+      const transformedItems = items.map((item) => {
         // Parse instructions to get addons and customizations
         let addons = [];
         let customization = {};
@@ -69,7 +86,7 @@ export function CartSection({ onStartOver }: CartSectionProps) {
           if (item.instructions) {
             const parsedInstructions = JSON.parse(item.instructions);
             if (parsedInstructions.addOns) {
-              addons = parsedInstructions.addOns.map(addon => ({
+              addons = parsedInstructions.addOns.map((addon) => ({
                 id: addon.id,
                 name: addon.name,
                 price: addon.price / 100 // Convert cents to dollars

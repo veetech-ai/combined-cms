@@ -158,5 +158,55 @@
     "status": "Online",
     "lastSeen": "2025-02-08T06:37:53.253Z",
     "hexCode": "F274DFAQ"
+  },
+  {
+    "id": "8a90257d-a204-4a82-982a-0f4c96b82c95",
+    "name": "asd",
+    "location": "Pending Setup",
+    "store": "Hafiz Usman",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-09T08:31:37.906Z",
+    "hexCode": "1562F466"
+  },
+  {
+    "id": "d4589216-2d0f-4196-a548-63a8980e4ac4",
+    "name": "Zain",
+    "location": "Pending Setup",
+    "store": "MexiKhana",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-09T20:20:04.901Z",
+    "hexCode": "F274DFA6"
+  },
+  {
+    "id": "5185cf39-5aa4-4c0e-8118-1a77f92c9a2f",
+    "name": "Zain",
+    "location": "Pending Setup",
+    "store": "MexiKhana",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-09T20:20:19.267Z",
+    "hexCode": "F274DFA2"
+  },
+  {
+    "id": "53ac8d4c-bf31-48d1-b3cf-2d36f41f9ec7",
+    "name": "Zain",
+    "location": "Pending Setup",
+    "store": "Maxi Khana",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-09T20:20:44.594Z",
+    "hexCode": "F274DF11"
+  },
+  {
+    "id": "c404c86a-bb09-4af7-be98-72866b6eebb0",
+    "name": "Zain",
+    "location": "Pending Setup",
+    "store": "Maxi Khana",
+    "organization": "Default Organization",
+    "status": "Online",
+    "lastSeen": "2025-02-09T20:34:30.342Z",
+    "hexCode": "FDSSDFSD"
   }
 ]

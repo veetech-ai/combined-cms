@@ -1,10 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 
-// Create Order Context
-const OrderContext = createContext();
-
 interface OrderItem {
-  id: number;
+  id: number | string;
   name: { en: string; es: string };
   price: number;
   quantity: number;
@@ -20,6 +17,15 @@ interface OrderItem {
     price: number;
   }>;
   instructions?: string;
+  imageUrl?: string;
+  cartId?: string;
+  addOnPrices?: { [key: string]: number };
+  beveragePrices?: { [key: string]: number };
+  sidePrices?: { [key: string]: number };
+  dessertPrices?: { [key: string]: number };
+  beverages?: string[];
+  sides?: string[];
+  desserts?: string[];
 }
 
 interface OrderContextType {
@@ -27,22 +33,29 @@ interface OrderContextType {
     orderId: string;
     items: OrderItem[];
     totalBill: string;
+    customerName?: string;
+    customerPhone?: string;
+    timestamp?: string;
   } | null;
-  setOrder: (order: any) => void;
+  setOrder: (order: OrderContextType['orderItems']) => void;
+  clearOrder: () => void;
 }
 
+// Create Order Context with type
+const OrderContext = createContext<OrderContextType | undefined>(undefined);
+
 // Provider Component
-export const OrderProvider = ({ children }) => {
-  const [orderItems, setOrderItems] = useState([]);
+export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [orderItems, setOrderItems] = useState<OrderContextType['orderItems']>(null);
 
   // Set the full order array (replaces previous order)
-  const setOrder = (newOrder) => {
+  const setOrder = (newOrder: OrderContextType['orderItems']) => {
     setOrderItems(newOrder);
   };
 
   // Clear the order
   const clearOrder = () => {
-    setOrderItems([]);
+    setOrderItems(null);
   };
 
   return (
@@ -54,5 +67,9 @@ export const OrderProvider = ({ children }) => {
 
 // Custom Hook for using the Order Context
 export const useOrder = () => {
-  return useContext(OrderContext);
+  const context = useContext(OrderContext);
+  if (context === undefined) {
+    throw new Error('useOrder must be used within an OrderProvider');
+  }
+  return context;
 };
