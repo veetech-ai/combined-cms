@@ -8,9 +8,9 @@ import {
 
 const router = Router();
 
-router.get('/displays', checkAccess(ROLES.ADMIN), displayController.getDevices);
+router.get('/', checkAccess(ROLES.ADMIN), displayController.getDevices);
 
-router.post('/displays', checkAccess(ROLES.ADMIN), displayController.addDevice);
+router.post('/', checkAccess(ROLES.ADMIN), displayController.addDevice);
 
 router.put(
   '/:id',
@@ -27,7 +27,7 @@ router.delete(
 );
 
 router.get(
-  '/displays/store/:storeId',
+  '/store/:storeId',
   checkAccess(ROLES.ADMIN),
   displayController.getStoreDevices
 );
