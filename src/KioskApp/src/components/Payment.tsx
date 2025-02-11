@@ -252,15 +252,15 @@ export function Payment() {
       applePayButton.mount('#apple-pay-button');
 
       // Ensure iframe inside container has correct height
-      // setTimeout(() => {
-      //   const iframe = applePayContainer.querySelector('iframe');
-      //   if (iframe) {
-      //     iframe.style.height = '50px'; // Adjust height
-      //     iframe.style.width = '100%'; // Ensure full width
-      //     iframe.style.border = 'none'; // Remove border
-      //     iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
-      //   }
-      // }, 500);
+      setTimeout(() => {
+        const iframe = applePayContainer.querySelector('iframe');
+        if (iframe) {
+          iframe.style.height = '50px'; // Adjust height
+          iframe.style.width = '100%'; // Ensure full width
+          iframe.style.border = 'none'; // Remove border
+          iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
+        }
+      }, 500);
 
       // ✅ Apple Pay Button
       // const applePayData = {
