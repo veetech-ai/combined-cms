@@ -4,43 +4,9 @@ import path from 'path';
 import { asyncHandler } from '../../util/asyn-handler';
 import { ApiError } from '../../util/api.error';
 import { io } from '../..';
+import { Order, OrderItem } from '../models/order';
 
 const ORDERS_FILE = path.join(process.cwd(), 'data', 'orders.json');
-
-interface OrderItem {
-  id: number | string;
-  name: { en: string; es: string };
-  price: number;
-  quantity: number;
-  customization?: Record<string, string>;
-  addons?: Array<{
-    id: string;
-    name: string;
-    price: number;
-  }>;
-  extras?: Array<{
-    id: string;
-    name: string;
-    price: number;
-  }>;
-  instructions?: string;
-}
-
-interface Order {
-  orderId: string;
-  status:
-    | 'pending'
-    | 'confirmed'
-    | 'preparing'
-    | 'ready'
-    | 'completed'
-    | 'cancelled';
-  customerName: string;
-  customerPhone: string;
-  timestamp: string;
-  items: OrderItem[];
-  totalBill: string;
-}
 
 // Ensure the data directory exists
 async function ensureDataDir() {
@@ -176,3 +142,29 @@ export const deleteOrder = asyncHandler(async (req: Request, res: Response) => {
   await writeOrders(filteredOrders);
   res.status(204).send();
 });
+
+export const updateOrderStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    const orders = await readOrders();
+    const index = orders.findIndex((o) => o.orderId === orderId);
+
+    if (index === -1) {
+      throw new ApiError(404, 'Order not found');
+    }
+
+    // Update order status
+    orders[index].status = status;
+    await writeOrders(orders);
+
+    // Emit socket event
+    io.emit('orderStatusUpdated', {
+      orderId,
+      status
+    });
+
+    res.json(orders[index]);
+  }
+);

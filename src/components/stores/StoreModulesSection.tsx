@@ -103,6 +103,7 @@ const StoreModulesSection: React.FC<StoreModulesSectionProps> = ({ store, onModu
   const loadStoreModules = async () => {
     try {
       const data = await storeModuleService.getStoreModules(store.id);
+      console.log({data});
       // Sort modules based on the defined order
       const sortedModules = [...data].sort((a, b) => {
         const indexA = moduleOrder.indexOf(a.key);

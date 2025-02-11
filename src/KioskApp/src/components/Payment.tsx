@@ -10,6 +10,33 @@ import { useCustomerStore } from '../stores/customerStore';
 import { createCharge } from '../api/clover';
 import { useLocation } from 'react-router-dom';
 import { orderService } from '../../../services/orderService';
+import io from 'socket.io-client';
+
+declare global {
+  interface Window {
+    Clover: {
+      new (merchantId: string, config: CloverConfig): CloverInstance;
+    };
+  }
+}
+
+interface CloverConfig {
+  merchantId: string;
+}
+
+interface CloverInstance {
+  elements: () => any;
+  createToken: () => Promise<{ token: string }>;
+  createApplePaymentRequest: ({
+    amount,
+    currencyCode,
+    countryCode
+  }: {
+    amount: number;
+    currencyCode: string;
+    countryCode: string;
+  }) => Promise<{ token: string }>;
+}
 
 interface OrderData {
   orderId: string;
@@ -46,17 +73,378 @@ export function Payment() {
   const queryParams = new URLSearchParams(location.search);
   const testDummyPayment = queryParams.get('testDummyPayment') === 'true';
   const orderId = queryParams.get('orderId');
-
+  const [cloverInstance, setCloverInstance] = useState<CloverInstance | null>(
+    null
+  );
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [amount, setAmount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<
-    'apple' | 'google' | 'processing' | 'confirmation'
-  >('apple');
+    'payment' | 'processing' | 'confirmation' | 'retry'
+  >('payment');
   const [rating, setRating] = useState<number>(0);
+  const [retryPayment, setRetryPayment] = useState<boolean>(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isApplePaySupported, setIsApplePaySupported] = useState(true);
+  const [isGooglePaySupported, setIsGooglePaySupported] = useState(true);
+  const [isPaymentButtonsLoading, setIsPaymentButtonsLoading] = useState(false);
+
+  // Initialize socket connection and handle payment processing
+  useEffect(() => {
+    const socket = io(WS_URL);
+
+    // Connect to WebSocket server
+    socket.connect();
+
+    // Handle successful connection
+    socket.on('connect', () => {
+      console.log('Payment component connected to socket server');
+    });
+
+    // Handle payment processing status updates
+    socket.on('paymentStatus', (data) => {
+      if (data.orderId === orderId) {
+        switch (data.status) {
+          case 'processing':
+            setCurrentScreen('processing');
+            break;
+          case 'success':
+            setCurrentScreen('confirmation');
+            break;
+          case 'failed':
+            // Show error and allow retry
+            setError(data.error || 'Payment failed');
+            setRetryPayment(true);
+            break;
+        }
+      }
+    });
+
+    // Cleanup socket connection
+    return () => {
+      socket.disconnect();
+    };
+  }, [orderId]);
+
+  const initializeClover = async () => {
+    if (!window.Clover) {
+      console.error('Clover SDK is not loaded');
+      setError('Payment system not initialized.');
+      return;
+    }
+
+    // ✅ Avoid reinitializing Clover if it already exists
+    if (cloverInstance) {
+      console.log(
+        'Clover instance already initialized, skipping reinitialization.'
+      );
+      return;
+    }
+
+    const clover = new window.Clover('62862dc628972e7b4e7fbffd18ab0cdb', {
+      merchantId: 'PSK40XM0M8ME1'
+    });
+
+    setCloverInstance(clover);
+  };
+
+  const initializeCloverPaymentMethods = async () => {
+    try {
+      if (!amount || amount <= 0 || !orderData) {
+        console.error('Invalid amount, cannot proceed with Google Pay.');
+        setError('Payment amount is required.');
+        return;
+      }
+
+      if (!window.Clover) {
+        console.error('Clover SDK is not loaded');
+        setError('Payment system not initialized.');
+        return;
+      }
+
+      // ✅ Avoid reinitializing Clover if it already exists
+      if (cloverInstance) {
+        console.log(
+          'Clover instance already initialized, skipping reinitialization.'
+        );
+        return;
+      }
+
+      // ✅ Avoid reinitializing Clover if it already exists
+      // if (!cloverInstance) {
+      //   console.log(
+      //     'Clover instance not initialized, skipping reinitialization.'
+      //   );
+      //   return;
+      // }
+
+      console.log('Initializing Clover payment methods...');
+
+      const googlePayContainer = document.getElementById('google-pay-button');
+      if (!googlePayContainer) {
+        console.error('Google Pay button container not found.');
+        setError('Google Pay button not available.');
+        return;
+      }
+
+      // // avoid re-initializing Clover if already initialized
+      if (googlePayContainer.querySelector('iframe')) {
+        return;
+      }
+
+      const applePayContainer = document.getElementById('apple-pay-button');
+      if (!applePayContainer) {
+        console.error('Apple Pay button container not found.');
+        // setError('Apple Pay button not available.');
+        return;
+      }
+
+      // Avoid re-initializing Clover if already initialized
+      if (applePayContainer.querySelector('iframe')) {
+        return;
+      }
+
+      // if (document.getElementById('card-number-element')?.children.length) {
+      //   return;
+      // }
+
+      const clover = new window.Clover('62862dc628972e7b4e7fbffd18ab0cdb', {
+        merchantId: 'PSK40XM0M8ME1'
+      });
+      // const clover = cloverInstance;
+
+      // test merchant credentials
+      // const clover = new window.Clover('04750d1c04d58c8b1e4e5be9dc3ae37f', {
+      //   merchantId: 'RCTSTAVI0010002'
+      // });
+
+      const elements = clover.elements();
+
+      // ✅ Google Pay Button
+      const googlePayData = {
+        total: {
+          label: 'Total Amount',
+          amount: amount * 100 // Convert to cents
+        },
+        options: {
+          button: {
+            buttonType: 'short' // or 'long' for additional text
+          }
+        }
+      };
+
+      const googlePayButton = await elements.create('PAYMENT_REQUEST_BUTTON', {
+        paymentReqData: googlePayData
+      });
+
+      if (googlePayButton) {
+        setIsGooglePaySupported(true);
+      }
+
+      googlePayButton.mount('#google-pay-button');
+
+      // Ensure iframe inside container has correct height
+      setTimeout(() => {
+        const iframe = googlePayContainer.querySelector('iframe');
+        if (iframe) {
+          iframe.style.height = '50px'; // Adjust height
+          iframe.style.width = '100%'; // Ensure full width
+          iframe.style.border = 'none'; // Remove border
+          iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
+        }
+      }, 500);
+
+      googlePayButton.addEventListener('paymentMethod', async (event) => {
+        console.log('Google Pay token received:', event);
+        const token = event.token;
+        if (!token) {
+          console.error('Google Pay tokenization failed:', event);
+          setError('Google Pay transaction failed. Please try again.');
+          return;
+        }
+
+        await processPayment(token);
+      });
+
+      const applePayRequest = await clover.createApplePaymentRequest({
+        amount: amount * 100,
+        countryCode: 'US',
+        currencyCode: 'USD'
+      });
+
+      if (applePayRequest.token) {
+        setIsApplePaySupported(true);
+      }
+
+      // Create Apple Pay Button Element
+      const applePayButton = elements.create(
+        'PAYMENT_REQUEST_BUTTON_APPLE_PAY',
+        {
+          applePayRequest,
+          sessionIdentifier: 'PSK40XM0M8ME1'
+        }
+      );
+
+      applePayButton.mount('#apple-pay-button');
+
+      // Ensure iframe inside container has correct height
+      setTimeout(() => {
+        const iframe = applePayContainer.querySelector('iframe');
+        if (iframe) {
+          iframe.style.height = '50px'; // Adjust height
+          iframe.style.width = '100%'; // Ensure full width
+          iframe.style.border = 'none'; // Remove border
+          iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
+        }
+      }, 500);
+
+      // ✅ Apple Pay Button
+      // const applePayData = {
+      //   total: {
+      //     label: 'Total Amount',
+      //     amount: 1 // Amount in cents (e.g., $10.99)
+      //   },
+      //   options: {
+      //     button: {
+      //       buttonType: 'short' // or 'long' for additional text
+      //     }
+      //   }
+      // };
+
+      // const applePayButton = elements.create(
+      //   'PAYMENT_REQUEST_BUTTON_APPLE_PAY',
+      //   {
+      //     paymentReqData: applePayData
+      //   }
+      // );
+
+      applePayButton.addEventListener('paymentMethod', async (event) => {
+        console.log('Apple Pay token received:', event);
+
+        if (!event.detail || !event.detail.tokenReceived) {
+          setError('Apple Pay transaction failed. Please try again.');
+          return;
+        }
+
+        if (!event.token) {
+          console.error('Apple Pay tokenization failed:', event);
+          setError('Apple Pay transaction failed. Please try again.');
+          return;
+        }
+
+        const token = event.token || event.detail.tokenReceived.i;
+        console.log('Apple Pay token:', token);
+
+        // Send token to backend for processing
+        await processPayment(token);
+      });
+
+      // setCloverInstance(clover);
+      setIsPaymentButtonsLoading(false); // ✅ Mark payment methods as loaded
+    } catch (err) {
+      console.error('Clover initialization error:', err);
+      setError('Failed to initialize payment system');
+    }
+    // setIsPaymentButtonsLoading(false);
+    // return () => {};
+  };
+
+  // useEffect(() => {
+  //   initializeClover();
+  // }, []);
+
+  useEffect(() => {
+    const checkPaymentSupport = async () => {
+      setIsPaymentButtonsLoading(true);
+
+      if (window.Clover) {
+        const clover = new window.Clover('62862dc628972e7b4e7fbffd18ab0cdb', {
+          merchantId: 'PSK40XM0M8ME1'
+        });
+
+        const elements = clover.elements();
+
+        try {
+          const applePayRequest = await clover.createApplePaymentRequest({
+            amount: amount * 100,
+            countryCode: 'US',
+            currencyCode: 'USD'
+          });
+
+          if (applePayRequest.token) {
+            setIsApplePaySupported(true);
+          }
+        } catch (error) {
+          console.log('❌ Apple Pay not supported:', error);
+        }
+
+        try {
+          const googlePayButton = elements.create('PAYMENT_REQUEST_BUTTON', {
+            paymentReqData: {
+              total: {
+                label: 'Total Amount',
+                amount: amount * 100
+              },
+              options: {
+                button: {
+                  buttonType: 'short'
+                }
+              }
+            }
+          });
+
+          if (googlePayButton) {
+            setIsGooglePaySupported(true);
+          }
+        } catch (error) {
+          console.log('❌ Google Pay not supported:', error);
+        }
+      }
+
+      setIsPaymentButtonsLoading(false);
+    };
+
+    // checkPaymentSupport();
+    initializeCloverPaymentMethods();
+  }, [amount]);
+
+  // apple pay & google pay buttons
+  const renderAppleGooglePayButtons = () => (
+    <div className="p-6 space-y-4 bg-white shadow-xl rounded-t-[2.5rem] fixed bottom-0 left-0 right-0 max-w-lg mx-auto">
+      {isPaymentButtonsLoading ? (
+        <div className="text-center text-gray-600">
+          Checking payment options...
+        </div>
+      ) : (
+        <>
+          {/* Apple Pay Button */}
+          {/* {isApplePaySupported && ( */}
+          <div
+            id="apple-pay-button"
+            className="w-full h-14  text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 transition-all  active:scale-95 font-roboto"
+          ></div>
+          {/* )} */}
+
+          {/* Google Pay Button */}
+          {/* {isGooglePaySupported && ( */}
+          <div
+            id="google-pay-button"
+            className="w-full h-14 text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 transition-all  active:scale-95 font-roboto"
+          ></div>
+          {/* )} */}
+
+          {/* If no payment method is supported */}
+          {!isApplePaySupported && !isGooglePaySupported && (
+            <div className="text-center text-gray-500">
+              No supported payment methods available.
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
@@ -106,28 +494,59 @@ export function Payment() {
     fetchOrderDetails();
   }, [orderId, testDummyPayment]);
 
+  // Handle payment processing
   const processPayment = async (token: string) => {
-    const response: any = await createCharge(
-      amount * 100,
-      token,
-      'Payment for order',
-      'usd'
-    );
-    if (response.status === 'succeeded') {
-      setCurrentScreen('confirmation');
-      if (orderId) await updateOrderStatus(orderId, 'completed');
-    } else {
-      setError('Failed to process payment. Please try again.');
-      // setCurrentScreen
+    try {
+      // Attempt to create charge
+      const response: any = await createCharge(
+        amount * 100,
+        token,
+        'Payment for order',
+        'usd'
+      );
+
+      if (response.status === 'succeeded') {
+        // Payment successful
+        setCurrentScreen('confirmation');
+        if (orderId) {
+          await updateOrderStatus(orderId, 'completed');
+        }
+      } else {
+        // Payment failed - update order status and show retry screen
+        if (orderId) {
+          await updateOrderStatus(orderId, 'failed_retry');
+        }
+        setRetryPayment(true);
+        setError('Payment failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      setError('Payment processing failed. Please try again.');
+      // Emit socket event for payment failure
+      socket.emit('paymentFailed', {
+        orderId,
+        error: 'Payment processing failed'
+      });
     }
+  };
+
+  // Handle retry payment attempts
+  const handleRetryPayment = async () => {
+    setError(null);
+    setRetryPayment(false);
+    setCurrentScreen('initial');
+    // Emit event to show QR code retry screen in PaymentModal
+    socket.emit('orderStatusUpdated', {
+      orderId,
+      status: 'payment_retry'
+    });
   };
 
   useEffect(() => {
     setError(null);
-    if (currentScreen === 'apple') {
-      handleApplePay();
-    } else if (currentScreen === 'google') {
-      handleGooglePay();
+    if (currentScreen === 'payment') {
+      // handleApplePay();
+      // handleGooglePay();
     }
 
     // Perform any setup or initialization here
@@ -172,7 +591,7 @@ export function Payment() {
       const applePayContainer = document.getElementById('apple-pay-button');
       if (!applePayContainer) {
         console.error('Apple Pay button container not found.');
-        setError('Apple Pay button not available.');
+        // setError('Apple Pay button not available.');
         return;
       }
 
@@ -350,9 +769,9 @@ export function Payment() {
       setIsAnimating(true);
       setCurrentScreen('processing');
       if (provider === 'google') {
-        await handleGooglePay();
+        // await handleGooglePay();
       } else if (provider === 'apple') {
-        await handleApplePay();
+        // await handleApplePay();
       }
       // setCurrentScreen('confirmation');
 
@@ -369,7 +788,7 @@ export function Payment() {
     }
   };
 
-  const renderApplePayScreen = () => (
+  const renderPaymentScreen = () => (
     <div className="flex flex-col h-full bg-[#EEEEEE] animate-fadeIn relative">
       <div className="overflow-y-auto flex-1 pb-[140px]">
         <header className="bg-black p-8 text-white">
@@ -454,166 +873,10 @@ export function Payment() {
         </div>
       </div>
 
-      <div className="p-6 space-y-4 bg-white shadow-xl rounded-t-[2.5rem] fixed bottom-0 left-0 right-0 max-w-lg mx-auto">
-        {/* <button
-          onClick={() => handlePayment('apple')}
-          className={`w-full text-xl font-bold rounded-2xl py-5 flex items-center justify-center gap-3 shadow-lg transition-all ${
-            amount
-              ? 'bg-black text-white hover:bg-gray-800 hover:shadow-xl active:transform active:scale-98'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-          disabled={!amount}
-        >
-          Pay with Apple Pay
-        </button> */}
-        <button
-          id="apple-pay-button"
-          className={`w-full h-14 bg-black text-white text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 shadow-md transition-all hover:bg-gray-800 hover:shadow-lg active:scale-95 font-roboto ${
-            amount > 0 ? '' : 'cursor-not-allowed opacity-50'
-          }`}
-          disabled={!amount || !orderData}
-        >
-          Pay with Apple Pay
-        </button>
-
-        <button
-          onClick={() => setCurrentScreen('google')}
-          className={`w-full bg-white border-2 border-black text-lg font-medium rounded-2xl py-4 transition-colors hover:bg-gray-50 ${
-            amount ? '' : 'cursor-not-allowed opacity-50'
-          }`}
-          disabled={!amount || !orderData}
-        >
-          Switch to Google Pay
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderGooglePayScreen = () => (
-    <div className="flex flex-col h-full bg-[#EEEEEE] animate-fadeIn relative">
-      <div className="overflow-y-auto flex-1 pb-[140px]">
-        <header className="bg-black p-8 text-white">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <TacoIcon className="w-12 h-12 text-[#06C167]" />
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">MexiKhana</h1>
-                <p className="text-gray-400 text-sm">{orderData?.orderId}</p>
-              </div>
-            </div>
-            <img
-              src="https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=200&h=200"
-              alt="Restaurant"
-              className="w-16 h-16 rounded-lg object-cover shadow-lg"
-            />
-          </div>
-          <div className="h-1 w-24 bg-[#06C167] rounded-full mt-4"></div>
-        </header>
-        {/* <header className="bg-black p-8 text-white">
-          <div className="flex items-center justify-between mb-6">
-            <ArrowLeft
-              className="w-10 h-10 cursor-pointer transition-transform hover:scale-110"
-              onClick={() => setCurrentScreen('apple')}
-            />
-            <div className="flex items-center space-x-4">
-              <TacoIcon className="w-12 h-12 text-[#06C167]" />
-              <h1 className="text-2xl font-bold tracking-tight">MexiKhana</h1>
-            </div>
-            <div className="w-10 h-10"></div>
-          </div>
-          <div className="h-1 w-24 bg-[#06C167] rounded-full mt-4"></div>
-        </header> */}
-        {renderErrorMessage()}
-
-        <div className="flex-1 p-8 text-left">
-          <h2 className="text-2xl font-bold mb-1 font-roboto text-black">
-            Total Amount
-          </h2>
-          <div className="text-6xl font-bold mb-8 font-roboto text-black tracking-tight">
-            ${amount ? amount.toFixed(2) : 0}
-          </div>
-
-          <div className="mb-8">
-            <div className="h-px bg-gray-200 w-full mb-8" />
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-500 font-roboto">
-                ORDER SUMMARY
-              </h3>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#06C167] rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium">
-                    {orderData?.customerName.charAt(0)}
-                  </span>
-                </div>
-                <span className="text-lg text-gray-700 font-medium font-roboto">
-                  {orderData?.customerName}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6 mb-8">
-            {items.map((item, index) => (
-              <div
-                key={index}
-                className="flex justify-between items-center p-6 bg-white rounded-2xl shadow-sm transition-all hover:shadow-md border border-gray-100"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="w-12 h-12 bg-[#06C167] text-white text-xl font-bold rounded-xl flex items-center justify-center">
-                    {item.quantity}
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-xl font-medium font-roboto">
-                      {item.name.en}
-                    </span>
-                    {item.customization &&
-                      Object.entries(item.customization).map(([key, value]) => (
-                        <span key={key} className="text-sm text-gray-500">
-                          • {value}
-                        </span>
-                      ))}
-                    {item.addons?.map((addon, idx) => (
-                      <span key={idx} className="text-sm text-gray-500">
-                        + {addon.name} (${addon.price.toFixed(2)})
-                      </span>
-                    ))}
-                    {item.extras?.map((extra, idx) => (
-                      <span key={idx} className="text-sm text-gray-500">
-                        + {extra.name} (${extra.price.toFixed(2)})
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <span className="text-xl font-bold font-roboto">
-                  ${(item.price * item.quantity).toFixed(2)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Show Apple Pay & Google Pay Buttons */}
 
       <div className="p-6 space-y-4 bg-white shadow-xl rounded-t-[2.5rem] fixed bottom-0 left-0 right-0 max-w-lg mx-auto">
-        {/* <button
-          id="google-pay-button"
-          className="w-full max-w-xs h-12 rounded-lg bg-black flex items-center justify-center shadow-lg hover:bg-gray-800 transition"
-        ></button> */}
-        <button
-          id="google-pay-button"
-          className={`w-full h-14 bg-black text-white text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 shadow-md transition-all hover:bg-gray-800 hover:shadow-lg active:scale-95 font-roboto ${
-            amount > 0 ? '' : 'cursor-not-allowed opacity-50'
-          }`}
-          disabled={!amount || !orderData}
-        ></button>
-        <button
-          onClick={() => setCurrentScreen('apple')}
-          className={`w-full bg-white border-2 border-[#06C167] text-[#06C167] text-lg font-medium rounded-2xl py-4 transition-colors hover:bg-green-50 font-roboto ${
-            amount > 0 ? '' : 'cursor-not-allowed opacity-50'
-          }`}
-          disabled={!amount || !orderData}
-        >
-          Switch to Apple Pay
-        </button>
+        {renderAppleGooglePayButtons()}
       </div>
     </div>
   );
@@ -752,7 +1015,7 @@ export function Payment() {
     );
   }
 
-  if (error && !orderData) {
+  if (retryPayment || (error && !orderData)) {
     return (
       <div className="h-[100dvh] max-w-lg mx-auto bg-white shadow-2xl overflow-hidden">
         <div className="flex flex-col h-full items-center justify-center p-8">
@@ -785,8 +1048,7 @@ export function Payment() {
 
   return (
     <div className="h-[100dvh] max-w-lg mx-auto bg-white shadow-2xl overflow-hidden">
-      {currentScreen === 'apple' && renderApplePayScreen()}
-      {currentScreen === 'google' && renderGooglePayScreen()}
+      {currentScreen === 'payment' && renderPaymentScreen()}
       {currentScreen === 'processing' && renderProcessingScreen()}
       {currentScreen === 'confirmation' && renderConfirmationScreen()}
     </div>

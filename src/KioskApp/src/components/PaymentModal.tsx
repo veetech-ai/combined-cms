@@ -21,7 +21,7 @@ import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
 import { orderService } from '../../../services/orderService';
 
-const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173'; //5173 on localhost
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000'; //5173 on localhost
 
 // Add dummy data
 const dummyCartItems = [
@@ -51,6 +51,9 @@ export function PaymentModal() {
   const [isUserActive, setIsUserActive] = useState(true);
   const { customerName } = useCustomerStore();
   const [orderTotal, setOrderTotal] = useState();
+  const [isQRScanned, setIsQRScanned] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [processingTimeout, setProcessingTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const total = dummyCartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -66,18 +69,36 @@ export function PaymentModal() {
     socket.on('orderStatusUpdated', (data) => {
       console.log('Order status updated:', data);
       if (data.orderId === orderItems?.orderId) {
+        if (processingTimeout) {
+          clearTimeout(processingTimeout);
+        }
+
         if (data.status === 'payment_processing') {
           setStep('payment_processing');
         } else if (data.status === 'completed') {
           setStep('card_paid');
+        } else if (data.status === 'failed_retry') {
+          setStep('initial_retry');
+        } else if (data.status === 'payment_failed') {
+          setStep('payment_retry');
         }
       }
     });
 
+    socket.on('qrCodeScanned', (data) => {
+      if (data.orderId === orderItems?.orderId) {
+        setIsQRScanned(true);
+        setStep('payment_processing');
+      }
+    });
+
     return () => {
+      if (processingTimeout) {
+        clearTimeout(processingTimeout);
+      }
       socket.disconnect();
     };
-  }, [orderItems?.orderId]);
+  }, [orderItems?.orderId, processingTimeout]);
 
   // Update QR code generation when orderId changes
   useEffect(() => {
@@ -207,29 +228,60 @@ export function PaymentModal() {
   };
 
   const handleQRCodeClick = () => {
-    resetTimer();
-    handleUserActivity();
+    // Reset any previous errors
+    setError(null);
+    
+    // Clear any existing timeout
+    if (processingTimeout) {
+      clearTimeout(processingTimeout);
+    }
+    
     // Set processing state
     setStep('payment_processing');
 
-    // Update order status to payment_processing
-    if (orderItems?.orderId) {
-      orderService
-        .updateOrder(orderItems.orderId, {
-          status: 'payment_processing'
-        })
-        .catch((error) => {
-          console.error('Error updating order status:', error);
-          toast.error('Failed to process payment');
-          setStep('initial');
-        });
-    }
+    // Emit socket event to notify server that QR was scanned
+    socket.emit('qrCodeScanned', {
+      orderId: orderItems?.orderId,
+      status: 'payment_processing',
+      isRetry: true // Flag to indicate this is a retry attempt
+    });
   };
 
   // Update handler for order button click - remove clearCart
   const handleOrderClick = () => {
     navigate(`/kiosk/${id}/kiosk`);
   };
+  // I added this functionality to check failed payment screen but we can use it for timeout failure as well.
+  // Add useEffect to handle processing timeout
+  useEffect(() => {
+    // Clear any existing timeout when step changes
+    if (processingTimeout) {
+      clearTimeout(processingTimeout);
+    }
+
+    // Set new timeout when entering processing state
+    if (step === 'payment_processing') {
+      const timeout = setTimeout(() => {
+        // Update order status to failed
+        if (orderItems?.orderId) {
+          socket.emit('orderStatusUpdated', {
+            orderId: orderItems.orderId,
+            status: 'payment_failed'
+          });
+        }
+        setStep('payment_retry');
+      }, 120000); // 120 seconds
+
+      setProcessingTimeout(timeout);
+    }
+
+    // Cleanup timeout on unmount or step change
+    return () => {
+      if (processingTimeout) {
+        clearTimeout(processingTimeout);
+      }
+    };
+  }, [step, orderItems?.orderId]);
 
   return (
     <div className="fixed inset-0 bg-white">
@@ -414,7 +466,252 @@ export function PaymentModal() {
 
                   {orderItems?.orderId ? (
                     <div
-                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100"
+                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors"
+                      onClick={handleQRCodeClick} //Remove it on deployment so click dont open processing screen using it for testing #zain
+                    >
+                      {qrCode && (
+                        <>
+                          <img
+                            src={qrCode}
+                            alt="Order Summary QR Code"
+                            className="w-40 h-40"
+                          />
+                          <p className="text-sm text-gray-500 mt-2">
+                            Order ID: {orderItems.orderId}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Scan to Pay
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center p-4 text-gray-500">
+                      Loading order details...
+                    </div>
+                  )}
+                </div>
+
+                {/* Cash/Card Payment */}
+                <motion.button
+                  onClick={() => {
+                    setStep('cash');
+                    resetTimer();
+                  }}
+                  className="w-full bg-black text-white rounded-2xl p-4 flex items-center justify-between hover:bg-black/90 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div>
+                    <h3 className="text-lg font-medium mb-1">
+                      Pay with Cash or Card
+                    </h3>
+                    <p className="text-white/70 text-sm">Pay at the counter</p>
+                  </div>
+                  <CreditCard className="w-6 h-6" />
+                </motion.button>
+
+                {showTimer && (
+                  <div className="absolute top-4 right-4">
+                    <Timer
+                      seconds={timeLeft}
+                      isActive={isTimerActive}
+                      variant="light"
+                      onStartOver={handleStartOver}
+                      onComplete={handleStartOver}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+      {step === 'initial_retry' && (
+        <>
+          <div className="p-6 flex justify-between">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
+                focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
+                disabled:pointer-events-none disabled:opacity-50
+                hover:bg-gray-100 h-9 px-4 py-2 
+                text-gray-900"
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOrderClick}
+              className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span>{orderItems && orderItems.items.length} items</span>
+              <span>|</span>
+              <span>
+                ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+              </span>
+            </button>
+          </div>
+
+          <div className="h-[100dvh] flex flex-col lg:flex-row items-stretch">
+            {/* Left Side - Order Summary */}
+            <div className="w-full lg:w-[45%] lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full">
+              <div className="p-6">
+                <div className="mb-4">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-medium">Order Summary</h2>
+                    <span className="text-gray-500">
+                      ({orderItems && orderItems.items.length}{' '}
+                      {orderItems.items.length === 1 ? 'Item' : 'Items'})
+                    </span>
+                  </div>
+                  <div className="text-gray-500">
+                    {orderItems && orderItems.orderId}
+                  </div>
+                </div>
+
+                {/* Order Details Card */}
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+                  {/* Order Items List */}
+                  <div className="p-4 space-y-4">
+                    {orderItems.items.map((item, index) => (
+                      <div key={index} className="space-y-1">
+                        {/* Main Item */}
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <span className="text-gray-500">
+                              {item.quantity}x
+                            </span>
+                            <span className="font-medium">{item.name.en}</span>
+                          </div>
+                          <span className="font-medium">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+
+                        {/* Customizations */}
+                        {item.customization &&
+                          Object.keys(item.customization).length > 0 && (
+                            <div className="ml-8 text-sm text-gray-500">
+                              {Object.entries(item.customization).map(
+                                ([key, value]) => (
+                                  <div
+                                    key={key}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <span>•</span>
+                                    <span>{value}</span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          )}
+
+                        {/* Addons */}
+                        {item.addons && item.addons.length > 0 && (
+                          <div className="ml-8 text-sm text-gray-500">
+                            {item.addons.map((addon, idx) => (
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span>+</span>
+                                  <span>{addon.name}</span>
+                                </div>
+                                <span>${addon.price.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Extras */}
+                        {item.extras && item.extras.length > 0 && (
+                          <div className="ml-8 text-sm text-gray-500">
+                            {item.extras.map((extra, idx) => (
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span>+</span>
+                                  <span>{extra.name}</span>
+                                </div>
+                                <span>${extra.price.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Divider except for last item */}
+                        {index < orderItems.items.length - 1 && (
+                          <div className="border-b border-gray-100 my-2" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Order Totals */}
+                  <div className="border-t border-gray-100">
+                    <div className="p-4 space-y-2">
+                      <div className="flex justify-between text-gray-500">
+                        <span>Subtotal</span>
+                        <span>
+                          $
+                          {orderItems &&
+                            parseFloat(orderItems.totalBill).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between text-lg font-medium">
+                        <span>Total</span>
+                        <span>
+                          $
+                          {orderItems &&
+                            parseFloat(orderItems.totalBill).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side - Payment Options */}
+            <div className="flex-1 p-6 order-1 lg:order-2 overflow-auto">
+              <div className="max-w-lg mx-auto space-y-6">
+                <h1 className="text-3xl mx-auto space-y-4 text-red-500">
+                  Retry Payment
+                </h1>
+                <h2 className="text-2xl font-medium mb-4">
+                  Select Payment Method
+                </h2>
+
+                {/* Digital Payment */}
+                <div className="bg-white rounded-2xl p-4 shadow-lg relative overflow-hidden border border-gray-100 group">
+                  <div className="flex flex-col items-center text-center mb-3">
+                    <h3 className="text-2xl font-medium mb-1">Quick Pay</h3>
+                    <p className="text-gray-500">
+                      Scan with your phone to view order summary
+                    </p>
+                  </div>
+
+                  <div className="flex justify-center gap-4 mb-3">
+                    <div className="transform transition-transform group-hover:scale-105">
+                      <GooglePayLogo />
+                    </div>
+                    <div className="transform transition-transform group-hover:scale-105">
+                      <ApplePayLogo />
+                    </div>
+                  </div>
+
+                  {orderItems?.orderId ? (
+                    <div
+                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors"
                       onClick={handleQRCodeClick}
                     >
                       {qrCode && (
@@ -597,6 +894,59 @@ export function PaymentModal() {
               <p className="text-sm text-gray-400">
                 Securely processing your payment
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+      {step === 'payment_retry' && (
+        <div className="h-full flex flex-col items-center justify-center bg-black text-white">
+          <div className="flex flex-col items-center justify-center text-center p-8">
+            {/* Order Details Header */}
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold">Payment Failed</h2>
+              <p className="text-lg text-gray-300 mt-2">
+                Order #{orderItems?.orderId}
+              </p>
+              <p className="text-2xl font-semibold mt-4">
+                ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+              </p>
+            </div>
+
+            {/* QR Code Section */}
+            {orderItems?.orderId && qrCode ? (
+              <div 
+                className="flex flex-col items-center justify-center relative bg-white rounded-xl p-6 border-2 border-gray-700 cursor-pointer hover:border-gray-500 transition-colors"
+                onClick={handleQRCodeClick}
+              >
+                <img
+                  src={qrCode}
+                  alt="Order Payment QR Code"
+                  className="w-48 h-48 mb-4"
+                />
+                <div className="text-black">
+                  <p className="font-medium mb-1">Scan to Retry Payment</p>
+                  <p className="text-sm text-gray-500">
+                    Use your phone's camera to scan and complete payment
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center p-4 text-gray-400">
+                Loading payment details...
+              </div>
+            )}
+
+            {/* Alternative Payment Options */}
+            <div className="mt-8">
+              <p className="text-gray-400 mb-4">Or pay using</p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setStep('initial')}
+                  className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  Other Payment Methods
+                </button>
+              </div>
             </div>
           </div>
         </div>

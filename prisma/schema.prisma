@@ -20,6 +20,11 @@ enum UserStatus {
   INACTIVE
 }
 
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+}
+
 // Enum for catalog status
 enum CatalogStatus {
   ACTIVE
@@ -75,39 +80,39 @@ model User {
 }
 
 model Organization {
-  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name              String              @db.VarChar(255)
-  email             String              @unique @db.VarChar(255)
-  company           String              @db.VarChar(255)
-  phone             String?             @db.VarChar(255)
-  logo              String?             @db.VarChar(255)
-  website           String?             @db.VarChar(255)
-  
-  billingStreet     String?             @map("billing_street") @db.VarChar(255)
-  billingCity       String?             @map("billing_city") @db.VarChar(255)
-  billingState      String?             @map("billing_state") @db.VarChar(255)
-  billingZip        String?             @map("billing_zip") @db.VarChar(255)
-  billingCountry    String?             @map("billing_country") @db.VarChar(255)
-  
-  contactName       String?             @map("contact_name") @db.VarChar(255)
-  contactEmail      String?             @map("contact_email") @db.VarChar(255)
-  contactPhone      String?             @map("contact_phone") @db.VarChar(255)
-  contactRole       String?             @map("contact_role") @db.VarChar(255)
-  
-  subscriptionPlan      SubscriptionPlan    @default(BASIC) @map("subscription_plan")
-  subscriptionStatus    SubscriptionStatus  @default(PENDING) @map("subscription_status")
-  subscriptionStart     DateTime?           @map("subscription_start")
-  subscriptionRenewal   DateTime?           @map("subscription_renewal")
-  
-  posType          PosIntegrationType   @default(NONE) @map("pos_type")
-  posProvider      String?              @map("pos_provider") @db.VarChar(255)
-  posConfig        Json?                @map("pos_config") @db.JsonB
-  
-  createdAt        DateTime             @default(now()) @map("created_at")
-  updatedAt        DateTime             @updatedAt @map("updated_at")
+  id      String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String  @db.VarChar(255)
+  email   String  @unique @db.VarChar(255)
+  company String  @db.VarChar(255)
+  phone   String? @db.VarChar(255)
+  logo    String? @db.VarChar(255)
+  website String? @db.VarChar(255)
 
-  stores           Store[]
-  users            User[]
+  billingStreet  String? @map("billing_street") @db.VarChar(255)
+  billingCity    String? @map("billing_city") @db.VarChar(255)
+  billingState   String? @map("billing_state") @db.VarChar(255)
+  billingZip     String? @map("billing_zip") @db.VarChar(255)
+  billingCountry String? @map("billing_country") @db.VarChar(255)
+
+  contactName  String? @map("contact_name") @db.VarChar(255)
+  contactEmail String? @map("contact_email") @db.VarChar(255)
+  contactPhone String? @map("contact_phone") @db.VarChar(255)
+  contactRole  String? @map("contact_role") @db.VarChar(255)
+
+  subscriptionPlan    SubscriptionPlan   @default(BASIC) @map("subscription_plan")
+  subscriptionStatus  SubscriptionStatus @default(PENDING) @map("subscription_status")
+  subscriptionStart   DateTime?          @map("subscription_start")
+  subscriptionRenewal DateTime?          @map("subscription_renewal")
+
+  posType     PosIntegrationType @default(NONE) @map("pos_type")
+  posProvider String?            @map("pos_provider") @db.VarChar(255)
+  posConfig   Json?              @map("pos_config") @db.JsonB
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stores Store[]
+  users  User[]
 
   @@map("organizations")
 }
@@ -124,26 +129,26 @@ model Module {
 }
 
 model Store {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId  String    @map("organization_id") @db.Uuid
-  name            String    @db.VarChar(255)
-  address         String    @db.VarChar(255)
-  city            String    @db.VarChar(255)
-  state           String    @db.VarChar(255)
-  zipCode         String    @map("zip_code") @db.VarChar(255)
-  phone           String    @db.VarChar(255)
-  location        String?   @db.VarChar(255)
-  modules         Json      @default("[]") @db.JsonB
-  operatingHours  Json      @default("{}") @map("operating_hours") @db.JsonB
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String   @db.VarChar(255)
+  address        String   @db.VarChar(255)
+  city           String   @db.VarChar(255)
+  state          String   @db.VarChar(255)
+  zipCode        String   @map("zip_code") @db.VarChar(255)
+  phone          String   @db.VarChar(255)
+  location       String?  @db.VarChar(255)
+  modules        Json     @default("[]") @db.JsonB
+  operatingHours Json     @default("{}") @map("operating_hours") @db.JsonB
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   users        User[]
   storeModules StoreModule[]
 
-  @@map("stores")
   @@index([organizationId])
+  @@map("stores")
 }
 
 model StoreModule {
@@ -152,13 +157,13 @@ model StoreModule {
   moduleId  String       @map("module_id") @db.Uuid
   status    ModuleStatus @default(DISABLED)
   isEnabled Boolean      @default(false)
-  stats     Json?       @db.JsonB
-  createdAt DateTime    @default(now()) @map("created_at")
-  updatedAt DateTime    @updatedAt @map("updated_at")
+  stats     Json?        @db.JsonB
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
 
-  store    Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  module   Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  Devices  Devices[]
+  store   Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  module  Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  Devices Devices[]
 
   @@unique([storeId, moduleId])
   @@map("store_modules")
@@ -173,15 +178,23 @@ model ScreenSpecs {
 }
 
 model Devices {
-  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String
   description   String?
   location      String?
-  storeModuleId String  @map("store_module_id") @db.Uuid
-  screenSpecsId String  @map("screen_specs_id") @db.Uuid
+  storeModuleId String       @map("store_module_id") @db.Uuid
+  screenSpecsId String?      @map("screen_specs_id") @db.Uuid
+  hexCode       String?
+  status        DeviceStatus @default(OFFLINE)
+  lastSeen      DateTime?
 
-  storeModule StoreModule @relation(fields: [storeModuleId], references: [id], onDelete: Cascade)
-  screenSpecs ScreenSpecs @relation(fields: [screenSpecsId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  storeModule StoreModule  @relation(fields: [storeModuleId], references: [id], onDelete: Cascade)
+  screenSpecs ScreenSpecs? @relation(fields: [screenSpecsId], references: [id], onDelete: Cascade)
+
+  @@map("devices")
 }
 
 model RefreshToken {

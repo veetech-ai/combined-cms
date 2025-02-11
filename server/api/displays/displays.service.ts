@@ -1,110 +1,150 @@
-import { Prisma, PrismaClient, Display } from '@prisma/client';
+import { Prisma, Devices } from '@prisma/client';
 import { DBService } from '../../services/db.service';
 import { ApiError } from '../../util/api.error';
 
-type DisplayWithRelations = Display & {
-  store: {
+type DeviceWithRelations = Devices & {
+  storeModule: {
     id: string;
     name: string;
+    store: {
+      id: string;
+      name: string;
+    };
+    module: {
+      id: string;
+      name: string;
+    };
   };
-  module: {
+  screenSpecs: {
     id: string;
-    name: string;
+    size: string;
+    resolution: string | null;
+    aspectRatio: string | null;
   };
 };
 
-export class DisplayService extends DBService {
-  async getDisplays(params?: {
-    where?: Prisma.DisplayWhereInput;
-    orderBy?: Prisma.DisplayOrderByWithRelationInput;
-  }): Promise<DisplayWithRelations[]> {
-    const displays = await this.db.display.findMany({
+export class DeviceService extends DBService {
+  async getDevices(params?: {
+    where?: Prisma.DevicesWhereInput;
+    orderBy?: Prisma.DevicesOrderByWithRelationInput;
+  }): Promise<DeviceWithRelations[]> {
+    const devices = await this.db.devices.findMany({
       ...params,
       include: {
-        store: {
+        storeModule: {
           select: {
-            id: true,
-            name: true
+            store: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
+            module: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         },
-        module: {
+        screenSpecs: {
           select: {
             id: true,
-            name: true
+            size: true,
+            resolution: true,
+            aspectRatio: true
           }
         }
       }
     });
-    return displays;
+
+    return devices;
   }
 
-  async createDisplay(data: {
+  async createDevice(data: {
     name: string;
     hexCode: string;
-    store: { connect: { id: string } };
-    module: { connect: { id: string } };
-  }): Promise<DisplayWithRelations> {
+    storeModuleId: string;
+    screenSpecsId: string;
+  }): Promise<DeviceWithRelations> {
     if (!/^[0-9A-F]{8}$/i.test(data.hexCode)) {
       throw new ApiError(400, 'Invalid hex code format');
     }
 
     try {
-      return await this.db.display.create({
+      return this.db.devices.create({
         data: {
           name: data.name,
-          hexCode: data.hexCode.toUpperCase(),
-          store: data.store,
-          module: data.module
+          status: 'OFFLINE',
+          location: 'Pending Setup',
+          hexCode: data.hexCode,
+          storeModule: {
+            connect: {
+              id: data.storeModuleId
+            }
+          }
         },
         include: {
-          store: true,
-          module: true
+          storeModule: {
+            include: {
+              store: true,
+              module: true
+            }
+          },
+          screenSpecs: true
         }
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new ApiError(400, 'Hex code already exists');
       }
       throw error;
     }
   }
 
-  async updateDisplay(id: string, data: {
-    name?: string;
-    hexCode?: string;
-    status?: string;
-  }) {
-    if (data.hexCode && !/^[0-9A-F]{8}$/i.test(data.hexCode)) {
-      throw new ApiError(400, 'Invalid hex code format');
+  async updateDevice(
+    id: string,
+    data: {
+      name?: string;
+      status?: string;
+      location?: string;
     }
-
+  ) {
     try {
-      return await this.db.display.update({
+      return await this.db.devices.update({
         where: { id },
         data,
         include: {
-          store: true,
-          module: true
+          storeModule: {
+            include: {
+              store: true,
+              module: true
+            }
+          },
+          screenSpecs: true
         }
       });
     } catch (error) {
       if (error.code === 'P2025') {
-        throw new ApiError(404, 'Display not found');
+        throw new ApiError(404, 'Device not found');
       }
       throw error;
     }
   }
 
-  async deleteDisplay(id: string) {
+  async deleteDevice(id: string) {
     try {
-      return await this.db.display.delete({
+      return await this.db.devices.delete({
         where: { id }
       });
     } catch (error) {
       if (error.code === 'P2025') {
-        throw new ApiError(404, 'Display not found');
+        throw new ApiError(404, 'Device not found');
       }
       throw error;
     }
   }
-} 
+}

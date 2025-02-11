@@ -31,7 +31,6 @@ ModulesListProps) {
   const loadStoreModules = async () => {
     try {
       const data = await storeModuleService.getStoreModules(store.id);
-      console.log(data);
       setModules(data);
     } catch (error: any) {
       toast.error(
@@ -116,7 +115,7 @@ ModulesListProps) {
           <div onClick={(e) => e.stopPropagation()}>
             <ToggleSwitch
               enabled={module.isEnabled}
-              onChange={() => handleToggle(module.id, module.isEnabled)}
+              onChange={() => handleToggle(module.moduleId, module.isEnabled)}
               size="sm"
             />
           </div>
