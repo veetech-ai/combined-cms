@@ -677,6 +677,16 @@ export function Payment() {
           iframe.style.border = 'none'; // Remove border
           iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
         }
+        const appBtn = document.querySelector('.apple-pay-button');
+        if (appBtn) {
+          (appBtn as HTMLElement).style.display = 'block';
+          (appBtn as HTMLElement).style.width = '100%';
+          (appBtn as HTMLElement).style.height = '56px';
+          (appBtn as HTMLElement).style.border = 'none';
+          (appBtn as HTMLElement).style.borderRadius = '12px';
+          // border: none !important;
+          // border-radius: 12px !important;
+        }
       }, 500);
 
       // Listen for Apple Pay event
