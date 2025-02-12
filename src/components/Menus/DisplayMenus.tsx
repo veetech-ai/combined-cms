@@ -10,7 +10,8 @@ import {
   Trash2,
   Pen,
   ExternalLink,
-  Plus
+  Plus,
+  Power
 } from 'lucide-react';
 import { OnboardClientModal } from './OnBoardClientModal';
 import { toast, Toaster } from 'react-hot-toast';
@@ -78,6 +79,7 @@ export const DisplayMenus = () => {
     try {
       setIsLoading(true);
       const data = await displayService.getDisplays();
+      console.log(store)
       // Filter displays for the current store
       const storeDisplays = data.filter(
         (display) => display.storeModule.store.id === store.id
@@ -87,6 +89,24 @@ export const DisplayMenus = () => {
       toast.error('Failed to load displays');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const toggleDisplayStatus = async (displayId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus.toLowerCase() === 'online' ? 'OFFLINE' : 'ONLINE';
+      await displayService.updateDisplay(displayId, { status: newStatus });
+      
+      // Update the displays list with new status
+      setDisplays(displays.map(display => 
+        display.id === displayId 
+          ? { ...display, status: newStatus } 
+          : display
+      ));
+      
+      toast.success(`Display ${newStatus === 'ONLINE' ? 'activated' : 'deactivated'}`);
+    } catch (error) {
+      toast.error('Failed to update display status');
     }
   };
 
@@ -105,13 +125,17 @@ export const DisplayMenus = () => {
       const displayWithStore = {
         ...newDisplay,
         store: store.name,
-        storeModuleId: kioskModule.storeModuleId
+        storeModuleId: kioskModule.storeModuleId,
+        status: 'ONLINE'
       };
 
       console.log({ displayWithStore });
 
       await displayService.addDisplay(displayWithStore);
-      setDisplays((prevDisplays) => [...prevDisplays, displayWithStore]);
+      
+      // Refresh the displays list after adding new display
+      await loadDisplays();
+      
       toast.success('Display added successfully');
       setIsOnboardingOpen(false);
     } catch (error: any) {
@@ -123,12 +147,12 @@ export const DisplayMenus = () => {
     window.open(`${VITE_HOST_URL}/code`, '_blank');
   };
 
-  const openDisplayView = (hexCode: string) => {
-    window.open(`${VITE_HOST_URL}/kiosk/${hexCode}`, '_blank');
+  const openDisplayView = (displayId: string) => {
+    window.open(`${VITE_HOST_URL}/kiosk/${displayId}`, '_blank');
   };
 
-  const generateViewMenuLink = (hexCode: string) => {
-    return `${VITE_HOST_URL}/kiosk/${hexCode}`;
+  const generateViewMenuLink = (displayId: string) => {
+    return `${VITE_HOST_URL}/kiosk/${displayId}`;
   };
 
   if (isLoading) {
@@ -191,14 +215,14 @@ export const DisplayMenus = () => {
                 <div className="flex items-center space-x-3">
                   <div
                     className={`p-2 rounded-lg ${
-                      display.status === 'Online'
+                      display.status.toLowerCase() === 'online'
                         ? 'bg-green-100'
                         : 'bg-gray-100'
                     }`}
                   >
                     <Monitor
                       className={`w-6 h-6 ${
-                        display.status === 'Online'
+                        display.status.toLowerCase() === 'online'
                           ? 'text-green-600'
                           : 'text-gray-400'
                       }`}
@@ -211,14 +235,27 @@ export const DisplayMenus = () => {
                     <p className="text-sm text-gray-500">{display.location}</p>
                   </div>
                 </div>
-                <div
-                  className={`text-sm ${
-                    display.status === 'Online'
-                      ? 'text-green-600'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  {display.status}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleDisplayStatus(display.id, display.status)}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      display.status.toLowerCase() === 'online'
+                        ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    }`}
+                    title={`Turn ${display.status.toLowerCase() === 'online' ? 'off' : 'on'} display`}
+                  >
+                    <Power className="w-4 h-4" />
+                  </button>
+                  <span
+                    className={`text-sm ${
+                      display.status.toLowerCase() === 'online'
+                        ? 'text-green-600'
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {display.status}
+                  </span>
                 </div>
               </div>
 
@@ -238,11 +275,11 @@ export const DisplayMenus = () => {
                 <div className="mt-4 flex justify-end">
                   <div className="flex flex-col gap-2 items-center">
                     <QRCodeCard
-                      viewMenuLink={generateViewMenuLink(display.hexCode)}
+                      viewMenuLink={generateViewMenuLink(display.id)}
                       displayName={display.name}
                     />
                     <button
-                      onClick={() => openDisplayView(display.hexCode)}
+                      onClick={() => openDisplayView(display.id)}
                       className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
                     >
                       <ExternalLink className="w-4 h-4" />

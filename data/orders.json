@@ -1859,5 +1859,34 @@
     ],
     "totalBill": "38.00",
     "status": "pending"
+  },
+  {
+    "status": "pending",
+    "orderId": "20250213-S3CSXH",
+    "customerName": "ZAIN",
+    "customerPhone": "(922) 222-2222",
+    "timestamp": "2025-02-12T19:27:45.504Z",
+    "items": [
+      {
+        "id": 1226702006892,
+        "name": {
+          "en": "Beef Nihari (Traditional)",
+          "es": "Nihari de Res (Tradicional)"
+        },
+        "price": 35,
+        "quantity": 1,
+        "addons": [
+          {
+            "id": "NA1CPHGRGZFS8",
+            "name": "Add Side Naan ",
+            "price": 3
+          }
+        ],
+        "customization": {},
+        "extras": [],
+        "instructions": "{\"addOns\":[{\"id\":\"NA1CPHGRGZFS8\",\"name\":\"Add Side Naan \",\"available\":true,\"price\":300,\"modifiedTime\":1723922553000,\"modifierGroup\":{\"id\":\"R576MR1S9PJQT\"},\"deleted\":false}],\"customizations\":[],\"beverages\":[],\"sides\":[],\"desserts\":[],\"specialInstructions\":\"\",\"unavailablePreference\":\"merchant-recommendation\",\"quantity\":1}"
+      }
+    ],
+    "totalBill": "38.00"
   }
 ]
