@@ -300,6 +300,32 @@ export function Payment() {
           iframe.style.border = 'none'; // Remove border
           iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+          const iframe = document.querySelector('#apple-pay-button iframe');
+
+          if (iframe) {
+            (iframe as HTMLIFrameElement).onload = function () {
+              const iframeDocument =
+                (iframe as HTMLIFrameElement).contentDocument ||
+                (iframe as HTMLIFrameElement).contentWindow?.document;
+
+              if (iframeDocument) {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                  .apple-pay-button {
+                    height: 56px !important;
+                    width: 100% !important;
+                    border-radius: 12px !important;
+                    background-color: black !important;
+                  }
+                `;
+
+                iframeDocument.head.appendChild(style);
+              }
+            };
+          }
+        });
       }, 500);
 
       // ✅ Apple Pay Button
