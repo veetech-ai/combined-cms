@@ -538,8 +538,10 @@ export function Payment() {
         </div>
       ) : (
         <>
-          <div id="apple-pay-button" className="payment-button"></div>
-          <div id="google-pay-button" className="payment-button"></div>
+          <div id="payment-request-button">
+            <div id="apple-pay-button" className="payment-button"></div>
+            <div id="google-pay-button" className="payment-button"></div>
+          </div>
 
           <h1>payment request button</h1>
 
