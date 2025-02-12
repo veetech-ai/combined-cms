@@ -543,8 +543,6 @@ export function Payment() {
             <div id="google-pay-button" className="payment-button"></div>
           </div>
 
-          <h1>payment request button</h1>
-
           {/* <div id="payment-request-button" className="payment-button"></div> */}
 
           {/* Apple Pay Button */}
