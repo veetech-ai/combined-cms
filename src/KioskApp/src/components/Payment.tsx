@@ -447,9 +447,10 @@ export function Payment() {
           {/* Iframe styling adjustments */}
           <style>{`
           #apple-pay-button iframe,
-          #google-pay-button iframe {
-            height: 56px !important;
+          #google-pay-button iframe,
+          .apple-pay-button {
             width: 100% !important;
+            height: 56px !important;
             border: none !important;
             border-radius: 12px !important;
           }
