@@ -447,12 +447,25 @@ export function Payment() {
           {/* Iframe styling adjustments */}
           <style>{`
           #apple-pay-button iframe,
-          #google-pay-button iframe,
-          .apple-pay-button {
+          #google-pay-button iframe {
             width: 100% !important;
             height: 56px !important;
             border: none !important;
             border-radius: 12px !important;
+          }
+
+          @supports (-webkit-appearance: -apple-pay-button) {
+            .apple-pay-button {
+              display: block;
+              height: 56px !important;
+              width: 100% !important;
+              border: none !important;
+              border-radius: 12px !important;
+              -webkit-appearance: -apple-pay-button;
+            }
+            .apple-pay-button-black {
+              -apple-pay-button-style: black;
+            }
           }
         `}</style>
         </>
