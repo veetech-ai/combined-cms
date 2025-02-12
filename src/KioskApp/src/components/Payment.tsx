@@ -182,6 +182,24 @@ export function Payment() {
       //   return;
       // }
 
+      const paymentReqData = {
+        total: {
+          label: 'Total Amount',
+          amount: amount * 100 // Convert to cents
+        },
+        options: {
+          button: {
+            buttonType: 'short', // or 'long' for full text
+            style: {
+              height: '56px',
+              width: '100%',
+              borderRadius: '12px',
+              fontSize: '18px'
+            }
+          }
+        }
+      };
+
       console.log('Initializing Clover payment methods...');
 
       const googlePayContainer = document.getElementById('google-pay-button');
@@ -237,96 +255,128 @@ export function Payment() {
         }
       };
 
-      const googlePayButton = await elements.create('PAYMENT_REQUEST_BUTTON', {
-        paymentReqData: googlePayData
+      const paymentRequestButton = elements.create('PAYMENT_REQUEST_BUTTON', {
+        paymentReqData
       });
 
-      if (googlePayButton) {
-        setIsGooglePaySupported(true);
-      }
+      // ✅ Mount to Apple Pay & Google Pay Containers
+      paymentRequestButton.mount('#apple-pay-button');
+      paymentRequestButton.mount('#google-pay-button');
 
-      googlePayButton.mount('#google-pay-button');
-
-      // Ensure iframe inside container has correct height
-      setTimeout(() => {
-        const iframe = googlePayContainer.querySelector('iframe');
-        if (iframe) {
-          iframe.style.height = '50px'; // Adjust height
-          iframe.style.width = '100%'; // Ensure full width
-          iframe.style.border = 'none'; // Remove border
-          iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
-        }
-      }, 500);
-
-      googlePayButton.addEventListener('paymentMethod', async (event) => {
-        console.log('Google Pay token received:', event);
-        const token = event.token;
-        if (!token) {
-          console.error('Google Pay tokenization failed:', event);
-          setError('Google Pay transaction failed. Please try again.');
-          return;
-        }
-
-        await processPayment(token);
-      });
-
-      const applePayRequest = await clover.createApplePaymentRequest({
-        amount: amount * 100,
-        countryCode: 'US',
-        currencyCode: 'USD'
-      });
-
-      if (applePayRequest.token) {
-        setIsApplePaySupported(true);
-      }
-
-      // Create Apple Pay Button Element
-      const applePayButton = elements.create(
-        'PAYMENT_REQUEST_BUTTON_APPLE_PAY',
-        {
-          applePayRequest,
-          sessionIdentifier: 'PSK40XM0M8ME1'
+      // ✅ Handle Payment Events
+      paymentRequestButton.addEventListener(
+        'paymentMethodStart',
+        function (ev) {
+          console.log('Payment processing started...');
         }
       );
 
-      applePayButton.mount('#apple-pay-button');
+      paymentRequestButton.addEventListener(
+        'paymentMethod',
+        async function (ev) {
+          console.log('Payment method received:', ev);
+          const token = ev.token;
+
+          if (!token) {
+            console.error('Payment tokenization failed:', ev);
+            setError('Transaction failed. Please try again.');
+            return;
+          }
+
+          await processPayment(token);
+        }
+      );
+
+      // const googlePayButton = await elements.create('PAYMENT_REQUEST_BUTTON', {
+      //   paymentReqData: googlePayData
+      // });
+
+      // if (googlePayButton) {
+      //   setIsGooglePaySupported(true);
+      // }
+
+      // googlePayButton.mount('#google-pay-button');
 
       // Ensure iframe inside container has correct height
-      setTimeout(() => {
-        const iframe = applePayContainer.querySelector('iframe');
-        if (iframe) {
-          iframe.style.height = '50px'; // Adjust height
-          iframe.style.width = '100%'; // Ensure full width
-          iframe.style.border = 'none'; // Remove border
-          iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
-        }
+      // setTimeout(() => {
+      //   const iframe = googlePayContainer.querySelector('iframe');
+      //   if (iframe) {
+      //     iframe.style.height = '50px'; // Adjust height
+      //     iframe.style.width = '100%'; // Ensure full width
+      //     iframe.style.border = 'none'; // Remove border
+      //     iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
+      //   }
+      // }, 500);
 
-        document.addEventListener('DOMContentLoaded', function () {
-          const iframe = document.querySelector('#apple-pay-button iframe');
+      // googlePayButton.addEventListener('paymentMethod', async (event) => {
+      //   console.log('Google Pay token received:', event);
+      //   const token = event.token;
+      //   if (!token) {
+      //     console.error('Google Pay tokenization failed:', event);
+      //     setError('Google Pay transaction failed. Please try again.');
+      //     return;
+      //   }
 
-          if (iframe) {
-            (iframe as HTMLIFrameElement).onload = function () {
-              const iframeDocument =
-                (iframe as HTMLIFrameElement).contentDocument ||
-                (iframe as HTMLIFrameElement).contentWindow?.document;
+      //   await processPayment(token);
+      // });
 
-              if (iframeDocument) {
-                const style = document.createElement('style');
-                style.innerHTML = `
-                  .apple-pay-button {
-                    height: 56px !important;
-                    width: 100% !important;
-                    border-radius: 12px !important;
-                    background-color: black !important;
-                  }
-                `;
+      // const applePayRequest = await clover.createApplePaymentRequest({
+      //   amount: amount * 100,
+      //   countryCode: 'US',
+      //   currencyCode: 'USD'
+      // });
 
-                iframeDocument.head.appendChild(style);
-              }
-            };
-          }
-        });
-      }, 500);
+      // if (applePayRequest.token) {
+      //   setIsApplePaySupported(true);
+      // }
+
+      // Create Apple Pay Button Element
+      // const applePayButton = elements.create(
+      //   'PAYMENT_REQUEST_BUTTON_APPLE_PAY',
+      //   {
+      //     applePayRequest,
+      //     sessionIdentifier: 'PSK40XM0M8ME1'
+      //   }
+      // );
+
+      // applePayButton.mount('#apple-pay-button');
+
+      // Ensure iframe inside container has correct height
+      // setTimeout(() => {
+      //   const iframe = applePayContainer.querySelector('iframe');
+      //   if (iframe) {
+      //     iframe.style.height = '50px'; // Adjust height
+      //     iframe.style.width = '100%'; // Ensure full width
+      //     iframe.style.border = 'none'; // Remove border
+      //     iframe.style.overflow = 'hidden'; // Hide any unwanted scrolling
+      //   }
+
+      // document.addEventListener('DOMContentLoaded', function () {
+      //   const iframe = document.querySelector('#apple-pay-button iframe');
+
+      //   if (iframe) {
+      //     (iframe as HTMLIFrameElement).onload = function () {
+      //       const iframeDocument =
+      //         (iframe as HTMLIFrameElement).contentDocument ||
+      //         (iframe as HTMLIFrameElement).contentWindow?.document;
+
+      //       if (iframeDocument) {
+      //         const style = document.createElement('style');
+      //         style.innerHTML = `
+      //           .apple-pay-button {
+      //             height: 56px !important;
+      //             width: 100% !important;
+      //             border-radius: 12px !important;
+      //             background-color: black !important;
+      //           }
+      //         `;
+
+      // iframeDocument.head.appendChild(style);
+      // }
+      // };
+      //     }
+      //   });
+      // }, 500);
 
       // ✅ Apple Pay Button
       // const applePayData = {
@@ -348,26 +398,26 @@ export function Payment() {
       //   }
       // );
 
-      applePayButton.addEventListener('paymentMethod', async (event) => {
-        console.log('Apple Pay token received:', event);
+      // applePayButton.addEventListener('paymentMethod', async (event) => {
+      //   console.log('Apple Pay token received:', event);
 
-        if (!event.detail || !event.detail.tokenReceived) {
-          setError('Apple Pay transaction failed. Please try again.');
-          return;
-        }
+      //   if (!event.detail || !event.detail.tokenReceived) {
+      //     setError('Apple Pay transaction failed. Please try again.');
+      //     return;
+      //   }
 
-        if (!event.token) {
-          console.error('Apple Pay tokenization failed:', event);
-          setError('Apple Pay transaction failed. Please try again.');
-          return;
-        }
+      //   if (!event.token) {
+      //     console.error('Apple Pay tokenization failed:', event);
+      //     setError('Apple Pay transaction failed. Please try again.');
+      //     return;
+      //   }
 
-        const token = event.token || event.detail.tokenReceived.i;
-        console.log('Apple Pay token:', token);
+      //   const token = event.token || event.detail.tokenReceived.i;
+      //   console.log('Apple Pay token:', token);
 
-        // Send token to backend for processing
-        await processPayment(token);
-      });
+      //   // Send token to backend for processing
+      //   await processPayment(token);
+      // });
 
       // setCloverInstance(clover);
       setIsPaymentButtonsLoading(false); // ✅ Mark payment methods as loaded
@@ -447,20 +497,23 @@ export function Payment() {
         </div>
       ) : (
         <>
+          <div id="apple-pay-button" className="payment-button"></div>
+          <div id="google-pay-button" className="payment-button"></div>
+
           {/* Apple Pay Button */}
           {/* {isApplePaySupported && ( */}
-          <div
+          {/* <div
             id="apple-pay-button"
             className="w-full h-14  text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 transition-all  active:scale-95 font-roboto"
-          ></div>
+          ></div> */}
           {/* )} */}
 
           {/* Google Pay Button */}
           {/* {isGooglePaySupported && ( */}
-          <div
+          {/* <div
             id="google-pay-button"
             className="w-full h-14 text-xl font-bold rounded-lg py-4 flex items-center justify-center gap-3 transition-all  active:scale-95 font-roboto"
-          ></div>
+          ></div> */}
           {/* )} */}
 
           {/* If no payment method is supported */}
@@ -474,10 +527,7 @@ export function Payment() {
           <style>{`
           #apple-pay-button iframe,
           #google-pay-button iframe {
-            width: 100% !important;
-            height: 56px !important;
-            border: none !important;
-            border-radius: 12px !important;
+
           }
 
           @supports (-webkit-appearance: -apple-pay-button) {
@@ -493,6 +543,14 @@ export function Payment() {
               -apple-pay-button-style: black;
             }
           }
+
+          .payment-button iframe {
+  width: 100% !important;
+  height: 56px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
         `}</style>
         </>
       )}
