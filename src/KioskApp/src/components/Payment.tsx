@@ -259,9 +259,50 @@ export function Payment() {
         paymentReqData
       });
 
+      const applePayRequest = clover.createApplePaymentRequest({
+        amount: amount * 100,
+        countryCode: 'US',
+        currencyCode: 'USD'
+      });
+
+      const paymentRequestAppleButton = elements.create(
+        'PAYMENT_REQUEST_BUTTON_APPLE_PAY',
+        {
+          applePaymentRequest: applePayRequest,
+          sessionIdentifier: 'PSK40XM0M8ME1'
+        }
+      );
+
       // ✅ Mount to Apple Pay & Google Pay Containers
+      paymentRequestAppleButton.mount('#apple-pay-button');
       paymentRequestButton.mount('#apple-pay-button');
       paymentRequestButton.mount('#google-pay-button');
+
+      // ✅ Apply Size to `#payment-request-button`
+      const paymentButtonContainer = document.getElementById(
+        'payment-request-button'
+      );
+      if (paymentButtonContainer) {
+        paymentButtonContainer.style.width = '100%';
+        paymentButtonContainer.style.height = '56px';
+        paymentButtonContainer.style.borderRadius = '12px';
+        paymentButtonContainer.style.overflow = 'hidden';
+      }
+
+      // ✅ Mount Apple Pay & Google Pay to `#payment-request-button`
+      paymentRequestButton.mount('#payment-request-button');
+      paymentRequestAppleButton.mount('#payment-request-button');
+
+      // ✅ Ensure iFrame Styling
+      setTimeout(() => {
+        const iframe = document.querySelector('#payment-request-button iframe');
+        if (iframe) {
+          (iframe as HTMLIFrameElement).style.width = '100%';
+          (iframe as HTMLIFrameElement).style.height = '56px';
+          (iframe as HTMLIFrameElement).style.border = 'none';
+          (iframe as HTMLIFrameElement).style.borderRadius = '12px';
+        }
+      }, 1000);
 
       // ✅ Handle Payment Events
       paymentRequestButton.addEventListener(
@@ -500,6 +541,10 @@ export function Payment() {
           <div id="apple-pay-button" className="payment-button"></div>
           <div id="google-pay-button" className="payment-button"></div>
 
+          <h1>payment request button</h1>
+
+          <div id="payment-request-button" className="payment-button"></div>
+
           {/* Apple Pay Button */}
           {/* {isApplePaySupported && ( */}
           {/* <div
@@ -550,6 +595,14 @@ export function Payment() {
   border-radius: 12px !important;
   overflow: hidden !important;
 }
+
+#payment-request-button iframe {
+  width: 100% !important;
+  height: 56px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
 
         `}</style>
         </>
