@@ -191,7 +191,7 @@ export function Payment() {
           button: {
             buttonType: 'short', // or 'long' for full text
             style: {
-              height: '56px',
+              height: '40px',
               width: '100%',
               borderRadius: '12px',
               fontSize: '18px'
@@ -284,7 +284,7 @@ export function Payment() {
       );
       if (paymentButtonContainer) {
         paymentButtonContainer.style.width = '100%';
-        paymentButtonContainer.style.height = '56px';
+        paymentButtonContainer.style.height = '40px';
         paymentButtonContainer.style.borderRadius = '12px';
         paymentButtonContainer.style.overflow = 'hidden';
       }
@@ -298,7 +298,7 @@ export function Payment() {
         const iframe = document.querySelector('#payment-request-button iframe');
         if (iframe) {
           (iframe as HTMLIFrameElement).style.width = '100%';
-          (iframe as HTMLIFrameElement).style.height = '56px';
+          (iframe as HTMLIFrameElement).style.height = '40px';
           (iframe as HTMLIFrameElement).style.border = 'none';
           (iframe as HTMLIFrameElement).style.borderRadius = '12px';
         }
@@ -545,7 +545,7 @@ export function Payment() {
 
           <h1>payment request button</h1>
 
-          <div id="payment-request-button" className="payment-button"></div>
+          {/* <div id="payment-request-button" className="payment-button"></div> */}
 
           {/* Apple Pay Button */}
           {/* {isApplePaySupported && ( */}
@@ -580,7 +580,7 @@ export function Payment() {
           @supports (-webkit-appearance: -apple-pay-button) {
             .apple-pay-button {
               display: block;
-              height: 56px !important;
+              height: 40px !important;
               width: 100% !important;
               border: none !important;
               border-radius: 12px !important;
@@ -593,14 +593,14 @@ export function Payment() {
 
           .payment-button iframe {
   width: 100% !important;
-  height: 56px !important;
+  height: 4px !important;
   border-radius: 12px !important;
   overflow: hidden !important;
 }
 
 #payment-request-button iframe {
   width: 100% !important;
-  height: 56px !important;
+  height: 40px !important;
   border-radius: 12px !important;
   overflow: hidden !important;
 }
@@ -820,7 +820,7 @@ export function Payment() {
         if (appBtn) {
           (appBtn as HTMLElement).style.display = 'block';
           (appBtn as HTMLElement).style.width = '100%';
-          (appBtn as HTMLElement).style.height = '56px';
+          (appBtn as HTMLElement).style.height = '40px';
           (appBtn as HTMLElement).style.border = 'none';
           (appBtn as HTMLElement).style.borderRadius = '12px';
           // border: none !important;
