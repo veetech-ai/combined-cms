@@ -2,13 +2,15 @@ import apiClient from './apiClient';
 import { API_CONFIG } from '../config/api';
 import { Module } from '../types';
 
+export type DisplayStatus = 'ONLINE' | 'OFFLINE';
+
 export interface Display {
   id: string;
   name: string;
   location: string;
   store: string;
   organization: string;
-  status: string;
+  status: DisplayStatus;
   lastSeen: string;
   hexCode: string;
   storeModuleId: string;
@@ -17,7 +19,7 @@ export interface Display {
 export const displayService = {
   async getDisplays() {
     const { data } = await apiClient.get<Display[]>(
-      `${API_CONFIG.ENDPOINTS.DISPLAYS}`
+      `${API_CONFIG.ENDPOINTS.DISPLAYS}/public`
     );
     return data;
   },
@@ -30,10 +32,10 @@ export const displayService = {
     return data;
   },
 
-  async updateDisplay(id: string, display: Partial<Display>) {
+  async updateDisplay(id: string, updateData: Partial<Display>) {
     const { data } = await apiClient.put<Display>(
       `${API_CONFIG.ENDPOINTS.DISPLAYS}/${id}`,
-      display
+      updateData
     );
     return data;
   },
@@ -47,6 +49,13 @@ export const displayService = {
       `${API_CONFIG.ENDPOINTS.STORE_MODULES}/${storeId}`
     );
     console.log({ data });
+    return data;
+  },
+
+  async getDisplayById(id: string) {
+    const { data } = await apiClient.get<Display>(
+      `${API_CONFIG.ENDPOINTS.DISPLAYS}/public/${id}`
+    );
     return data;
   }
 };

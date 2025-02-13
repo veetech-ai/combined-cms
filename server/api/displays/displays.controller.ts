@@ -17,7 +17,7 @@ const newDeviceSchema = z.object({
 const updateDeviceSchema = z.object({
   name: z.string().optional(),
   hexCode: z.string().optional(),
-  status: z.string().optional(),
+  status: z.enum(['ONLINE', 'OFFLINE']).optional(),
   location: z.string().optional(),
   storeModuleId: z.string().optional()
 });

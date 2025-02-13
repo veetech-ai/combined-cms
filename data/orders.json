@@ -1859,5 +1859,57 @@
     ],
     "totalBill": "38.00",
     "status": "pending"
+  },
+  {
+    "status": "pending",
+    "orderId": "20250213-S3CSXH",
+    "customerName": "ZAIN",
+    "customerPhone": "(922) 222-2222",
+    "timestamp": "2025-02-12T19:27:45.504Z",
+    "items": [
+      {
+        "id": 1226702006892,
+        "name": {
+          "en": "Beef Nihari (Traditional)",
+          "es": "Nihari de Res (Tradicional)"
+        },
+        "price": 35,
+        "quantity": 1,
+        "addons": [
+          {
+            "id": "NA1CPHGRGZFS8",
+            "name": "Add Side Naan ",
+            "price": 3
+          }
+        ],
+        "customization": {},
+        "extras": [],
+        "instructions": "{\"addOns\":[{\"id\":\"NA1CPHGRGZFS8\",\"name\":\"Add Side Naan \",\"available\":true,\"price\":300,\"modifiedTime\":1723922553000,\"modifierGroup\":{\"id\":\"R576MR1S9PJQT\"},\"deleted\":false}],\"customizations\":[],\"beverages\":[],\"sides\":[],\"desserts\":[],\"specialInstructions\":\"\",\"unavailablePreference\":\"merchant-recommendation\",\"quantity\":1}"
+      }
+    ],
+    "totalBill": "38.00"
+  },
+  {
+    "status": "pending",
+    "orderId": "20250214-KZLKRY",
+    "customerName": "ZAIN",
+    "customerPhone": "(333) 333-3333",
+    "timestamp": "2025-02-13T19:23:04.802Z",
+    "items": [
+      {
+        "id": 760122032815,
+        "name": {
+          "en": "Beef Keema Burrito ",
+          "es": "Burrito de Keema de Res"
+        },
+        "price": 13,
+        "quantity": 1,
+        "addons": [],
+        "customization": {},
+        "extras": [],
+        "instructions": "{\"addOns\":[],\"customizations\":[{\"id\":\"R8P4DQYPGNRS2\",\"name\":\"No Onions\",\"available\":true,\"price\":0,\"modifiedTime\":1736218628000,\"modifierGroup\":{\"id\":\"P8ZW5MKXFVQ1C\"},\"deleted\":false}],\"beverages\":[],\"sides\":[],\"desserts\":[],\"specialInstructions\":\"\",\"unavailablePreference\":\"merchant-recommendation\",\"quantity\":1}"
+      }
+    ],
+    "totalBill": "13.00"
   }
 ]

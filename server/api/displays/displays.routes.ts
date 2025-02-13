@@ -8,6 +8,11 @@ import {
 
 const router = Router();
 
+// Public routes for display access
+router.get('/public/:id', displayController.getDisplayById);
+router.get('/public', displayController.getDevices); // New public route for getting all displays
+
+// Protected admin routes
 router.get(
   '/',
   ensureValidToken,
