@@ -23,8 +23,20 @@ export function WelcomeScreen() {
   const loadDisplays = async () => {
     try {
       setIsLoading(true);
+      // Try to get single display first
+      try {
+        const currentDisplay = await displayService.getDisplayById(id || '');
+        if (currentDisplay) {
+          setIsValidId(true);
+          setDisplayStatus(currentDisplay.status.toLowerCase() === 'online');
+          return;
+        }
+      } catch (error) {
+        console.log('Single display fetch failed, trying all displays');
+      }
+
+      // Fallback to getting all displays
       const displays = await displayService.getDisplays();
-      
       const currentDisplay = displays.find(display => display.id === id);
       
       if (currentDisplay) {

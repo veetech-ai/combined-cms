@@ -19,7 +19,7 @@ export interface Display {
 export const displayService = {
   async getDisplays() {
     const { data } = await apiClient.get<Display[]>(
-      `${API_CONFIG.ENDPOINTS.DISPLAYS}`
+      `${API_CONFIG.ENDPOINTS.DISPLAYS}/public`
     );
     return data;
   },
@@ -49,6 +49,13 @@ export const displayService = {
       `${API_CONFIG.ENDPOINTS.STORE_MODULES}/${storeId}`
     );
     console.log({ data });
+    return data;
+  },
+
+  async getDisplayById(id: string) {
+    const { data } = await apiClient.get<Display>(
+      `${API_CONFIG.ENDPOINTS.DISPLAYS}/public/${id}`
+    );
     return data;
   }
 };
