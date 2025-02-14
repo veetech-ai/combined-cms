@@ -437,9 +437,9 @@ export function PaymentModal() {
                   <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg relative overflow-hidden border border-gray-100 group">
                     <div className="flex flex-col items-center text-center mb-3">
                       <h3 className="text-xl sm:text-2xl font-medium mb-1">Quick Pay</h3>
-                      <p className="text-gray-500 text-sm sm:text-base">
+                      {/* <p className="text-gray-500 text-sm sm:text-base">
                         Scan with your phone to view order summary
-                      </p>
+                      </p> */}
                     </div>
 
                     <div className="flex justify-center gap-4 mb-3">
@@ -666,9 +666,9 @@ export function PaymentModal() {
                 <div className="bg-white rounded-2xl p-4 shadow-lg relative overflow-hidden border border-gray-100 group">
                   <div className="flex flex-col items-center text-center mb-3">
                     <h3 className="text-2xl font-medium mb-1">Quick Pay</h3>
-                    <p className="text-gray-500">
+                    {/* <p className="text-gray-500">
                       Scan with your phone to view order summary
-                    </p>
+                    </p> */}
                   </div>
 
                   <div className="flex justify-center gap-4 mb-3">
