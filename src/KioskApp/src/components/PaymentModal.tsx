@@ -287,47 +287,33 @@ export function PaymentModal() {
     <div className="fixed inset-0 bg-white">
       {step === 'initial' && (
         <>
-          <div className="p-6 flex justify-between">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
-                focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
-                disabled:pointer-events-none disabled:opacity-50
-                hover:bg-gray-100 h-9 px-4 py-2 
-                text-gray-900"
-            >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Back
-            </button>
-
-            <button
-              type="button"
-              onClick={handleOrderClick}
-              className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              <span>{orderItems && orderItems.items.length} items</span>
-              <span>|</span>
-              <span>
-                ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
-              </span>
-            </button>
-          </div>
-
-          <div className="h-[100dvh] flex flex-col lg:flex-row items-stretch">
+          <div className="h-screen flex flex-col lg:flex-row">
             {/* Left Side - Order Summary */}
-            <div className="w-full lg:w-[45%] lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full">
-              <div className="p-6">
+            <div className="w-full lg:w-1/2 lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full overflow-auto">
+              <div className="p-4 sm:p-6 md:p-8">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="inline-flex items-center justify-center rounded-lg text-sm font-medium 
+                    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
+                    disabled:pointer-events-none disabled:opacity-50
+                    hover:bg-gray-100 h-9 px-4 py-2 
+                    text-gray-900 mb-6 sm:mb-8"
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Back
+                </button>
+
+                {/* Order Summary Section */}
                 <div className="mb-4">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-medium">Order Summary</h2>
-                    <span className="text-gray-500">
+                    <h2 className="text-xl sm:text-2xl font-medium">Order Summary</h2>
+                    <span className="text-gray-500 text-sm sm:text-base">
                       ({orderItems && orderItems.items.length}{' '}
                       {orderItems.items.length === 1 ? 'Item' : 'Items'})
                     </span>
                   </div>
-                  <div className="text-gray-500">
+                  <div className="text-gray-500 text-sm">
                     {orderItems && orderItems.orderId}
                   </div>
                 </div>
@@ -440,88 +426,73 @@ export function PaymentModal() {
             </div>
 
             {/* Right Side - Payment Options */}
-            <div className="flex-1 p-6 order-1 lg:order-2 overflow-auto">
-              <div className="max-w-lg mx-auto space-y-6">
-                <h2 className="text-2xl font-medium mb-4">
-                  Select Payment Method
-                </h2>
+            <div className="w-full lg:w-1/2 flex flex-col order-1 lg:order-2 h-full overflow-auto">
+              <div className="p-4 sm:p-6 md:p-8">
+                <div className="max-w-lg mx-auto space-y-6">
+                  <h2 className="text-xl sm:text-2xl font-medium mb-4 text-center">
+                    Select Payment Method
+                  </h2>
 
-                {/* Digital Payment */}
-                <div className="bg-white rounded-2xl p-4 shadow-lg relative overflow-hidden border border-gray-100 group">
-                  <div className="flex flex-col items-center text-center mb-3">
-                    <h3 className="text-2xl font-medium mb-1">Quick Pay</h3>
-                    <p className="text-gray-500">
-                      Scan with your phone to view order summary
-                    </p>
+                  {/* Digital Payment */}
+                  <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg relative overflow-hidden border border-gray-100 group">
+                    <div className="flex flex-col items-center text-center mb-3">
+                      <h3 className="text-xl sm:text-2xl font-medium mb-1">Quick Pay</h3>
+                      {/* <p className="text-gray-500 text-sm sm:text-base">
+                        Scan with your phone to view order summary
+                      </p> */}
+                    </div>
+
+                    <div className="flex justify-center gap-4 mb-3">
+                      <div className="transform transition-transform group-hover:scale-105">
+                        <GooglePayLogo />
+                      </div>
+                      <div className="transform transition-transform group-hover:scale-105">
+                        <ApplePayLogo />
+                      </div>
+                    </div>
+
+                    {/* QR Code Section */}
+                    {orderItems?.orderId ? (
+                      <div className="flex flex-col items-center justify-center relative bg-white rounded-xl p-3 sm:p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors">
+                        {qrCode && (
+                          <>
+                            <img
+                              src={qrCode}
+                              alt="Order Summary QR Code"
+                              className="w-32 h-32 sm:w-40 sm:h-40"
+                            />
+                            <p className="text-sm sm:text-base font-medium text-gray-600 mt-3">
+                              Scan to Pay
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center p-4 text-gray-500">
+                        Loading order details...
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex justify-center gap-4 mb-3">
-                    <div className="transform transition-transform group-hover:scale-105">
-                      <GooglePayLogo />
+                  {/* Cash/Card Payment */}
+                  <motion.button
+                    onClick={() => {
+                      setStep('cash');
+                      resetTimer();
+                    }}
+                    className="w-full bg-black text-white rounded-2xl p-4 flex items-center justify-center hover:bg-black/90 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="text-center">
+                      <h3 className="text-base sm:text-lg font-medium mb-1">
+                        Pay with Cash or Card
+                      </h3>
+                      <p className="text-xs sm:text-sm text-white/70">Pay at the counter</p>
                     </div>
-                    <div className="transform transition-transform group-hover:scale-105">
-                      <ApplePayLogo />
-                    </div>
-                  </div>
-
-                  {orderItems?.orderId ? (
-                    <div
-                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors"
-                      onClick={handleQRCodeClick} //Remove it on deployment so click dont open processing screen using it for testing #zain
-                    >
-                      {qrCode && (
-                        <>
-                          <img
-                            src={qrCode}
-                            alt="Order Summary QR Code"
-                            className="w-40 h-40"
-                          />
-                          <p className="text-sm text-gray-500 mt-2">
-                            Order ID: {orderItems.orderId}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Scan to Pay
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center p-4 text-gray-500">
-                      Loading order details...
-                    </div>
-                  )}
+                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 ml-3 sm:ml-4" />
+                  </motion.button>
                 </div>
-
-                {/* Cash/Card Payment */}
-                <motion.button
-                  onClick={() => {
-                    setStep('cash');
-                    resetTimer();
-                  }}
-                  className="w-full bg-black text-white rounded-2xl p-4 flex items-center justify-between hover:bg-black/90 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div>
-                    <h3 className="text-lg font-medium mb-1">
-                      Pay with Cash or Card
-                    </h3>
-                    <p className="text-white/70 text-sm">Pay at the counter</p>
-                  </div>
-                  <CreditCard className="w-6 h-6" />
-                </motion.button>
-
-                {showTimer && (
-                  <div className="absolute top-4 right-4">
-                    <Timer
-                      seconds={timeLeft}
-                      isActive={isTimerActive}
-                      variant="light"
-                      onStartOver={handleStartOver}
-                      onComplete={handleStartOver}
-                    />
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -695,9 +666,9 @@ export function PaymentModal() {
                 <div className="bg-white rounded-2xl p-4 shadow-lg relative overflow-hidden border border-gray-100 group">
                   <div className="flex flex-col items-center text-center mb-3">
                     <h3 className="text-2xl font-medium mb-1">Quick Pay</h3>
-                    <p className="text-gray-500">
+                    {/* <p className="text-gray-500">
                       Scan with your phone to view order summary
-                    </p>
+                    </p> */}
                   </div>
 
                   <div className="flex justify-center gap-4 mb-3">
@@ -721,10 +692,7 @@ export function PaymentModal() {
                             alt="Order Summary QR Code"
                             className="w-40 h-40"
                           />
-                          <p className="text-sm text-gray-500 mt-2">
-                            Order ID: {orderItems.orderId}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-sm sm:text-base font-medium text-gray-600 mt-3">
                             Scan to Pay
                           </p>
                         </>
