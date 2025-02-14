@@ -11,6 +11,7 @@ import { createCharge } from '../api/clover';
 import { useLocation } from 'react-router-dom';
 import { orderService } from '../../../services/orderService';
 import io from 'socket.io-client';
+import { useTimer } from '../contexts/TimerContext';
 
 declare global {
   interface Window {
@@ -93,6 +94,14 @@ export function Payment() {
 
   const WS_URL = import.meta.env.VITE_WS_URL;
 
+  const { 
+    timeLeft, 
+    isTimerActive, 
+    showTimer, 
+    resetTimer, 
+    handleUserActivity 
+  } = useTimer();
+
   // Initialize socket connection and handle payment processing
   useEffect(() => {
     const socket = io(WS_URL);
@@ -121,6 +130,15 @@ export function Payment() {
             setRetryPayment(true);
             break;
         }
+      }
+    });
+
+    // Add to your existing socket event handlers
+    socket.on('resetTimer', (data) => {
+      if (data.orderId === orderId) {
+        resetTimer();
+        // If you need to reset any other state in Payment component
+        setCurrentScreen('payment');
       }
     });
 
@@ -1178,6 +1196,23 @@ export function Payment() {
     </div>
   );
 
+  const renderTimer = () => {
+    if (showTimer) {
+      return (
+        <div className="absolute top-4 right-4">
+          <Timer
+            seconds={timeLeft}
+            isActive={isTimerActive}
+            variant="light"
+            onStartOver={resetTimer}
+            onComplete={resetTimer}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
   if (isLoading) {
     return (
       <div className="h-[100dvh] max-w-lg mx-auto bg-white shadow-2xl overflow-hidden">
@@ -1222,6 +1257,7 @@ export function Payment() {
 
   return (
     <div className="h-[100dvh] max-w-lg mx-auto bg-white shadow-2xl overflow-hidden">
+      {renderTimer()}
       {currentScreen === 'payment' && renderPaymentScreen()}
       {currentScreen === 'processing' && renderProcessingScreen()}
       {currentScreen === 'confirmation' && renderConfirmationScreen()}
