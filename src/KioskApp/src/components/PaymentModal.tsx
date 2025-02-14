@@ -461,10 +461,7 @@ export function PaymentModal() {
                               alt="Order Summary QR Code"
                               className="w-32 h-32 sm:w-40 sm:h-40"
                             />
-                            <p className="text-xs sm:text-sm text-gray-500 mt-2">
-                              Order ID: {orderItems.orderId}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-sm sm:text-base font-medium text-gray-600 mt-3">
                               Scan to Pay
                             </p>
                           </>
@@ -695,10 +692,7 @@ export function PaymentModal() {
                             alt="Order Summary QR Code"
                             className="w-40 h-40"
                           />
-                          <p className="text-sm text-gray-500 mt-2">
-                            Order ID: {orderItems.orderId}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-sm sm:text-base font-medium text-gray-600 mt-3">
                             Scan to Pay
                           </p>
                         </>

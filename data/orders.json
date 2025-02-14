@@ -2233,5 +2233,28 @@
       }
     ],
     "totalBill": "13.00"
+  },
+  {
+    "status": "pending",
+    "orderId": "20250214-IEWXXO",
+    "customerName": "ZAIN",
+    "customerPhone": "(333) 333-3333",
+    "timestamp": "2025-02-14T14:07:43.255Z",
+    "items": [
+      {
+        "id": 760122032815,
+        "name": {
+          "en": "Beef Keema Burrito ",
+          "es": "Burrito de Keema de Res"
+        },
+        "price": 13,
+        "quantity": 1,
+        "addons": [],
+        "customization": {},
+        "extras": [],
+        "instructions": "{\"addOns\":[],\"customizations\":[{\"id\":\"PVJ2T51ST8YXJ\",\"name\":\"No Jalapeños \",\"available\":true,\"price\":0,\"modifiedTime\":1736218628000,\"modifierGroup\":{\"id\":\"P8ZW5MKXFVQ1C\"},\"deleted\":false}],\"beverages\":[],\"sides\":[],\"desserts\":[],\"specialInstructions\":\"\",\"unavailablePreference\":\"merchant-recommendation\",\"quantity\":1}"
+      }
+    ],
+    "totalBill": "13.00"
   }
 ]
