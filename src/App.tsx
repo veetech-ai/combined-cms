@@ -34,7 +34,6 @@ import { PaymentModal } from './KioskApp/src/components/PaymentModal';
 import { FeedbackModal } from './KioskApp/src/components/FeedbackModal';
 import Success from './KioskApp/src/components/Success';
 import { Payment } from './KioskApp/src/components/Payment';
-import { TimerProvider } from './KioskApp/src/contexts/TimerContext';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated, token } = useAuthStore();
@@ -76,22 +75,12 @@ const App = () => {
 
             {/* <Route path="/store/:id" element={<StorePage />} /> */}
             <Route path="/kiosk/:id" element={<WelcomeScreen />} />
-            <Route
-              path="/kiosk/:id/*"
-              element={
-                <TimerProvider>
-                  <Routes>
-                    <Route path="/" element={<WelcomeScreen />} />
-                    <Route path="/kiosk" element={<KioskApp />} />
-                    <Route path="/details" element={<CustomerDetailsModal />} />
-                    <Route path="/payment" element={<PaymentModal />} />
-                    <Route path="/feedback" element={<FeedbackModal />} />
-                    <Route path="/success" element={<Success />} />
-                    <Route path="/summary" element={<Payment />} />
-                  </Routes>
-                </TimerProvider>
-              }
-            />
+            <Route path="/kiosk/:id/*" element={<KioskApp />} />
+            <Route path="/kiosk/:id/details" element={<CustomerDetailsModal  />} />
+            <Route path="/kiosk/:id/payment" element={<PaymentModal  />} />
+            <Route path="/kiosk/:id/feedback" element={<FeedbackModal  />} />
+            <Route path="/kiosk/:id/success" element={<Success  />} />
+            <Route path="/kiosk/:id/summary" element={<Payment />} />
 
               {/* Protected Routes */}
               <Route

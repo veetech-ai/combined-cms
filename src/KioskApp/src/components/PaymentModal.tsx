@@ -20,9 +20,8 @@ import { useCustomerStore } from '../stores/customerStore';
 import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
 import { orderService } from '../../../services/orderService';
-import { useTimer } from '../contexts/TimerContext';
 
-const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:5173'; //5173 on localhost
+const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000'; //5173 on localhost
 
 // Add dummy data
 const dummyCartItems = [
@@ -45,93 +44,16 @@ export function PaymentModal() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { clearCart } = useCartStore();
-  const { 
-    timeLeft, 
-    isTimerActive, 
-    showTimer, 
-    resetTimer, 
-    handleUserActivity,
-    startTimer,
-    lastActivity
-  } = useTimer();
+  const [timeLeft, setTimeLeft] = useState(120);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [isUserActive, setIsUserActive] = useState(true);
+  const { customerName } = useCustomerStore();
+  const [orderTotal, setOrderTotal] = useState();
   const [isQRScanned, setIsQRScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingTimeout, setProcessingTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  // Initialize timer when component mounts
-  useEffect(() => {
-    // Start with a fresh timer
-    resetTimer();
-    
-    // Set up initial activity timestamp
-    handleUserActivity();
-
-    // Start checking for inactivity
-    const inactivityCheck = setInterval(() => {
-      const timeSinceLastActivity = Date.now() - lastActivity;
-      if (timeSinceLastActivity > 10000) { // 10 seconds
-        startTimer(); // This will show timer and start countdown
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(inactivityCheck);
-    };
-  }, []); // Run once when component mounts
-
-  // Add activity tracking
-  useEffect(() => {
-    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
-    
-    const handleActivity = () => {
-      handleUserActivity();
-      if (showTimer) {
-        resetTimer(); // Reset timer if it's already showing
-      }
-    };
-
-    events.forEach(event => {
-      window.addEventListener(event, handleActivity);
-    });
-
-    return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, handleActivity);
-      });
-    };
-  }, [handleUserActivity, showTimer, resetTimer]);
-
-  // Handle timer completion
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      clearCart();
-      navigate(`/kiosk/${id}`);
-    }
-  }, [timeLeft, clearCart, navigate, id]);
-
-  // Render timer component
-  const renderTimer = () => {
-    if (showTimer) {
-      return (
-        <div className="absolute top-4 right-4">
-          <Timer
-            seconds={timeLeft}
-            isActive={isTimerActive}
-            variant="light"
-            onStartOver={() => {
-              setStep('initial');
-              resetTimer();
-            }}
-            onComplete={() => {
-              clearCart();
-              navigate(`/kiosk/${id}`);
-            }}
-          />
-        </div>
-      );
-    }
-    return null;
-  };
 
   const total = dummyCartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -199,49 +121,185 @@ export function PaymentModal() {
     }
   }, [orderItems?.orderId, id]);
 
-  // Add this near your other socket event handlers
+  // Track user activity
+  const handleUserActivity = useCallback(() => {
+    setLastActivity(Date.now());
+    setIsUserActive(true);
+
+    if (showTimer) {
+      setShowTimer(false);
+      setTimeLeft(120);
+    }
+  }, [showTimer]);
+
+  // Set up activity listeners
   useEffect(() => {
-    socket.on('timerReset', () => {
-      resetTimer();
-      setStep('initial');
+    const events = [
+      'mousemove',
+      'mousedown',
+      'keydown',
+      'touchstart',
+      'scroll'
+    ];
+
+    events.forEach((event) => {
+      window.addEventListener(event, handleUserActivity);
     });
 
     return () => {
-      socket.off('timerReset');
+      events.forEach((event) => {
+        window.removeEventListener(event, handleUserActivity);
+      });
     };
-  }, [resetTimer]);
+  }, [handleUserActivity]);
 
-  // Modify the back button handler
-  const handleBack = () => {
-    // Emit event to notify other components
-    socket.emit('resetTimer', { orderId: orderItems?.orderId });
-    
-    setStep('initial');
+  // Check for inactivity
+  useEffect(() => {
+    const inactivityCheck = setInterval(() => {
+      const timeSinceLastActivity = Date.now() - lastActivity;
+
+      if (timeSinceLastActivity > 10000) {
+        // 10 seconds
+        setIsUserActive(false);
+        setShowTimer(true);
+        setIsTimerActive(true);
+      }
+    }, 1000);
+
+    return () => clearInterval(inactivityCheck);
+  }, [lastActivity]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!isTimerActive || !showTimer || timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, isTimerActive, showTimer]);
+
+  // Handle timer expiry
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      handleStartOver();
+    }
+  }, [timeLeft]);
+
+  const resetTimer = () => {
+    setTimeLeft(120);
+    setIsTimerActive(true);
+    handleUserActivity();
+  };
+
+  // Update handlers to track activity
+  const handleGotIt = () => {
     resetTimer();
+    handleUserActivity();
+    navigate(`/kiosk/${id}/feedback`);
+  };
+
+  const handleSuccess = () => {
+    resetTimer();
+    const summaryUrl = `/kiosk/${id}/summary?orderId=${orderItems?.orderId}`;
+    console.log('Navigating to:', summaryUrl);
+    navigate(summaryUrl);
+  };
+
+  const handleClose = () => {
+    // Navigate back to phone number step with state to prevent auto-submission
+    navigate(`/kiosk/${id}/details`, {
+      state: { 
+        step: 'phone',
+        fromPayment: true  // Add this flag
+      }
+    });
+  };
+
+  const handleStartOver = () => {
+    setIsTimerActive(false);
+    setShowTimer(false);
+    setTimeLeft(120); // Reset timer
+    setIsTimerActive(true); // Restart timer
+    setLastActivity(Date.now()); // Reset activity timestamp
+    clearCart();
+    navigate(`/kiosk/${id}`);
+  };
+
+  const handleQRCodeClick = () => {
+    // Reset any previous errors
+    setError(null);
+    
+    // Clear any existing timeout
+    if (processingTimeout) {
+      clearTimeout(processingTimeout);
+    }
+    
+    // Set processing state
+    setStep('payment_processing');
+
+    // Emit socket event to notify server that QR was scanned
+    socket.emit('qrCodeScanned', {
+      orderId: orderItems?.orderId,
+      status: 'payment_processing',
+      isRetry: true // Flag to indicate this is a retry attempt
+    });
+  };
+
+  // Update handler for order button click - remove clearCart
+  const handleOrderClick = () => {
     navigate(`/kiosk/${id}/kiosk`);
   };
+  // I added this functionality to check failed payment screen but we can use it for timeout failure as well.
+  // Add useEffect to handle processing timeout
+  useEffect(() => {
+    // Clear any existing timeout when step changes
+    if (processingTimeout) {
+      clearTimeout(processingTimeout);
+    }
+
+    // Set new timeout when entering processing state
+    if (step === 'payment_processing') {
+      const timeout = setTimeout(() => {
+        // Update order status to failed
+        if (orderItems?.orderId) {
+          socket.emit('orderStatusUpdated', {
+            orderId: orderItems.orderId,
+            status: 'payment_failed'
+          });
+        }
+        setStep('payment_retry');
+      }, 120000); // 120 seconds
+
+      setProcessingTimeout(timeout);
+    }
+
+    // Cleanup timeout on unmount or step change
+    return () => {
+      if (processingTimeout) {
+        clearTimeout(processingTimeout);
+      }
+    };
+  }, [step, orderItems?.orderId]);
 
   return (
     <div className="fixed inset-0 bg-white">
-      {renderTimer()}
       {step === 'initial' && (
         <>
-          <div className="h-screen flex flex-col lg:flex-row">
-            {/* Left Side - Order Summary */}
-            <div className="w-full lg:w-1/2 lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full overflow-auto">
-              <div className="p-4 sm:p-6 md:p-8">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="inline-flex items-center justify-center rounded-lg text-sm font-medium 
-                    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
-                    disabled:pointer-events-none disabled:opacity-50
-                    hover:bg-gray-100 h-9 px-4 py-2 
-                    text-gray-900 mb-6 sm:mb-8"
-                >
-                  <ChevronLeft className="mr-2 h-4 w-4" />
-                  Back
-                </button>
+          <div className="p-6 flex justify-between">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
+                focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
+                disabled:pointer-events-none disabled:opacity-50
+                hover:bg-gray-100 h-9 px-4 py-2 
+                text-gray-900"
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back
+            </button>
 
             <button
               type="button"
@@ -474,10 +532,7 @@ export function PaymentModal() {
           <div className="p-6 flex justify-between">
             <button
               type="button"
-              onClick={() => {
-                setStep('initial');
-                resetTimer();
-              }}
+              onClick={handleClose}
               className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
                 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
                 disabled:pointer-events-none disabled:opacity-50
@@ -490,7 +545,7 @@ export function PaymentModal() {
 
             <button
               type="button"
-              onClick={handleBack}
+              onClick={handleOrderClick}
               className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
             >
               <ShoppingCart className="h-4 w-4" />
@@ -657,10 +712,7 @@ export function PaymentModal() {
                   {orderItems?.orderId ? (
                     <div
                       className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors"
-                      onClick={() => {
-                        setStep('payment_processing');
-                        resetTimer();
-                      }}
+                      onClick={handleQRCodeClick}
                     >
                       {qrCode && (
                         <>
@@ -703,6 +755,18 @@ export function PaymentModal() {
                   </div>
                   <CreditCard className="w-6 h-6" />
                 </motion.button>
+
+                {showTimer && (
+                  <div className="absolute top-4 right-4">
+                    <Timer
+                      seconds={timeLeft}
+                      isActive={isTimerActive}
+                      variant="light"
+                      onStartOver={handleStartOver}
+                      onComplete={handleStartOver}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -752,10 +816,7 @@ export function PaymentModal() {
               </p>
 
               <motion.button
-                onClick={() => {
-                  setStep('initial');
-                  resetTimer();
-                }}
+                onClick={handleStartOver}
                 className="w-full bg-black text-white py-4 text-xl font-medium rounded-xl hover:bg-gray-900 transition-colors duration-200"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -764,6 +825,18 @@ export function PaymentModal() {
               </motion.button>
             </motion.div>
           </div>
+
+          {showTimer && (
+            <div className="absolute top-4 right-4">
+              <Timer
+                seconds={timeLeft}
+                isActive={isTimerActive}
+                variant="light"
+                onStartOver={handleStartOver}
+                onComplete={handleStartOver}
+              />
+            </div>
+          )}
         </div>
       )}
       {step === 'card_paid' && (
@@ -785,10 +858,7 @@ export function PaymentModal() {
             </p>
             <motion.div>
               <motion.button
-                onClick={() => {
-                  setStep('initial');
-                  resetTimer();
-                }}
+                onClick={handleStartOver}
                 className="w-full bg-black text-white py-4 text-xl font-medium rounded-xl hover:bg-gray-900 transition-colors duration-200 px-8"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -797,6 +867,18 @@ export function PaymentModal() {
               </motion.button>
             </motion.div>
           </div>
+
+          {showTimer && (
+            <div className="absolute top-4 right-4">
+              <Timer
+                seconds={timeLeft}
+                isActive={isTimerActive}
+                variant="light"
+                onStartOver={handleStartOver}
+                onComplete={handleStartOver}
+              />
+            </div>
+          )}
         </div>
       )}
       {step === 'payment_processing' && (
@@ -834,10 +916,7 @@ export function PaymentModal() {
             {orderItems?.orderId && qrCode ? (
               <div 
                 className="flex flex-col items-center justify-center relative bg-white rounded-xl p-6 border-2 border-gray-700 cursor-pointer hover:border-gray-500 transition-colors"
-                onClick={() => {
-                  setStep('payment_processing');
-                  resetTimer();
-                }}
+                onClick={handleQRCodeClick}
               >
                 <img
                   src={qrCode}
