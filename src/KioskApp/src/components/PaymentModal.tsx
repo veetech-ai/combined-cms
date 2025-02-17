@@ -211,7 +211,7 @@ export function PaymentModal() {
   const handleClose = () => {
     // Navigate back to phone number step with state to prevent auto-submission
     navigate(`/kiosk/${id}/details`, {
-      state: { 
+      state: {
         step: 'phone',
         fromPayment: true  // Add this flag
       }
@@ -231,12 +231,12 @@ export function PaymentModal() {
   const handleQRCodeClick = () => {
     // Reset any previous errors
     setError(null);
-    
+
     // Clear any existing timeout
     if (processingTimeout) {
       clearTimeout(processingTimeout);
     }
-    
+
     // Set processing state
     setStep('payment_processing');
 
@@ -454,11 +454,13 @@ export function PaymentModal() {
                     </div>
 
                     <div className="flex justify-center gap-4 mb-3">
-                      <div className="transform transition-transform group-hover:scale-105">
-                        <GooglePayLogo />
-                      </div>
-                      <div className="transform transition-transform group-hover:scale-105">
+                      <div className="flex items-center justify-center transform transition-transform group-hover:scale-105">
                         <ApplePayLogo />
+                        <span className=' font-semi text-lg'>Pay</span>
+                      </div>
+                      <div className="flex items-center gap-1 justify-center transform transition-transform group-hover:scale-105">
+                        <GooglePayLogo />
+                        <span className=' font-semi text-lg'>Pay</span>
                       </div>
                     </div>
 
@@ -887,7 +889,7 @@ export function PaymentModal() {
 
             {/* QR Code Section */}
             {orderItems?.orderId && qrCode ? (
-              <div 
+              <div
                 className="flex flex-col items-center justify-center relative bg-white rounded-xl p-6 border-2 border-gray-700 cursor-pointer hover:border-gray-500 transition-colors"
                 onClick={handleQRCodeClick}
               >
