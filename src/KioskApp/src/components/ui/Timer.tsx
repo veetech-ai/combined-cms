@@ -106,7 +106,7 @@ export function Timer({
                 transition-colors
               `}
             >
-              Reset Session
+                    Start Over
             </button>
           ) : (
             <button 
@@ -119,7 +119,7 @@ export function Timer({
                 }
               `}
             >
-              Reset
+              Start Over
             </button>
           )}
         </div>

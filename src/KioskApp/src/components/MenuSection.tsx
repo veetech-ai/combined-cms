@@ -11,6 +11,8 @@ import { ModifiersModal } from './ModifiersModal';
 import type { MenuItem } from '../types';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { itemImageMap, DEFAULT_IMAGE } from '../utils/imageMap';
+import { Timer } from './ui/Timer';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Add a constant for featured items
 const FEATURED_ITEMS = [
@@ -252,7 +254,7 @@ const normalizeItemName = (name: string) => {
 
 const MenuSection = () => {
   const { t, i18n } = useTranslation();
-  const { addItem } = useCartStore();
+  const { addItem, clearCart } = useCartStore();
   const [apiMenuItems, setApiMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<CategoryName>('All');
@@ -264,6 +266,13 @@ const MenuSection = () => {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [showSimplifiedModal, setShowSimplifiedModal] = useState(false);
   const [showPromo, setShowPromo] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [isUserActive, setIsUserActive] = useState(true);
+  const navigate = useNavigate();
+  const { id } = useParams();
 
   const currentLanguage = i18n.language as 'en' | 'es';
 
@@ -706,8 +715,80 @@ const MenuSection = () => {
     }
   }, [apiMenuItems]);
 
+  // Add handleUserActivity callback
+  const handleUserActivity = useCallback(() => {
+    setLastActivity(Date.now());
+    setIsUserActive(true);
+
+    if (showTimer) {
+      setShowTimer(false);
+      setTimeLeft(30);
+    }
+  }, [showTimer]);
+
+  // Add activity listeners
+  useEffect(() => {
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+
+    events.forEach(event => {
+      window.addEventListener(event, handleUserActivity);
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleUserActivity);
+      });
+    };
+  }, [handleUserActivity]);
+
+  // Add inactivity check effect
+  useEffect(() => {
+    const inactivityCheck = setInterval(() => {
+      const timeSinceLastActivity = Date.now() - lastActivity;
+
+      if (timeSinceLastActivity > 10000) {
+        setIsUserActive(false);
+        setShowTimer(true);
+        setIsTimerActive(true);
+      }
+    }, 1000);
+
+    return () => clearInterval(inactivityCheck);
+  }, [lastActivity]);
+
+  // Add countdown timer effect
+  useEffect(() => {
+    if (!isTimerActive || !showTimer || timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, isTimerActive, showTimer]);
+
+  // Add timer expiry effect
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      handleStartOver();
+    }
+  }, [timeLeft]);
+
+  const resetTimer = () => {
+    setTimeLeft(30);
+    setIsTimerActive(true);
+    handleUserActivity();
+  };
+
+  const handleStartOver = () => {
+    setIsTimerActive(false);
+    setShowTimer(false);
+    clearCart();
+    navigate(`/kiosk/${id}`);
+  };
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" onMouseMove={handleUserActivity} onClick={handleUserActivity}>
       {/* Update the category bar styling */}
       <div className="mb-4 sticky top-0 bg-white/95 backdrop-blur-sm z-30">
         {!loading && !error && (
@@ -961,6 +1042,16 @@ const MenuSection = () => {
             item={selectedItem}
           />
         )}
+
+      {showTimer && (
+        <Timer
+          seconds={timeLeft}
+          isActive={isTimerActive}
+          onStartOver={handleStartOver}
+          onComplete={handleStartOver}
+          showStartOverText={true}
+        />
+      )}
     </div>
   );
 };
