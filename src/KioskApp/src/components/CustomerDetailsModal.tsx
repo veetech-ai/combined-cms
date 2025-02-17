@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCustomerStore } from '../stores/customerStore';
 import { toast } from 'react-hot-toast';
-import { ChevronLeft, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 import { Timer } from './ui/Timer';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { CheckoutLayout } from '../components/CheckoutLayout';
 import { useOrder } from '../../../contexts/OrderContext';
 import { orderService } from '../../..//services/orderService';
+import { Button } from '@/components/ui/button';
 type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
@@ -18,8 +19,8 @@ export function CustomerDetailsModal() {
     location.state?.fromPayment
       ? 'name'
       : location.state?.step === 'phone'
-      ? 'phone'
-      : 'name'
+        ? 'phone'
+        : 'name'
   );
   const [timeLeft, setTimeLeft] = useState(30);
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -290,17 +291,12 @@ export function CustomerDetailsModal() {
   }, [orderItems]);
 
   // Add back the phone input effect but with the fromPayment check
-  useEffect(() => {
-    if (step === 'phone' && !location.state?.fromPayment) {
-      const cleanPhone = phone.replace(/\D/g, '');
-      const isValidPhone =
-        cleanPhone.length === 10 && /^[2-9]\d{9}$/.test(cleanPhone);
 
-      if (isValidPhone) {
-        handlePhoneSubmit();
-      }
-    }
-  }, [phone, step, location.state?.fromPayment]);
+  const isValidPhone = useMemo(() => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    return cleanPhone.length === 10 && /^[2-9]\d{9}$/.test(cleanPhone);
+  }, [phone]);
+  
 
   // Update the name input keydown handler to work in both cases
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -382,6 +378,12 @@ export function CustomerDetailsModal() {
                     onKeyDown={handleNameKeyDown}
                   />
                   <div className="absolute left-0 right-0 h-0.5 bg-gray-200 bottom-0" />
+
+                </div>
+                <div className='flex justify-end w-full'>
+                  <Button disabled={name == ""} onClick={handleNameSubmit} className='text-3xl h-30 px-10 pb-3'>
+                    Next
+                  </Button>
                 </div>
               </div>
             </>
@@ -414,6 +416,11 @@ export function CustomerDetailsModal() {
                     onKeyDown={handlePhoneKeyDown}
                   />
                   <div className="absolute left-0 right-0 h-0.5 bg-gray-200 bottom-0" />
+                </div>
+                <div className='flex justify-end w-full'>
+                  <Button disabled={!isValidPhone} onClick={handlePhoneSubmit} className='text-3xl h-30 px-10 pb-3'>
+                    Next
+                  </Button>
                 </div>
               </div>
             </>
