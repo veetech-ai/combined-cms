@@ -321,18 +321,15 @@ export function CustomerDetailsModal() {
       onClick={handleUserActivity}
     >
       <div className="p-6 flex justify-between">
-        <button
-          type="button"
+        <Button
           onClick={handleBack}
-          className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
-            focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
-            disabled:pointer-events-none disabled:opacity-50
-            hover:bg-gray-100 h-9 px-4 py-2 
-            text-gray-900"
+          variant="ghost"
+          size="lg"
+          className="flex items-center text-lg"
         >
-          <ChevronLeft className="mr-2 h-4 w-4" />
+          <ChevronLeft className="mr-2 h-5 w-5" />
           Back
-        </button>
+        </Button>
 
         <button
           type="button"

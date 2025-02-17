@@ -14,6 +14,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ApplePayLogo } from './ui/ApplePayLogo';
 import { GooglePayLogo } from './ui/GooglePayLogo';
 import { toast } from 'react-hot-toast';
+import { Button } from "@/components/ui/button";
 
 import { useCartStore } from '../stores/cartStore';
 import { useCustomerStore } from '../stores/customerStore';
@@ -291,18 +292,28 @@ export function PaymentModal() {
             {/* Left Side - Order Summary */}
             <div className="w-full lg:w-1/2 lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full overflow-auto">
               <div className="p-4 sm:p-6 md:p-8">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="inline-flex items-center justify-center rounded-lg text-sm font-medium 
-                    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
-                    disabled:pointer-events-none disabled:opacity-50
-                    hover:bg-gray-100 h-9 px-4 py-2 
-                    text-gray-900 mb-6 sm:mb-8"
-                >
-                  <ChevronLeft className="mr-2 h-4 w-4" />
-                  Back
-                </button>
+                <div className="p-6 flex justify-between">
+                  <Button
+                    onClick={handleClose}
+                    variant="ghost"
+                    size="lg"
+                    className="flex items-center text-lg"
+                  >
+                    <ChevronLeft className="mr-2 h-5 w-5" />
+                    Back
+                  </Button>
+
+                  <button
+                    type="button"
+                    onClick={handleOrderClick}
+                    className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    <span>{orderItems && orderItems.items.length} items</span>
+                    <span>|</span>
+                    <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
+                  </button>
+                </div>
 
                 {/* Order Summary Section */}
                 <div className="mb-4">
@@ -501,18 +512,15 @@ export function PaymentModal() {
       {step === 'initial_retry' && (
         <>
           <div className="p-6 flex justify-between">
-            <button
-              type="button"
+            <Button
               onClick={handleClose}
-              className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
-                focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
-                disabled:pointer-events-none disabled:opacity-50
-                hover:bg-gray-100 h-9 px-4 py-2 
-                text-gray-900"
+              variant="ghost"
+              size="lg"
+              className="flex items-center text-lg"
             >
-              <ChevronLeft className="mr-2 h-4 w-4" />
+              <ChevronLeft className="mr-2 h-5 w-5" />
               Back
-            </button>
+            </Button>
 
             <button
               type="button"
@@ -743,18 +751,15 @@ export function PaymentModal() {
       {step === 'cash' && (
         <div className="h-full flex flex-col">
           <div className="p-6">
-            <button
-              type="button"
+            <Button
               onClick={() => setStep('initial')}
-              className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors 
-                focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
-                disabled:pointer-events-none disabled:opacity-50
-                hover:bg-gray-100 h-9 px-4 py-2 
-                text-gray-900"
+              variant="ghost"
+              size="lg"
+              className="flex items-center text-lg"
             >
-              <ChevronLeft className="mr-2 h-4 w-4" />
+              <ChevronLeft className="mr-2 h-5 w-5" />
               Back
-            </button>
+            </Button>
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center px-8">
