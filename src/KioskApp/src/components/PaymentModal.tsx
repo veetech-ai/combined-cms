@@ -401,7 +401,7 @@ export function PaymentModal() {
             {/* Left Side - Order Summary */}
             <div className="w-full lg:w-1/2 lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full overflow-auto">
               <div className="p-4 sm:p-6 md:p-8">
-                <div className="p-6 flex justify-between">
+                <div className="flex justify-between">
                   <Button
                     onClick={handleClose}
                     variant="ghost"
