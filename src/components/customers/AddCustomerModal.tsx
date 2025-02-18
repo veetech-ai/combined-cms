@@ -14,10 +14,8 @@ interface AddCustomerModalProps {
   ) => void;
 }
 
-// Extract role type from Customer interface
 type CustomerRole = Customer['primaryContact']['role'];
 
-// Create role options from the Customer type
 const roleOptions: { value: CustomerRole; label: string }[] = [
   { value: 'super_admin', label: 'Super Admin' },
   { value: 'admin', label: 'Admin' },
@@ -31,30 +29,30 @@ const defaultModules = [
   { id: 'rewards', name: 'Rewards Program', isEnabled: false }
 ];
 
-const defaultStore: Omit<Store, 'id'> = {
-  name: '',
-  address: '',
-  city: '',
-  state: '',
-  zipCode: '',
-  phone: '',
-  modules: defaultModules,
-  operatingHours: {
-    monday: { open: '09:00', close: '17:00' },
-    tuesday: { open: '09:00', close: '17:00' },
-    wednesday: { open: '09:00', close: '17:00' },
-    thursday: { open: '09:00', close: '17:00' },
-    friday: { open: '09:00', close: '17:00' },
-    saturday: null,
-    sunday: null
-  }
-};
-
 const DEFAULT_AVATAR =
   'https://ui-avatars.com/api/?background=0D8ABC&color=fff';
 
+interface FormErrors {
+  name?: string;
+  email?: string;
+  company?: string;
+  phone?: string;
+  billingAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  primaryContact?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    role?: string;
+  };
+}
+
 export default function AddCustomerModal({
-  customers,
   isOpen,
   onClose,
   onAdd
@@ -64,6 +62,8 @@ export default function AddCustomerModal({
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -72,14 +72,12 @@ export default function AddCustomerModal({
         setIsUploading(true);
         setUploadError(null);
 
-        // Show preview immediately
         const reader = new FileReader();
         reader.onloadend = () => {
           setAvatarPreview(reader.result as string);
         };
         reader.readAsDataURL(file);
 
-        // Upload the file
         const imageUrl = await uploadImage(file);
         setFormData((prev) => ({ ...prev, logo: imageUrl }));
       } catch (error) {
@@ -93,7 +91,6 @@ export default function AddCustomerModal({
   };
 
   const [formData, setFormData] = useState({
-    // Customer Details
     name: '',
     email: '',
     company: '',
@@ -105,50 +102,65 @@ export default function AddCustomerModal({
       zipCode: '',
       country: ''
     },
-    // Primary Contact
     primaryContact: {
       name: '',
       email: '',
       phone: '',
-      role: ''
+      role: 'super_admin' // Default role
     },
-    // Subscription
     subscription: {
-      plan: 'BASIC' as const,
+      plan: 'BASIC' as const, // Default plan
       status: 'PENDING' as const,
       startDate: new Date().toISOString(),
-      renewalDate: new Date(
-        Date.now() + 365 * 24 * 60 * 60 * 1000
-      ).toISOString()
+      renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
     },
-    // Empty stores array - stores will be added separately
     stores: [],
-    // Default modules
     modules: DEFAULT_MODULES
   });
 
   const validateStep = () => {
+    const newErrors: FormErrors = {};
+
     if (currentStep === 1) {
-      const emailExists = customers.some(
-        (element) => element.email === formData.email
-      );
-      if (emailExists) {
-        toast.error('Email already exists');
-        return false;
-      }
+      if (!formData.name.trim()) newErrors.name = 'Customer name is required';
+      if (!formData.email.trim()) newErrors.email = 'Email is required';
+      if (!formData.company.trim()) newErrors.company = 'Company name is required';
+      if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+      if (!formData.billingAddress.street.trim())
+        newErrors.billingAddress = { ...newErrors.billingAddress, street: 'Street address is required' };
+      if (!formData.billingAddress.city.trim())
+        newErrors.billingAddress = { ...newErrors.billingAddress, city: 'City is required' };
+      if (!formData.billingAddress.state.trim())
+        newErrors.billingAddress = { ...newErrors.billingAddress, state: 'State is required' };
+      if (!formData.billingAddress.zipCode.trim())
+        newErrors.billingAddress = { ...newErrors.billingAddress, zipCode: 'ZIP code is required' };
+      if (!formData.billingAddress.country.trim())
+        newErrors.billingAddress = { ...newErrors.billingAddress, country: 'Country is required' };
+    } else if (currentStep === 2) {
+      if (!formData.primaryContact.name.trim())
+        newErrors.primaryContact = { ...newErrors.primaryContact, name: 'Contact name is required' };
+      if (!formData.primaryContact.email.trim())
+        newErrors.primaryContact = { ...newErrors.primaryContact, email: 'Contact email is required' };
+      if (!formData.primaryContact.phone.trim())
+        newErrors.primaryContact = { ...newErrors.primaryContact, phone: 'Contact phone is required' };
     }
 
-    setCurrentStep((prev) => prev + 1);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleNextStep = async () => {
-    validateStep();
+    if (!validateStep()) {
+      toast.error('Please fill all required fields before proceeding.');
+      return;
+    }
+    setCurrentStep((prev) => prev + 1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentStep < 2) {
-      setCurrentStep(currentStep + 1);
+    if (!validateStep()) {
+      toast.error('Please fill all required fields before submitting.');
       return;
     }
 
@@ -160,38 +172,12 @@ export default function AddCustomerModal({
         phone: formData.phone,
         logo: formData.logo || DEFAULT_AVATAR,
         website: formData.website,
-
-        billing_address: {
-          street: formData.billingAddress.street,
-          city: formData.billingAddress.city,
-          state: formData.billingAddress.state,
-          zipCode: formData.billingAddress.zipCode,
-          country: formData.billingAddress.country
-        },
-
-        primary_contact: {
-          name: formData.primaryContact.name,
-          email: formData.primaryContact.email,
-          phone: formData.primaryContact.phone,
-          role: formData.primaryContact.role
-        },
-
-        subscription: {
-          plan: formData.subscription.plan.toUpperCase(),
-          status: formData.subscription.status.toUpperCase(),
-          startDate: formData.subscription.startDate,
-          renewalDate: formData.subscription.renewalDate
-        },
-
-        pos_integration: {
-          type: 'NONE',
-          provider: null,
-          configuration: {
-            webhookUrl: '',
-            callbackUrl: '',
-            settings: {}
-          }
-        }
+        billingAddress: formData.billingAddress,
+        primaryContact: formData.primaryContact,
+        subscription: formData.subscription,
+        posIntegration: DEFAULT_POS_INTEGRATION,
+        stores: formData.stores,
+        modules: formData.modules
       };
 
       await onAdd(organizationData);
@@ -212,15 +198,13 @@ export default function AddCustomerModal({
           name: '',
           email: '',
           phone: '',
-          role: ''
+          role: 'super_admin' // Reset to default role
         },
         subscription: {
-          plan: 'BASIC',
+          plan: 'BASIC', // Reset to default plan
           status: 'PENDING',
           startDate: new Date().toISOString(),
-          renewalDate: new Date(
-            Date.now() + 365 * 24 * 60 * 60 * 1000
-          ).toISOString()
+          renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
         },
         stores: [],
         modules: DEFAULT_MODULES
@@ -242,9 +226,7 @@ export default function AddCustomerModal({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold">Add New Customer</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Step {currentStep} of 2
-            </p>
+            <p className="text-sm text-gray-500 mt-1">Step {currentStep} of 2</p>
           </div>
           <button
             onClick={onClose}
@@ -294,12 +276,8 @@ export default function AddCustomerModal({
                   />
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700">
-                    Company Logo
-                  </h4>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Upload a company logo or profile picture
-                  </p>
+                  <h4 className="text-sm font-medium text-gray-700">Company Logo</h4>
+                  <p className="text-sm text-gray-500 mt-1">Upload a company logo or profile picture</p>
                   {uploadError && (
                     <p className="text-sm text-red-500 mt-1">{uploadError}</p>
                   )}
@@ -309,62 +287,98 @@ export default function AddCustomerModal({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer Name
+                    Customer Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      setErrors((prev) => ({ ...prev, name: undefined }));
+                    }}
+                    onBlur={() => setTouched({ ...touched, name: true })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.name && touched.name
+                        ? 'border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:ring-blue-500'
+                    }`}
                   />
+                  {errors.name && touched.name && (
+                    <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Company Name
+                    Company Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.company}
-                    onChange={(e) =>
-                      setFormData({ ...formData, company: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setFormData({ ...formData, company: e.target.value });
+                      setErrors((prev) => ({ ...prev, company: undefined }));
+                    }}
+                    onBlur={() => setTouched({ ...touched, company: true })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.company && touched.company
+                        ? 'border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:ring-blue-500'
+                    }`}
                   />
+                  {errors.company && touched.company && (
+                    <p className="mt-1 text-sm text-red-500">{errors.company}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
+                    Email Address <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
                     required
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      setErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
+                    onBlur={() => setTouched({ ...touched, email: true })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.email && touched.email
+                        ? 'border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:ring-blue-500'
+                    }`}
                   />
+                  {errors.email && touched.email && (
+                    <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
+                    Phone Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     required
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setFormData({ ...formData, phone: e.target.value });
+                      setErrors((prev) => ({ ...prev, phone: undefined }));
+                    }}
+                    onBlur={() => setTouched({ ...touched, phone: true })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.phone && touched.phone
+                        ? 'border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:ring-blue-500'
+                    }`}
                   />
+                  {errors.phone && touched.phone && (
+                    <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
+                  )}
                 </div>
               </div>
 
@@ -373,107 +387,167 @@ export default function AddCustomerModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Street Address
+                      Street Address <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
                       value={formData.billingAddress.street}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           billingAddress: {
                             ...formData.billingAddress,
                             street: e.target.value
                           }
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        });
+                        setErrors((prev) => ({
+                          ...prev,
+                          billingAddress: { ...prev.billingAddress, street: undefined }
+                        }));
+                      }}
+                      onBlur={() => setTouched({ ...touched, billingAddress: { ...touched.billingAddress, street: true } })}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        errors.billingAddress?.street && touched.billingAddress?.street
+                          ? 'border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:ring-blue-500'
+                      }`}
                     />
+                    {errors.billingAddress?.street && touched.billingAddress?.street && (
+                      <p className="mt-1 text-sm text-red-500">{errors.billingAddress.street}</p>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      City
+                      City <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
                       value={formData.billingAddress.city}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           billingAddress: {
                             ...formData.billingAddress,
                             city: e.target.value
                           }
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        });
+                        setErrors((prev) => ({
+                          ...prev,
+                          billingAddress: { ...prev.billingAddress, city: undefined }
+                        }));
+                      }}
+                      onBlur={() => setTouched({ ...touched, billingAddress: { ...touched.billingAddress, city: true } })}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        errors.billingAddress?.city && touched.billingAddress?.city
+                          ? 'border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:ring-blue-500'
+                      }`}
                     />
+                    {errors.billingAddress?.city && touched.billingAddress?.city && (
+                      <p className="mt-1 text-sm text-red-500">{errors.billingAddress.city}</p>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      State
+                      State <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
                       value={formData.billingAddress.state}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           billingAddress: {
                             ...formData.billingAddress,
                             state: e.target.value
                           }
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        });
+                        setErrors((prev) => ({
+                          ...prev,
+                          billingAddress: { ...prev.billingAddress, state: undefined }
+                        }));
+                      }}
+                      onBlur={() => setTouched({ ...touched, billingAddress: { ...touched.billingAddress, state: true } })}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        errors.billingAddress?.state && touched.billingAddress?.state
+                          ? 'border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:ring-blue-500'
+                      }`}
                     />
+                    {errors.billingAddress?.state && touched.billingAddress?.state && (
+                      <p className="mt-1 text-sm text-red-500">{errors.billingAddress.state}</p>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ZIP Code
+                      ZIP Code <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
                       value={formData.billingAddress.zipCode}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           billingAddress: {
                             ...formData.billingAddress,
                             zipCode: e.target.value
                           }
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        });
+                        setErrors((prev) => ({
+                          ...prev,
+                          billingAddress: { ...prev.billingAddress, zipCode: undefined }
+                        }));
+                      }}
+                      onBlur={() => setTouched({ ...touched, billingAddress: { ...touched.billingAddress, zipCode: true } })}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        errors.billingAddress?.zipCode && touched.billingAddress?.zipCode
+                          ? 'border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:ring-blue-500'
+                      }`}
                     />
+                    {errors.billingAddress?.zipCode && touched.billingAddress?.zipCode && (
+                      <p className="mt-1 text-sm text-red-500">{errors.billingAddress.zipCode}</p>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Country
+                      Country <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
                       value={formData.billingAddress.country}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           billingAddress: {
                             ...formData.billingAddress,
                             country: e.target.value
                           }
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        });
+                        setErrors((prev) => ({
+                          ...prev,
+                          billingAddress: { ...prev.billingAddress, country: undefined }
+                        }));
+                      }}
+                      onBlur={() => setTouched({ ...touched, billingAddress: { ...touched.billingAddress, country: true } })}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                        errors.billingAddress?.country && touched.billingAddress?.country
+                          ? 'border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:ring-blue-500'
+                      }`}
                     />
+                    {errors.billingAddress?.country && touched.billingAddress?.country && (
+                      <p className="mt-1 text-sm text-red-500">{errors.billingAddress.country}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -482,72 +556,106 @@ export default function AddCustomerModal({
 
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-medium mb-4">
-                Primary Contact & Subscription
-              </h3>
+              <h3 className="text-lg font-medium mb-4">Primary Contact & Subscription</h3>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Name
+                    Contact Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.primaryContact.name}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         primaryContact: {
                           ...formData.primaryContact,
                           name: e.target.value
                         }
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      });
+                      setErrors((prev) => ({
+                        ...prev,
+                        primaryContact: { ...prev.primaryContact, name: undefined }
+                      }));
+                    }}
+                    onBlur={() => setTouched({ ...touched, primaryContact: { ...touched.primaryContact, name: true } })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.primaryContact?.name && touched.primaryContact?.name
+                        ? 'border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:ring-blue-500'
+                    }`}
                   />
+                  {errors.primaryContact?.name && touched.primaryContact?.name && (
+                    <p className="mt-1 text-sm text-red-500">{errors.primaryContact.name}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Email
+                    Contact Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
                     required
                     value={formData.primaryContact.email}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         primaryContact: {
                           ...formData.primaryContact,
                           email: e.target.value
                         }
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      });
+                      setErrors((prev) => ({
+                        ...prev,
+                        primaryContact: { ...prev.primaryContact, email: undefined }
+                      }));
+                    }}
+                    onBlur={() => setTouched({ ...touched, primaryContact: { ...touched.primaryContact, email: true } })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.primaryContact?.email && touched.primaryContact?.email
+                        ? 'border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:ring-blue-500'
+                    }`}
                   />
+                  {errors.primaryContact?.email && touched.primaryContact?.email && (
+                    <p className="mt-1 text-sm text-red-500">{errors.primaryContact.email}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Phone
+                    Contact Phone <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     required
                     value={formData.primaryContact.phone}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         primaryContact: {
                           ...formData.primaryContact,
                           phone: e.target.value
                         }
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      });
+                      setErrors((prev) => ({
+                        ...prev,
+                        primaryContact: { ...prev.primaryContact, phone: undefined }
+                      }));
+                    }}
+                    onBlur={() => setTouched({ ...touched, primaryContact: { ...touched.primaryContact, phone: true } })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.primaryContact?.phone && touched.primaryContact?.phone
+                        ? 'border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:ring-blue-500'
+                    }`}
                   />
+                  {errors.primaryContact?.phone && touched.primaryContact?.phone && (
+                    <p className="mt-1 text-sm text-red-500">{errors.primaryContact.phone}</p>
+                  )}
                 </div>
 
                 <div>
@@ -557,16 +665,25 @@ export default function AddCustomerModal({
                   <select
                     required
                     value={formData.primaryContact.role}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({
                         ...formData,
                         primaryContact: {
                           ...formData.primaryContact,
                           role: e.target.value as CustomerRole
                         }
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      });
+                      setErrors((prev) => ({
+                        ...prev,
+                        primaryContact: { ...prev.primaryContact, role: undefined }
+                      }));
+                    }}
+                    onBlur={() => setTouched({ ...touched, primaryContact: { ...touched.primaryContact, role: true } })}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                      errors.primaryContact?.role && touched.primaryContact?.role
+                        ? 'border-red-500 focus:ring-red-200'
+                        : 'border-gray-200 focus:ring-blue-500'
+                    }`}
                   >
                     {roleOptions.map((role) => (
                       <option key={role.value} value={role.value}>
@@ -574,6 +691,9 @@ export default function AddCustomerModal({
                       </option>
                     ))}
                   </select>
+                  {errors.primaryContact?.role && touched.primaryContact?.role && (
+                    <p className="mt-1 text-sm text-red-500">{errors.primaryContact.role}</p>
+                  )}
                 </div>
               </div>
 
@@ -591,10 +711,7 @@ export default function AddCustomerModal({
                           ...formData,
                           subscription: {
                             ...formData.subscription,
-                            plan: e.target.value as
-                              | 'BASIC'
-                              | 'PREMIUM'
-                              | 'ENTERPRISE'
+                            plan: e.target.value as 'BASIC' | 'PREMIUM' | 'ENTERPRISE'
                           }
                         })
                       }
