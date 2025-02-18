@@ -602,7 +602,9 @@ export function Payment() {
   border-radius: 12px !important;
   overflow: hidden !important;
 }
-
+.grecaptcha-badge {
+  display: none !important;
+}
 
         `}</style>
         </>
