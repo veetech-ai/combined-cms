@@ -98,7 +98,7 @@ export const createCloverOrder = async (
     );
 
     const response = await fetch(
-      `${CLOVER_API_BASE}/merchants/${MERCHANT_ID}/atomic_order/orders`,
+      `${CLOVER_API_BASE}/merchants/${MERCHANT_ID}/atomic_orders/orders`,
       {
         method: 'POST',
         headers: {

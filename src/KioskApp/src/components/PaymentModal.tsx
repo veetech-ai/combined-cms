@@ -82,7 +82,7 @@ const createCloverOrder = async (order: Order) => {
     const cloverOrder = mapToCloverOrder(order);
 
     const response = await fetch(
-      'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/atomic_order/orders',
+      `https://bq2pgkc2c7.execute-api.us-east-1.amazonaws.com/atomic_orders/orders`,
       {
         method: 'POST',
         headers: {
