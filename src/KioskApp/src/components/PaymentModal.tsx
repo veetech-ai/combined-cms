@@ -348,24 +348,6 @@ export function PaymentModal() {
                           </span>
                         </div>
 
-                        {/* Customizations */}
-                        {item.customization &&
-                          Object.keys(item.customization).length > 0 && (
-                            <div className="ml-8 text-sm text-gray-500">
-                              {Object.entries(item.customization).map(
-                                ([key, value]) => (
-                                  <div
-                                    key={key}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <span>•</span>
-                                    <span>{value}</span>
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          )}
-
                         {/* Addons */}
                         {item.addons && item.addons.length > 0 && (
                           <div className="ml-8 text-sm text-gray-500">
@@ -401,7 +383,18 @@ export function PaymentModal() {
                             ))}
                           </div>
                         )}
-
+                        
+                        {/* Customizations */}
+                        {Array.isArray(item.customization) && item.customization.length > 0 && (
+                          <div className="ml-8 text-sm text-gray-500">
+                            {item.customization.map((customization) => (
+                              <div key={customization.id} className="flex items-center gap-2">
+                                <span>•</span>
+                                <span>{customization.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         {/* Divider except for last item */}
                         {index < orderItems.items.length - 1 && (
                           <div className="border-b border-gray-100 my-2" />

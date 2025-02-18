@@ -14,7 +14,7 @@ export type MenuItem = {
     name: { en: string; es: string };
     price: number;
   }>;
-  customizations: Array<{
+  customizations?: Array<{
     id: string;
     name: { en: string; es: string };
   }>;

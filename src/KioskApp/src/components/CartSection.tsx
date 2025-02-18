@@ -92,8 +92,8 @@ export function CartSection({ onStartOver }: CartSectionProps) {
                 price: addon.price / 100 // Convert cents to dollars
               }));
             }
-            if (parsedInstructions.customization) {
-              customization = parsedInstructions.customization;
+            if (parsedInstructions.customizations) {
+              customization = parsedInstructions.customizations;
             }
             if (parsedInstructions.extras) {
               extras = parsedInstructions.extras;

@@ -455,7 +455,9 @@ const MenuSection = () => {
         price: selectedItem.price,
         imageUrl: selectedItem.imageUrl || DEFAULT_IMAGE,
         instructions,
-        quantity
+        quantity,
+        customizations: selectedItem.customizations
+        
       });
     }
     setShowModifiers(false);
