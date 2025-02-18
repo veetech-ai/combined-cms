@@ -205,66 +205,7 @@ export function CustomerDetailsModal() {
     return `${datePart}-${randomPart}`;
   };
 
-  // Add this function to map your order to Clover's format
-  const mapToCloverOrder = (order: Order) => {
-    // Create a shorter note format with name and phone
-    const truncatedNote = `${order.customerName.slice(0, 15)} ${order.customerPhone.slice(-10)}`;
-
-    const cloverOrder = {
-      orderCart: {
-        lineItems: order.items.map((item) => ({
-          item: { id: item.id },
-          name: item.name.en,
-          price: Math.round(item.price * 100),
-          unitQty: item.quantity,
-          note: item.instructions ? JSON.parse(item.instructions).specialInstructions || '' : '',
-          modifications: [
-            ...(item.addons?.map(addon => ({
-              id: addon.id,
-              name: addon.name,
-              price: Math.round(addon.price * 100)
-            })) || [])
-          ]
-        })),
-        note: truncatedNote, // Will show like "JOHN SMITH 3334445555"
-        merchant: { id: 'PSK40XM0M8ME1' },
-        currency: 'USD',
-        state: 'OPEN'
-      }
-    };
-
-    return cloverOrder;
-  };
-
-  // Add function to create Clover order
-  const createCloverOrder = async (order: Order) => {
-    try {
-      const cloverOrder = mapToCloverOrder(order);
-
-      const response = await fetch(
-        'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/atomic_order/orders',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer acca0c85-6c26-710f-4390-23676eae487c'
-          },
-          body: JSON.stringify(cloverOrder)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Clover API error: ${response.status}`);
-      }
-
-      return await response.json();
-
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  // Update handlePhoneSubmit to create Clover order
+  // Update handlePhoneSubmit to remove Clover order creation:
   const handlePhoneSubmit = async () => {
     const cleanPhone = phone.replace(/\D/g, '');
 
@@ -272,7 +213,6 @@ export function CustomerDetailsModal() {
       let orderData;
 
       if (location.state?.fromPayment && orderItems?.orderId) {
-        // Update existing order
         const orderDetails = {
           customerName: name,
           customerPhone: phone
@@ -283,7 +223,6 @@ export function CustomerDetailsModal() {
           orderDetails
         );
       } else {
-        // Create new order
         const orderDetails: Order = {
           status: 'pending',
           orderId: generateOrderId(),
@@ -299,15 +238,7 @@ export function CustomerDetailsModal() {
           totalBill: orderItems?.totalBill || '0'
         };
 
-        // Create order in your system
         orderData = await orderService.createOrder(orderDetails);
-
-        // Create order in Clover
-        try {
-          await createCloverOrder(orderData);
-        } catch (cloverError) {
-          toast.error('Failed to sync with POS system');
-        }
       }
 
       setCustomerName(name);
