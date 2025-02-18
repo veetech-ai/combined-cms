@@ -1038,11 +1038,14 @@ export function Payment() {
                     ))}
 
                     {/* Corrected Customization Display */}
-                    {item.customization?.map((custom, idx) => (
-                      <span key={idx} className="text-sm text-gray-500">
-                        • {custom.name}
-                      </span>
-                    ))}
+                    {Array.isArray(item.customization) && item.customization.length > 0 && (
+                      item.customization.map((custom, idx) => (
+                        <span key={idx} className="text-sm text-gray-500">
+                          • {custom.name}
+                        </span>
+                      ))
+                    )}
+
 
                     {/* Special Instructions */}
                     {item?.instructions && (
