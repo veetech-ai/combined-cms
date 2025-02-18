@@ -191,7 +191,7 @@ export function Payment() {
           button: {
             buttonType: 'short', // or 'long' for full text
             style: {
-              height: '40px',
+              height: '60px',
               width: '100%',
               borderRadius: '12px',
               fontSize: '18px'
@@ -284,7 +284,7 @@ export function Payment() {
       );
       if (paymentButtonContainer) {
         paymentButtonContainer.style.width = '100%';
-        paymentButtonContainer.style.height = '40px';
+        paymentButtonContainer.style.height = '60px';
         paymentButtonContainer.style.borderRadius = '12px';
         paymentButtonContainer.style.overflow = 'hidden';
       }
@@ -298,7 +298,7 @@ export function Payment() {
         const iframe = document.querySelector('#payment-request-button iframe');
         if (iframe) {
           (iframe as HTMLIFrameElement).style.width = '100%';
-          (iframe as HTMLIFrameElement).style.height = '40px';
+          (iframe as HTMLIFrameElement).style.height = '60px';
           (iframe as HTMLIFrameElement).style.border = 'none';
           (iframe as HTMLIFrameElement).style.borderRadius = '12px';
         }
@@ -578,7 +578,7 @@ export function Payment() {
           @supports (-webkit-appearance: -apple-pay-button) {
             .apple-pay-button {
               display: block;
-              height: 40px !important;
+              height: 60px !important;
               width: 100% !important;
               border: none !important;
               border-radius: 12px !important;
@@ -598,7 +598,7 @@ export function Payment() {
 
 #payment-request-button iframe {
   width: 100% !important;
-  height: 40px !important;
+  height: 60px !important;
   border-radius: 12px !important;
   overflow: hidden !important;
 }
@@ -818,7 +818,7 @@ export function Payment() {
         if (appBtn) {
           (appBtn as HTMLElement).style.display = 'block';
           (appBtn as HTMLElement).style.width = '100%';
-          (appBtn as HTMLElement).style.height = '40px';
+          (appBtn as HTMLElement).style.height = '60px';
           (appBtn as HTMLElement).style.border = 'none';
           (appBtn as HTMLElement).style.borderRadius = '12px';
           // border: none !important;
@@ -964,7 +964,7 @@ export function Payment() {
 
   const renderPaymentScreen = () => (
     <div className="flex flex-col h-full bg-[#EEEEEE] animate-fadeIn relative">
-      <div className="overflow-y-auto flex-1 pb-[140px]">
+      <div className="overflow-y-auto flex-1 pb-[160px]">
         <header className="bg-black p-8 text-white">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
