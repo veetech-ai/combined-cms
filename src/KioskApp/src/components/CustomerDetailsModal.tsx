@@ -207,25 +207,26 @@ export function CustomerDetailsModal() {
 
   // Add this function to map your order to Clover's format
   const mapToCloverOrder = (order: Order) => {
+    // Create a shorter note format with name and phone
+    const truncatedNote = `${order.customerName.slice(0, 15)} ${order.customerPhone.slice(-10)}`;
+
     const cloverOrder = {
       orderCart: {
         lineItems: order.items.map((item) => ({
-          item: { id: item.id }, // Use the Clover product ID
+          item: { id: item.id },
           name: item.name.en,
-          price: Math.round(item.price * 100), // Convert to cents
+          price: Math.round(item.price * 100),
           unitQty: item.quantity,
-          note: item.instructions || '',
+          note: item.instructions ? JSON.parse(item.instructions).specialInstructions || '' : '',
           modifications: [
-            // Map addons to modifications
             ...(item.addons?.map(addon => ({
               id: addon.id,
               name: addon.name,
-              price: Math.round(addon.price * 100) // Convert to cents
+              price: Math.round(addon.price * 100)
             })) || [])
           ]
         })),
-        note: `Order: ${order.orderId} - Customer: ${order.customerName}`,
-        // Required Clover fields
+        note: truncatedNote, // Will show like "JOHN SMITH 3334445555"
         merchant: { id: 'PSK40XM0M8ME1' },
         currency: 'USD',
         state: 'OPEN'
@@ -239,7 +240,6 @@ export function CustomerDetailsModal() {
   const createCloverOrder = async (order: Order) => {
     try {
       const cloverOrder = mapToCloverOrder(order);
-      console.log('Clover order payload:', cloverOrder);
 
       const response = await fetch(
         'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/atomic_order/orders',
@@ -257,12 +257,9 @@ export function CustomerDetailsModal() {
         throw new Error(`Clover API error: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log('Clover order created:', data);
-      return data;
+      return await response.json();
 
     } catch (error) {
-      console.error('Failed to create Clover order:', error);
       throw error;
     }
   };
@@ -295,8 +292,8 @@ export function CustomerDetailsModal() {
           timestamp: new Date().toISOString(),
           items: orderItems?.items.map(item => ({
             ...item,
-            id: item.id.toString(), // Ensure ID is string
-            addons: item.addons || [], // Ensure addons is an array
+            id: item.id.toString(),
+            addons: item.addons || [],
             instructions: item.instructions || ''
           })) || [],
           totalBill: orderItems?.totalBill || '0'
@@ -307,32 +304,8 @@ export function CustomerDetailsModal() {
 
         // Create order in Clover
         try {
-          const mappedOrder = mapToCloverOrder(orderData);
-          console.log('Debug - Comparison:');
-          console.log('Working Curl Payload:', {
-            orderCart: {
-              lineItems: [{
-                item: { id: "9P71167JS2388" },
-                name: "Beef Keema Burrito",
-                price: 1300,
-                unitQty: 1,
-                modifications: [
-                  { id: "Y98KJTFXWRRDP", name: "Add Cheese", price: 100 },
-                  { id: "QN3TJNCMF6SJ0", name: "Extra Jalapeños", price: 0 }
-                ]
-              }],
-              note: "Order: 20250218-D5MRWS - Customer: zain",
-              merchant: { id: "PSK40XM0M8ME1" },
-              currency: "USD",
-              state: "OPEN"
-            }
-          });
-          console.log('Our Mapped Payload:', mappedOrder);
-          
-          const cloverOrderData = await createCloverOrder(orderData);
-          console.log('Order created in Clover:', cloverOrderData);
+          await createCloverOrder(orderData);
         } catch (cloverError) {
-          console.error('Failed to create Clover order:', cloverError);
           toast.error('Failed to sync with POS system');
         }
       }
@@ -342,7 +315,6 @@ export function CustomerDetailsModal() {
 
       navigate(`/kiosk/${id}/payment`);
     } catch (error) {
-      console.error('Error in handlePhoneSubmit:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to save customer data'
       );
