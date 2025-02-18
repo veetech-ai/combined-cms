@@ -366,57 +366,6 @@ export function ModifiersModal({
                         </div>
                       )}
 
-                      {/* Customizations Section */}
-                      {categorized.customizations.length > 0 && (
-                        <div>
-                          <div className="mb-4">
-                            <h3 className="text-base font-semibold">
-                              Customizations
-                            </h3>
-                            <p className="text-xs text-gray-500">
-                              ({t('modifiers.optional')})
-                            </p>
-                          </div>
-                          <div className="space-y-2">
-                            {categorized.customizations.map((group) => (
-                              <div key={group.id} className="space-y-2">
-                                {group.modifiers.elements.map((modifier) => (
-                                  <label
-                                    key={modifier.id}
-                                    className="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedCustomizations.some(
-                                        (custom) => custom.id === modifier.id
-                                      )}
-                                      onChange={() => {
-                                        setSelectedCustomizations((prev) => {
-                                          const exists = prev.some(
-                                            (custom) =>
-                                              custom.id === modifier.id
-                                          );
-                                          return exists
-                                            ? prev.filter(
-                                                (custom) =>
-                                                  custom.id !== modifier.id
-                                              )
-                                            : [...prev, modifier];
-                                        });
-                                      }}
-                                      className="w-4 h-4 mr-3 accent-primary"
-                                    />
-                                    <span className="text-sm">
-                                      {modifier.name}
-                                    </span>
-                                  </label>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
                       {/* Extras Section */}
                       {categorized.extras.length > 0 && (
                         <div>
@@ -465,6 +414,57 @@ export function ModifiersModal({
                                         +${(modifier.price / 100).toFixed(2)}
                                       </span>
                                     )}
+                                  </label>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Customizations Section */}
+                      {categorized.customizations.length > 0 && (
+                        <div>
+                          <div className="mb-4">
+                            <h3 className="text-base font-semibold">
+                              Customizations
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              ({t('modifiers.optional')})
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            {categorized.customizations.map((group) => (
+                              <div key={group.id} className="space-y-2">
+                                {group.modifiers.elements.map((modifier) => (
+                                  <label
+                                    key={modifier.id}
+                                    className="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedCustomizations.some(
+                                        (custom) => custom.id === modifier.id
+                                      )}
+                                      onChange={() => {
+                                        setSelectedCustomizations((prev) => {
+                                          const exists = prev.some(
+                                            (custom) =>
+                                              custom.id === modifier.id
+                                          );
+                                          return exists
+                                            ? prev.filter(
+                                                (custom) =>
+                                                  custom.id !== modifier.id
+                                              )
+                                            : [...prev, modifier];
+                                        });
+                                      }}
+                                      className="w-4 h-4 mr-3 accent-primary"
+                                    />
+                                    <span className="text-sm">
+                                      {modifier.name}
+                                    </span>
                                   </label>
                                 ))}
                               </div>
