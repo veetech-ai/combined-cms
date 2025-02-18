@@ -1055,8 +1055,7 @@ export function Payment() {
                           return instructionsData?.specialInstructions ? (
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-2">
-                                <span>•</span>
-                                <span>Additional notes: {instructionsData.specialInstructions}</span>
+                                <span>• Additional notes: {instructionsData.specialInstructions}</span>
                               </div>
                             </div>
                           ) : null;
