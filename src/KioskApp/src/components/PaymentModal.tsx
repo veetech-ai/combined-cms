@@ -383,7 +383,7 @@ export function PaymentModal() {
                             ))}
                           </div>
                         )}
-                        
+
                         {/* Customizations */}
                         {Array.isArray(item.customization) && item.customization.length > 0 && (
                           <div className="ml-8 text-sm text-gray-500">
@@ -399,6 +399,25 @@ export function PaymentModal() {
                         {index < orderItems.items.length - 1 && (
                           <div className="border-b border-gray-100 my-2" />
                         )}
+
+                        {/* Special Instructions */}
+                        {item?.instructions && (
+                          <div className="ml-8 text-sm text-gray-500 mt-4">
+                            {(() => {
+                              const instructionsData = JSON.parse(item.instructions);
+                              return instructionsData.specialInstructions ? (
+                                <div className="flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span>•</span>
+                                    <span>Additional notes: {instructionsData.specialInstructions}</span>
+                                  </div>
+                                </div>
+                              ) : null;
+                            })()}
+                          </div>
+                        )}
+
+
                       </div>
                     ))}
                   </div>
@@ -746,7 +765,7 @@ export function PaymentModal() {
       {step === 'cash' && (
         <div className="h-full flex flex-col">
           <div className="p-6">
-          
+
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center px-8">
