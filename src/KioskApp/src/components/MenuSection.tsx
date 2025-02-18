@@ -209,7 +209,7 @@ interface ApiModifierGroup {
 
 // Update the MenuItem interface
 interface MenuItem {
-  id: number;
+  id: string;
   name: {
     en: string;
     es: string;
@@ -357,7 +357,7 @@ const MenuSection = () => {
             overrideCategory || apiCategory || 'uncategorized';
 
           return {
-            id: parseInt(item.id.slice(0, 8), 36),
+            id: item.id,
             name: {
               en: item.name,
               es: getSpanishName(item.name)

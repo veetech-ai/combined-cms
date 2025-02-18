@@ -21,6 +21,7 @@ import { useCustomerStore } from '../stores/customerStore';
 import { useOrder } from '../../../contexts/OrderContext';
 import { io } from 'socket.io-client';
 import { orderService } from '../../../services/orderService';
+import { Order } from '../../../services/orderService';
 
 const BASE_URL = import.meta.env.VITE_HOST_URL || 'http://localhost:4000'; //5173 on localhost
 
@@ -38,6 +39,70 @@ const socket = io(WS_URL, {
   autoConnect: false
 });
 
+const mapToCloverOrder = (order: Order) => {
+  // Format phone number with spaces
+  const formatPhoneNumber = (phone: string) => {
+    // Remove all non-digits
+    const cleaned = phone.replace(/\D/g, '');
+    // Format as +1 XXXX XXX
+    return `+1 ${cleaned.slice(0, 4)} ${cleaned.slice(4)}`;
+  };
+
+  // Create formatted note with name and phone
+  const formattedNote = `Name: ${order.customerName} | Number: ${formatPhoneNumber(order.customerPhone)}`;
+
+  const cloverOrder = {
+    orderCart: {
+      lineItems: order.items.map((item) => ({
+        item: { id: item.id },
+        name: item.name.en,
+        price: Math.round(item.price * 100),
+        unitQty: item.quantity,
+        note: item.instructions ? JSON.parse(item.instructions).specialInstructions || '' : '',
+        modifications: [
+          ...(item.addons?.map(addon => ({
+            id: addon.id,
+            name: addon.name,
+            price: Math.round(addon.price * 100)
+          })) || [])
+        ]
+      })),
+      note: formattedNote, // Using the new formatted note
+      merchant: { id: 'PSK40XM0M8ME1' },
+      currency: 'USD',
+      state: 'OPEN'
+    }
+  };
+
+  return cloverOrder;
+};
+
+const createCloverOrder = async (order: Order) => {
+  try {
+    const cloverOrder = mapToCloverOrder(order);
+
+    const response = await fetch(
+      'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/atomic_order/orders',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer acca0c85-6c26-710f-4390-23676eae487c'
+        },
+        body: JSON.stringify(cloverOrder)
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Clover API error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
 export function PaymentModal() {
   const { orderItems } = useOrder();
   const [qrCode, setQrCode] = useState('');
@@ -50,7 +115,7 @@ export function PaymentModal() {
   const [showTimer, setShowTimer] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [isUserActive, setIsUserActive] = useState(true);
-  const { customerName } = useCustomerStore();
+  const { customerName, setCustomerName } = useCustomerStore();
   const [orderTotal, setOrderTotal] = useState();
   const [isQRScanned, setIsQRScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +132,7 @@ export function PaymentModal() {
       console.log('Connected to socket server - payment modal');
     });
 
-    socket.on('orderStatusUpdated', (data) => {
+    socket.on('orderStatusUpdated', async (data) => {
       console.log('Order status updated:', data);
       if (data.orderId === orderItems?.orderId) {
         if (processingTimeout) {
@@ -77,7 +142,28 @@ export function PaymentModal() {
         if (data.status === 'payment_processing') {
           setStep('payment_processing');
         } else if (data.status === 'completed') {
-          setStep('card_paid');
+          try {
+            // Create Clover order when payment is completed
+            if (orderItems) {
+              await createCloverOrder(orderItems);
+            }
+            
+            // Then show confirmation screen
+            if (isQRScanned) {
+              setStep('qr_confirmed');
+            } else {
+              setStep('card_paid');
+            }
+          } catch (error) {
+            console.error('Failed to create Clover order:', error);
+            toast.error('Payment confirmed but POS sync failed');
+            // Still show confirmation screen even if Clover sync fails
+            if (isQRScanned) {
+              setStep('qr_confirmed');
+            } else {
+              setStep('card_paid');
+            }
+          }
         } else if (data.status === 'failed_retry') {
           setStep('initial_retry');
         } else if (data.status === 'payment_failed') {
@@ -99,7 +185,7 @@ export function PaymentModal() {
       }
       socket.disconnect();
     };
-  }, [orderItems?.orderId, processingTimeout]);
+  }, [orderItems?.orderId, processingTimeout, isQRScanned]);
 
   // Update QR code generation when orderId changes
   useEffect(() => {
@@ -283,6 +369,29 @@ export function PaymentModal() {
       }
     };
   }, [step, orderItems?.orderId]);
+
+  const handleCashPayment = async () => {
+    try {
+      if (!orderItems) {
+        toast.error('No order items found');
+        return;
+      }
+
+      // Create order in Clover
+      try {
+        await createCloverOrder(orderItems);
+        setStep('cash');
+        resetTimer();
+      } catch (cloverError) {
+        toast.error('Failed to sync with POS system');
+        // Still proceed to cash screen even if Clover sync fails
+        setStep('cash');
+        resetTimer();
+      }
+    } catch (error) {
+      toast.error('Failed to process payment');
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-white">
@@ -501,21 +610,18 @@ export function PaymentModal() {
 
                   {/* Cash/Card Payment */}
                   <motion.button
-                    onClick={() => {
-                      setStep('cash');
-                      resetTimer();
-                    }}
-                    className="w-full bg-black text-white rounded-2xl p-4 flex items-center justify-center hover:bg-black/90 transition-colors"
+                    onClick={handleCashPayment}
+                    className="w-full bg-black text-white rounded-2xl p-4 flex items-center justify-between hover:bg-black/90 transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <div className="text-center">
-                      <h3 className="text-base sm:text-lg font-medium mb-1">
+                    <div>
+                      <h3 className="text-lg font-medium mb-1">
                         Pay with Cash or Card
                       </h3>
-                      <p className="text-xs sm:text-sm text-white/70">Pay at the counter</p>
+                      <p className="text-white/70 text-sm">Pay at the counter</p>
                     </div>
-                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 ml-3 sm:ml-4" />
+                    <CreditCard className="w-6 h-6" />
                   </motion.button>
                 </div>
               </div>
@@ -729,10 +835,7 @@ export function PaymentModal() {
 
                 {/* Cash/Card Payment */}
                 <motion.button
-                  onClick={() => {
-                    setStep('cash');
-                    resetTimer();
-                  }}
+                  onClick={handleCashPayment}
                   className="w-full bg-black text-white rounded-2xl p-4 flex items-center justify-between hover:bg-black/90 transition-colors"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

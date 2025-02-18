@@ -9,6 +9,7 @@ import { CheckoutLayout } from '../components/CheckoutLayout';
 import { useOrder } from '../../../contexts/OrderContext';
 import { orderService } from '../../..//services/orderService';
 import { Button } from '@/components/ui/button';
+import { Order } from '../../../services/orderService';
 type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
@@ -204,6 +205,7 @@ export function CustomerDetailsModal() {
     return `${datePart}-${randomPart}`;
   };
 
+  // Update handlePhoneSubmit to remove Clover order creation:
   const handlePhoneSubmit = async () => {
     const cleanPhone = phone.replace(/\D/g, '');
 
@@ -211,43 +213,39 @@ export function CustomerDetailsModal() {
       let orderData;
 
       if (location.state?.fromPayment && orderItems?.orderId) {
-        // Update existing order
         const orderDetails = {
           customerName: name,
           customerPhone: phone
         };
-
-        console.log('Updating order:', {
-          orderId: orderItems.orderId,
-          orderDetails
-        });
 
         orderData = await orderService.updateOrder(
           orderItems.orderId,
           orderDetails
         );
       } else {
-        // Create new order
         const orderDetails: Order = {
           status: 'pending',
           orderId: generateOrderId(),
           customerName: name,
           customerPhone: phone,
           timestamp: new Date().toISOString(),
-          items: orderItems?.items || [],
+          items: orderItems?.items.map(item => ({
+            ...item,
+            id: item.id.toString(),
+            addons: item.addons || [],
+            instructions: item.instructions || ''
+          })) || [],
           totalBill: orderItems?.totalBill || '0'
         };
 
         orderData = await orderService.createOrder(orderDetails);
       }
 
-      // Update both customer name and order context with the response data
       setCustomerName(name);
-      setOrder(orderData); // Update the entire order object with server response
+      setOrder(orderData);
 
       navigate(`/kiosk/${id}/payment`);
     } catch (error) {
-      console.error('Error in handlePhoneSubmit:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to save customer data'
       );
