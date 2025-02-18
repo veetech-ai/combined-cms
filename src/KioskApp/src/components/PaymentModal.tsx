@@ -746,15 +746,7 @@ export function PaymentModal() {
       {step === 'cash' && (
         <div className="h-full flex flex-col">
           <div className="p-6">
-            <Button
-              onClick={() => setStep('initial')}
-              variant="ghost"
-              size="lg"
-              className="flex items-center text-lg"
-            >
-              <ChevronLeft className="mr-2 h-5 w-5" />
-              Back
-            </Button>
+          
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center px-8">
