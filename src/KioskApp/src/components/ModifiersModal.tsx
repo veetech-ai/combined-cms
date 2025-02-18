@@ -314,7 +314,7 @@ export function ModifiersModal({
                       {categorized.addOns.length > 0 && (
                         <div>
                           <div className="mb-4">
-                            <h3 className="text-base font-semibold">Adsssd-Ons</h3>
+                            <h3 className="text-base font-semibold">Ad-Ons</h3>
                             <p className="text-xs text-gray-500">
                               ({t('modifiers.optional')})
                             </p>
