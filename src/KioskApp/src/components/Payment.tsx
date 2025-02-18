@@ -1044,30 +1044,31 @@ export function Payment() {
                       </span>
                     ))}
 
-                    {/* Special Instructions */}
-                    {item?.instructions && (
-                      <div className="text-sm text-gray-500">
-                        {(() => {
-                          try {
-                            const instructionsData =
-                              typeof item.instructions === "string"
-                                ? JSON.parse(item.instructions)
-                                : item.instructions; // Avoid parsing if already an object
+{/* Special Instructions */}
+{item?.instructions && item.instructions.trim() !== "" && (
+  <div className="ml-8 text-sm text-gray-500 mt-4">
+    {(() => {
+      try {
+        const instructionsData =
+          typeof item.instructions === "string" && item.instructions.trim() !== ""
+            ? JSON.parse(item.instructions)
+            : {}; // Default to an empty object
 
-                            return instructionsData?.specialInstructions ? (
-                              <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
+        return instructionsData?.specialInstructions ? (
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
                                   <span>• Additional notes: {instructionsData.specialInstructions}</span>
-                                </div>
-                              </div>
-                            ) : null;
-                          } catch (error) {
-                            console.error("Error parsing instructions:", error);
-                            return null;
-                          }
-                        })()}
-                      </div>
-                    )}
+            </div>
+          </div>
+        ) : null;
+      } catch (error) {
+        console.error("Error parsing instructions:", error);
+        return null;
+      }
+    })()}
+  </div>
+)}
+
 
                   </div>
                 </div>
