@@ -15,7 +15,7 @@ import io from 'socket.io-client';
 declare global {
   interface Window {
     Clover: {
-      new (merchantId: string, config: CloverConfig): CloverInstance;
+      new(merchantId: string, config: CloverConfig): CloverInstance;
     };
   }
 }
@@ -643,8 +643,8 @@ export function Payment() {
         const calculatedAmount = testDummyPayment
           ? 0.01
           : orderData.totalBill
-          ? parseFloat(orderData.totalBill)
-          : 0;
+            ? parseFloat(orderData.totalBill)
+            : 0;
 
         setAmount(calculatedAmount);
       } catch (err) {
@@ -1021,12 +1021,7 @@ export function Payment() {
                   <div className="flex flex-col">
                     <span className="text-xl font-medium">{item.name.en}</span>
 
-                    {/* Corrected Customization Display */}
-                    {item.customization?.map((custom, idx) => (
-                      <span key={idx} className="text-sm text-gray-500">
-                        • {custom.name}
-                      </span>
-                    ))}
+
 
                     {/* Display Addons */}
                     {item.addons?.map((addon, idx) => (
@@ -1041,6 +1036,40 @@ export function Payment() {
                         + {extra.name} (${extra.price.toFixed(2)})
                       </span>
                     ))}
+
+                    {/* Corrected Customization Display */}
+                    {item.customization?.map((custom, idx) => (
+                      <span key={idx} className="text-sm text-gray-500">
+                        • {custom.name}
+                      </span>
+                    ))}
+
+                    {/* Special Instructions */}
+                    {item?.instructions && (
+                      <div className="text-sm text-gray-500">
+                        {(() => {
+                          try {
+                            const instructionsData =
+                              typeof item.instructions === "string"
+                                ? JSON.parse(item.instructions)
+                                : item.instructions; // Avoid parsing if already an object
+
+                            return instructionsData?.specialInstructions ? (
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <span>•</span>
+                                  <span>Additional notes: {instructionsData.specialInstructions}</span>
+                                </div>
+                              </div>
+                            ) : null;
+                          } catch (error) {
+                            console.error("Error parsing instructions:", error);
+                            return null;
+                          }
+                        })()}
+                      </div>
+                    )}
+
                   </div>
                 </div>
                 <span className="text-xl font-bold">
@@ -1140,11 +1169,10 @@ export function Payment() {
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className={`w-12 h-12 cursor-pointer transition-all hover:scale-110 ${
-                    star <= rating
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-300'
-                  }`}
+                  className={`w-12 h-12 cursor-pointer transition-all hover:scale-110 ${star <= rating
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'text-gray-300'
+                    }`}
                   onClick={() => handleStarClick(star)}
                 />
               ))}
