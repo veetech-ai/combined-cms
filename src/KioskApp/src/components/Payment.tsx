@@ -1020,17 +1020,22 @@ export function Payment() {
                   </span>
                   <div className="flex flex-col">
                     <span className="text-xl font-medium">{item.name.en}</span>
-                    {item.customization &&
-                      Object.entries(item.customization).map(([key, value]) => (
-                        <span key={key} className="text-sm text-gray-500">
-                          • {value}
-                        </span>
-                      ))}
+
+                    {/* Corrected Customization Display */}
+                    {item.customization?.map((custom, idx) => (
+                      <span key={idx} className="text-sm text-gray-500">
+                        • {custom.name}
+                      </span>
+                    ))}
+
+                    {/* Display Addons */}
                     {item.addons?.map((addon, idx) => (
                       <span key={idx} className="text-sm text-gray-500">
                         + {addon.name} (${addon.price.toFixed(2)})
                       </span>
                     ))}
+
+                    {/* Display Extras (If any) */}
                     {item.extras?.map((extra, idx) => (
                       <span key={idx} className="text-sm text-gray-500">
                         + {extra.name} (${extra.price.toFixed(2)})
@@ -1044,6 +1049,7 @@ export function Payment() {
               </div>
             ))}
           </div>
+
         </div>
       </div>
 
