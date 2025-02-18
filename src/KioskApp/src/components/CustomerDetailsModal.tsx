@@ -9,6 +9,7 @@ import { CheckoutLayout } from '../components/CheckoutLayout';
 import { useOrder } from '../../../contexts/OrderContext';
 import { orderService } from '../../..//services/orderService';
 import { Button } from '@/components/ui/button';
+import { Order } from '../../../services/orderService';
 type Step = 'name' | 'phone';
 
 export function CustomerDetailsModal() {
@@ -204,6 +205,69 @@ export function CustomerDetailsModal() {
     return `${datePart}-${randomPart}`;
   };
 
+  // Add this function to map your order to Clover's format
+  const mapToCloverOrder = (order: Order) => {
+    const cloverOrder = {
+      orderCart: {
+        lineItems: order.items.map((item) => ({
+          item: { id: item.id }, // Use the Clover product ID
+          name: item.name.en,
+          price: Math.round(item.price * 100), // Convert to cents
+          unitQty: item.quantity,
+          note: item.instructions || '',
+          modifications: [
+            // Map addons to modifications
+            ...(item.addons?.map(addon => ({
+              id: addon.id,
+              name: addon.name,
+              price: Math.round(addon.price * 100) // Convert to cents
+            })) || [])
+          ]
+        })),
+        note: `Order: ${order.orderId} - Customer: ${order.customerName}`,
+        // Required Clover fields
+        merchant: { id: 'PSK40XM0M8ME1' },
+        currency: 'USD',
+        state: 'OPEN'
+      }
+    };
+
+    return cloverOrder;
+  };
+
+  // Add function to create Clover order
+  const createCloverOrder = async (order: Order) => {
+    try {
+      const cloverOrder = mapToCloverOrder(order);
+      console.log('Clover order payload:', cloverOrder);
+
+      const response = await fetch(
+        'https://api.clover.com/v3/merchants/PSK40XM0M8ME1/atomic_order/orders',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer acca0c85-6c26-710f-4390-23676eae487c'
+          },
+          body: JSON.stringify(cloverOrder)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Clover API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Clover order created:', data);
+      return data;
+
+    } catch (error) {
+      console.error('Failed to create Clover order:', error);
+      throw error;
+    }
+  };
+
+  // Update handlePhoneSubmit to create Clover order
   const handlePhoneSubmit = async () => {
     const cleanPhone = phone.replace(/\D/g, '');
 
@@ -217,11 +281,6 @@ export function CustomerDetailsModal() {
           customerPhone: phone
         };
 
-        console.log('Updating order:', {
-          orderId: orderItems.orderId,
-          orderDetails
-        });
-
         orderData = await orderService.updateOrder(
           orderItems.orderId,
           orderDetails
@@ -234,16 +293,52 @@ export function CustomerDetailsModal() {
           customerName: name,
           customerPhone: phone,
           timestamp: new Date().toISOString(),
-          items: orderItems?.items || [],
+          items: orderItems?.items.map(item => ({
+            ...item,
+            id: item.id.toString(), // Ensure ID is string
+            addons: item.addons || [], // Ensure addons is an array
+            instructions: item.instructions || ''
+          })) || [],
           totalBill: orderItems?.totalBill || '0'
         };
 
+        // Create order in your system
         orderData = await orderService.createOrder(orderDetails);
+
+        // Create order in Clover
+        try {
+          const mappedOrder = mapToCloverOrder(orderData);
+          console.log('Debug - Comparison:');
+          console.log('Working Curl Payload:', {
+            orderCart: {
+              lineItems: [{
+                item: { id: "9P71167JS2388" },
+                name: "Beef Keema Burrito",
+                price: 1300,
+                unitQty: 1,
+                modifications: [
+                  { id: "Y98KJTFXWRRDP", name: "Add Cheese", price: 100 },
+                  { id: "QN3TJNCMF6SJ0", name: "Extra Jalapeños", price: 0 }
+                ]
+              }],
+              note: "Order: 20250218-D5MRWS - Customer: zain",
+              merchant: { id: "PSK40XM0M8ME1" },
+              currency: "USD",
+              state: "OPEN"
+            }
+          });
+          console.log('Our Mapped Payload:', mappedOrder);
+          
+          const cloverOrderData = await createCloverOrder(orderData);
+          console.log('Order created in Clover:', cloverOrderData);
+        } catch (cloverError) {
+          console.error('Failed to create Clover order:', cloverError);
+          toast.error('Failed to sync with POS system');
+        }
       }
 
-      // Update both customer name and order context with the response data
       setCustomerName(name);
-      setOrder(orderData); // Update the entire order object with server response
+      setOrder(orderData);
 
       navigate(`/kiosk/${id}/payment`);
     } catch (error) {

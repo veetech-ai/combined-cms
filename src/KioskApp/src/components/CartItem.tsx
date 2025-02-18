@@ -16,7 +16,7 @@ interface CartItemProps {
   imageUrl: string;
   instructions?: string;
   category?: string;
-  id: number;
+  id: string;
   addOns?: string[];
   customizations?: string[];
   beverages?: string[];
