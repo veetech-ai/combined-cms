@@ -105,9 +105,27 @@ export function ModifiersModal({
         setLoadingModifiers(true);
         setModifierError(null);
 
-        const temp = item.modifierGroups[0].id;
-        const response = await fetchItemModifierGroups(temp);
-        setModifierGroups(response.elements || []);
+        const fetchAllModifiers = async (modifierGroups) => {
+          let allModifiers = [];
+      
+          for (const group of modifierGroups) {
+              try {
+                  const response = await fetchItemModifierGroups(group.id);
+                  allModifiers = [...allModifiers, ...(response.elements || [])];
+      
+                  // Optional: Add a short delay (e.g., 200ms) to avoid hitting rate limits
+                  await new Promise(resolve => setTimeout(resolve, 200));
+              } catch (error) {
+                  console.error(`Error fetching modifier group ${group.id}:`, error);
+              }
+          }
+      
+          setModifierGroups(allModifiers);
+      };
+      
+      
+        await fetchAllModifiers(item.modifierGroups)
+
       } catch (err) {
         setModifierError(t('errors.failedToLoadModifiers'));
       } finally {
@@ -296,7 +314,7 @@ export function ModifiersModal({
                       {categorized.addOns.length > 0 && (
                         <div>
                           <div className="mb-4">
-                            <h3 className="text-base font-semibold">Add-Ons</h3>
+                            <h3 className="text-base font-semibold">Adsssd-Ons</h3>
                             <p className="text-xs text-gray-500">
                               ({t('modifiers.optional')})
                             </p>
