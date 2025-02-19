@@ -397,7 +397,7 @@ export function PaymentModal() {
     <div className="fixed inset-0 bg-white">
       {step === 'initial' && (
         <>
-          <div className="h-screen flex flex-col lg:flex-row">
+          <div className="h-screen flex flex-col sm:flex-row">
             {/* Left Side - Order Summary */}
             <div className="w-full lg:w-1/2 lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full overflow-auto">
               <div className="p-4 sm:p-6 md:p-8">
