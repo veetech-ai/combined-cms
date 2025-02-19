@@ -14,7 +14,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ApplePayLogo } from './ui/ApplePayLogo';
 import { GooglePayLogo } from './ui/GooglePayLogo';
 import { toast } from 'react-hot-toast';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
 import { useCartStore } from '../stores/cartStore';
 import { useCustomerStore } from '../stores/customerStore';
@@ -49,7 +49,9 @@ const mapToCloverOrder = (order: Order) => {
   };
 
   // Create formatted note with name and phone
-  const formattedNote = `Name: ${order.customerName} | Number: ${formatPhoneNumber(order.customerPhone)}`;
+  const formattedNote = `Name: ${
+    order.customerName
+  } | Number: ${formatPhoneNumber(order.customerPhone)}`;
 
   const cloverOrder = {
     orderCart: {
@@ -58,9 +60,11 @@ const mapToCloverOrder = (order: Order) => {
         name: item.name.en,
         price: Math.round(item.price * 100),
         unitQty: item.quantity,
-        note: item.instructions ? JSON.parse(item.instructions).specialInstructions || '' : '',
+        note: item.instructions
+          ? JSON.parse(item.instructions).specialInstructions || ''
+          : '',
         modifications: [
-          ...(item.addons?.map(addon => ({
+          ...(item.addons?.map((addon) => ({
             id: addon.id,
             name: addon.name,
             price: Math.round(addon.price * 100)
@@ -119,7 +123,9 @@ export function PaymentModal() {
   const [orderTotal, setOrderTotal] = useState();
   const [isQRScanned, setIsQRScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [processingTimeout, setProcessingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [processingTimeout, setProcessingTimeout] =
+    useState<NodeJS.Timeout | null>(null);
+  const [dots, setDots] = useState('');
 
   const total = dummyCartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -393,41 +399,52 @@ export function PaymentModal() {
     }
   };
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length < 4 ? prev + '.' : ''));
+    }, 500); // Change dot every 500ms
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-white">
       {step === 'initial' && (
         <>
-          <div className="h-screen flex flex-col sm:flex-row">
+          <div className="p-6 flex justify-between">
+            <Button
+              onClick={handleClose}
+              variant="ghost"
+              size="lg"
+              className="flex items-center text-lg"
+            >
+              <ChevronLeft className="mr-2 h-5 w-5" />
+              Back
+            </Button>
+
+            <button
+              type="button"
+              onClick={handleOrderClick}
+              className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span>{orderItems && orderItems.items.length} items</span>
+              <span>|</span>
+              <span>
+                ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+              </span>
+            </button>
+          </div>
+          <div className="h-screen flex flex-col lg:flex-row">
             {/* Left Side - Order Summary */}
             <div className="w-full lg:w-1/2 lg:border-r border-gray-100 flex flex-col order-2 lg:order-1 h-full overflow-auto">
               <div className="p-4 sm:p-6 md:p-8">
-                <div className="flex justify-between">
-                  <Button
-                    onClick={handleClose}
-                    variant="ghost"
-                    size="lg"
-                    className="flex items-center text-lg"
-                  >
-                    <ChevronLeft className="mr-2 h-5 w-5" />
-                    Back
-                  </Button>
-
-                  <button
-                    type="button"
-                    onClick={handleOrderClick}
-                    className="flex items-center space-x-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                    <span>{orderItems && orderItems.items.length} items</span>
-                    <span>|</span>
-                    <span>${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}</span>
-                  </button>
-                </div>
-
                 {/* Order Summary Section */}
                 <div className="mb-4">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl sm:text-2xl font-medium">Order Summary</h2>
+                    <h2 className="text-xl sm:text-2xl font-medium">
+                      Order Summary
+                    </h2>
                     <span className="text-gray-500 text-sm sm:text-base">
                       ({orderItems && orderItems.items.length}{' '}
                       {orderItems.items.length === 1 ? 'Item' : 'Items'})
@@ -494,16 +511,20 @@ export function PaymentModal() {
                         )}
 
                         {/* Customizations */}
-                        {Array.isArray(item.customization) && item.customization.length > 0 && (
-                          <div className="ml-8 text-sm text-gray-500">
-                            {item.customization.map((customization) => (
-                              <div key={customization.id} className="flex items-center gap-2">
-                                <span>•</span>
-                                <span>{customization.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        {Array.isArray(item.customization) &&
+                          item.customization.length > 0 && (
+                            <div className="ml-8 text-sm text-gray-500">
+                              {item.customization.map((customization) => (
+                                <div
+                                  key={customization.id}
+                                  className="flex items-center gap-2"
+                                >
+                                  <span>•</span>
+                                  <span>{customization.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         {/* Divider except for last item */}
                         {index < orderItems.items.length - 1 && (
                           <div className="border-b border-gray-100 my-2" />
@@ -513,20 +534,23 @@ export function PaymentModal() {
                         {item?.instructions && (
                           <div className="ml-8 text-sm text-gray-500 mt-4">
                             {(() => {
-                              const instructionsData = JSON.parse(item.instructions);
+                              const instructionsData = JSON.parse(
+                                item.instructions
+                              );
                               return instructionsData.specialInstructions ? (
                                 <div className="flex justify-between items-center">
                                   <div className="flex items-center gap-2">
                                     <span>•</span>
-                                    <span>Additional notes: {instructionsData.specialInstructions}</span>
+                                    <span>
+                                      Additional notes:{' '}
+                                      {instructionsData.specialInstructions}
+                                    </span>
                                   </div>
                                 </div>
                               ) : null;
                             })()}
                           </div>
                         )}
-
-
                       </div>
                     ))}
                   </div>
@@ -568,7 +592,9 @@ export function PaymentModal() {
                   {/* Digital Payment */}
                   <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg relative overflow-hidden border border-gray-100 group">
                     <div className="flex flex-col items-center text-center mb-3">
-                      <h3 className="text-xl sm:text-2xl font-medium mb-1">Quick Pay</h3>
+                      <h3 className="text-xl sm:text-2xl font-medium mb-1">
+                        Quick Pay
+                      </h3>
                       {/* <p className="text-gray-500 text-sm sm:text-base">
                         Scan with your phone to view order summary
                       </p> */}
@@ -577,11 +603,11 @@ export function PaymentModal() {
                     <div className="flex justify-center gap-4 mb-3">
                       <div className="flex items-center justify-center transform transition-transform group-hover:scale-105">
                         <ApplePayLogo />
-                        <span className=' font-semi text-lg'>Pay</span>
+                        <span className=" font-semi text-lg">Pay</span>
                       </div>
                       <div className="flex items-center gap-1 justify-center transform transition-transform group-hover:scale-105">
                         <GooglePayLogo />
-                        <span className=' font-semi text-lg'>Pay</span>
+                        <span className=" font-semi text-lg">Pay</span>
                       </div>
                     </div>
 
@@ -619,7 +645,9 @@ export function PaymentModal() {
                       <h3 className="text-lg font-medium mb-1">
                         Pay with Cash or Card
                       </h3>
-                      <p className="text-white/70 text-sm">Pay at the counter</p>
+                      <p className="text-white/70 text-sm">
+                        Pay at the counter
+                      </p>
                     </div>
                     <CreditCard className="w-6 h-6" />
                   </motion.button>
@@ -810,15 +838,15 @@ export function PaymentModal() {
 
                   {orderItems?.orderId ? (
                     <div
-                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors"
+                      className="flex flex-col items-center justify-center relative bg-white rounded-xl p-8 border-2 border-gray-700 w-[360px] cursor-pointer hover:border-gray-500 transition-colors mb-8"
                       onClick={handleQRCodeClick}
                     >
                       {qrCode && (
                         <>
                           <img
                             src={qrCode}
-                            alt="Order Summary QR Code"
-                            className="w-40 h-40"
+                            alt="Order Payment QR Code"
+                            className="w-48 h-48 mb-4"
                           />
                           <p className="text-sm sm:text-base font-medium text-gray-600 mt-3">
                             Scan to Pay
@@ -867,9 +895,7 @@ export function PaymentModal() {
       )}
       {step === 'cash' && (
         <div className="h-full flex flex-col">
-          <div className="p-6">
-
-          </div>
+          <div className="p-6"></div>
 
           <div className="flex-1 flex flex-col items-center justify-center px-8">
             <motion.div
@@ -964,24 +990,52 @@ export function PaymentModal() {
         </div>
       )}
       {step === 'payment_processing' && (
-        <div className="h-full flex flex-col items-center justify-center bg-black text-white">
+        <div className="h-full flex items-center justify-center bg-black text-white">
           <div className="flex flex-col items-center justify-center text-center p-8">
-            <div className="loader mb-8"></div>
-            <h2 className="text-3xl font-bold mb-4">Processing Payment...</h2>
-            <p className="text-lg text-gray-300 mb-8">
-              Please don't close this window
-            </p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-              <p className="text-sm text-gray-400">
-                Securely processing your payment
+            {/* Order Details Header */}
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold">Processing Payment</h2>
+              <p className="text-lg text-gray-300 mt-2">
+                Order #{orderItems?.orderId}
+              </p>
+              <p className="text-2xl font-semibold mt-4">
+                ${orderItems && parseFloat(orderItems.totalBill).toFixed(2)}
+              </p>
+            </div>
+
+            {/* QR Code Section */}
+            {orderItems?.orderId && qrCode ? (
+              <div className="flex flex-col items-center justify-center relative bg-white rounded-xl p-8 border-2 border-gray-700 w-[360px] cursor-pointer transition-colors mb-8">
+                <img
+                  src={qrCode}
+                  alt="Order Payment QR Code"
+                  className="w-48 h-48 mb-4"
+                />
+                <div className="text-black">
+                  <p className="font-medium mb-1">Payment in Progress</p>
+                  <p className="text-sm text-gray-500">
+                    Please keep this window open
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center p-4 text-gray-400">
+                Loading payment details...
+              </div>
+            )}
+
+            {/* Processing Indicator */}
+            <div className="mt-4 flex flex-col items-center gap-4">
+              <div className="loader"></div>
+              <p className="text-lg text-gray-300">
+                Securely processing your payment{dots}
               </p>
             </div>
           </div>
         </div>
       )}
       {step === 'payment_retry' && (
-        <div className="h-full flex flex-col items-center justify-center bg-black text-white">
+        <div className="h-full flex items-center justify-center bg-black text-white">
           <div className="flex flex-col items-center justify-center text-center p-8">
             {/* Order Details Header */}
             <div className="mb-8">
@@ -997,8 +1051,8 @@ export function PaymentModal() {
             {/* QR Code Section */}
             {orderItems?.orderId && qrCode ? (
               <div
-                className="flex flex-col items-center justify-center relative bg-white rounded-xl p-6 border-2 border-gray-700 cursor-pointer hover:border-gray-500 transition-colors"
                 onClick={handleQRCodeClick}
+                className="flex flex-col items-center justify-center relative bg-white rounded-xl p-8 border-2 border-gray-700 w-[360px] cursor-pointer hover:border-gray-500 transition-colors mb-8"
               >
                 <img
                   src={qrCode}
@@ -1018,38 +1072,36 @@ export function PaymentModal() {
               </div>
             )}
 
-            {/* Alternative Payment Options */}
+            {/* Alternative Payment Button */}
             <div className="mt-8">
-              <p className="text-gray-400 mb-4">Or pay using</p>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setStep('initial')}
-                  className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Other Payment Methods
-                </button>
-              </div>
+              <p className="text-gray-400 mb-4">Or try a different method</p>
+              <button
+                onClick={() => setStep('initial')}
+                className="px-8 py-4 bg-white text-black rounded-xl hover:bg-gray-100 transition-colors text-lg font-medium"
+              >
+                Other Payment Methods
+              </button>
             </div>
           </div>
         </div>
       )}
-      /* Add this CSS for the circular loader */
+      {/* Update the loader styles */}
       <style>
         {`
-  .loader {
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid white;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-  }
+          .loader {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+          }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`}
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
       </style>
     </div>
   );
