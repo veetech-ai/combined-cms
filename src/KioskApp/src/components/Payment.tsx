@@ -672,7 +672,7 @@ export function Payment() {
       );
 
       if (response.status === 'succeeded') {
-        // Payment successful
+        // Payment successful //Print API CAll
         setCurrentScreen('confirmation');
         if (orderId) {
           await updateOrderStatus(orderId, 'completed');

@@ -40,42 +40,98 @@ const socket = io(WS_URL, {
 });
 
 const mapToCloverOrder = (order: Order) => {
+
   // Format phone number with spaces
   const formatPhoneNumber = (phone: string) => {
-    // Remove all non-digits
     const cleaned = phone.replace(/\D/g, '');
-    // Format as +1 XXXX XXX
     return `+1 ${cleaned.slice(0, 4)} ${cleaned.slice(4)}`;
   };
 
   // Create formatted note with name and phone
-  const formattedNote = `Name: ${
+  const formattedNote = `*****Did NOT PAY***** | ${
     order.customerName
-  } | Number: ${formatPhoneNumber(order.customerPhone)}`;
+  } | ${formatPhoneNumber(order.customerPhone)}`;
+
+ 
+
+  // Transform lineItems to separate items based on quantity
+  const expandedLineItems = order.items.flatMap((item) => {
+    
+
+    let modifications: any[] = [];
+    let parsedInstructions: any = null;
+    let specialInstructions = '';
+
+    try {
+      if (item.instructions) {
+        parsedInstructions = JSON.parse(item.instructions);
+        
+        // Get special instructions if any
+        specialInstructions = parsedInstructions.specialInstructions || '';
+
+        // Handle all modifications (addons, customizations, extras) in unified format
+        if (parsedInstructions.addOns) {
+          modifications.push(...parsedInstructions.addOns.map((addon: any) => ({
+            modifier: { id: addon.id },
+            name: addon.name,
+            amount: Math.round(addon.price) // Price should be in cents
+          })));
+        }
+
+        // Add any other modifications
+        if (parsedInstructions.modifications) {
+          modifications.push(...parsedInstructions.modifications.map((mod: any) => ({
+            modifier: { id: mod.id },
+            name: mod.name,
+            amount: mod.price ? Math.round(mod.price) : 0
+          })));
+
+          
+        }
+        if (parsedInstructions.customizations) {
+          modifications.push(...parsedInstructions.customizations.map((mod: any) => ({
+            modifier: { id: mod.id },
+            name: mod.name,
+            amount: mod.price ? Math.round(mod.price) : 0
+          })));
+
+          
+        }
+        if (parsedInstructions.customization) {
+          modifications.push(...parsedInstructions.customization.map((mod: any) => ({
+            modifier: { id: mod.id },
+            name: mod.name,
+            amount: mod.price ? Math.round(mod.price) : 0
+          })));
+
+          
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing item instructions:', e);
+    }
+
+    // Create array of items based on quantity
+    return Array.from({ length: item.quantity }, () => ({
+      item: { id: item.id },
+      name: item.name.en,
+      price: Math.round(item.price * 100),
+      modifications,
+      note: specialInstructions
+    }));
+  });
 
   const cloverOrder = {
     orderCart: {
-      lineItems: order.items.map((item) => ({
-        item: { id: item.id },
-        name: item.name.en,
-        price: Math.round(item.price * 100),
-        unitQty: item.quantity,
-        note: item.instructions
-          ? JSON.parse(item.instructions).specialInstructions || ''
-          : '',
-        modifications: [
-          ...(item.addons?.map((addon) => ({
-            id: addon.id,
-            name: addon.name,
-            price: Math.round(addon.price * 100)
-          })) || [])
-        ]
-      })),
-      note: formattedNote, // Using the new formatted note
-      merchant: { id: 'PSK40XM0M8ME1' },
-      currency: 'USD',
-      state: 'OPEN'
-    }
+      groupLineItems: true,
+      lineItems: expandedLineItems,
+      note: formattedNote
+    },
+    merchant: {
+      id: 'PSK40XM0M8ME1'
+    },
+    currency: 'USD',
+    state: 'OPEN'
   };
 
   return cloverOrder;
@@ -100,7 +156,6 @@ const createCloverOrder = async (order: Order) => {
     if (!response.ok) {
       throw new Error(`Clover API error: ${response.status}`);
     }
-
     return await response.json();
   } catch (error) {
     throw error;
@@ -135,11 +190,9 @@ export function PaymentModal() {
   useEffect(() => {
     socket.connect();
     socket.on('connect', () => {
-      console.log('Connected to socket server - payment modal');
     });
 
     socket.on('orderStatusUpdated', async (data) => {
-      console.log('Order status updated:', data);
       if (data.orderId === orderItems?.orderId) {
         if (processingTimeout) {
           clearTimeout(processingTimeout);
@@ -153,7 +206,7 @@ export function PaymentModal() {
             if (orderItems) {
               await createCloverOrder(orderItems);
             }
-            
+
             // Then show confirmation screen
             if (isQRScanned) {
               setStep('qr_confirmed');
@@ -296,7 +349,6 @@ export function PaymentModal() {
   const handleSuccess = () => {
     resetTimer();
     const summaryUrl = `/kiosk/${id}/summary?orderId=${orderItems?.orderId}`;
-    console.log('Navigating to:', summaryUrl);
     navigate(summaryUrl);
   };
 
@@ -305,7 +357,7 @@ export function PaymentModal() {
     navigate(`/kiosk/${id}/details`, {
       state: {
         step: 'phone',
-        fromPayment: true  // Add this flag
+        fromPayment: true // Add this flag
       }
     });
   };
