@@ -137,6 +137,37 @@ const mapToCloverOrder = (order: Order) => {
   return cloverOrder;
 };
 
+const printCloverOrder = async (orderId: string) => {
+  try {
+    const response = await fetch(
+      `https://api.clover.com/v3/merchants/PSK40XM0M8ME1/print_event?tags.name=Online%20Menu&expand=tags%2Ccategories%2CtaxRates%2CmodifierGroups%2CitemStock%2Coptions&name=Online%C2%A0Menu`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'stage': 'DRAFT',
+          'Authorization': 'Bearer acca0c85-6c26-710f-4390-23676eae487c'
+        },
+        body: JSON.stringify({
+          orderRef: {
+            id: orderId
+          },
+          id: "ORDER"
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Print API error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to print order:', error);
+    throw error;
+  }
+};
+
 const createCloverOrder = async (order: Order) => {
   try {
     const cloverOrder = mapToCloverOrder(order);
@@ -156,7 +187,12 @@ const createCloverOrder = async (order: Order) => {
     if (!response.ok) {
       throw new Error(`Clover API error: ${response.status}`);
     }
-    return await response.json();
+    const orderResponse = await response.json();
+
+    return {
+      cloverOrderId: orderResponse.id,
+      orderResponse
+    };
   } catch (error) {
     throw error;
   }
@@ -204,7 +240,9 @@ export function PaymentModal() {
           try {
             // Create Clover order when payment is completed
             if (orderItems) {
-              await createCloverOrder(orderItems);
+              const { cloverOrderId } = await createCloverOrder(orderItems);
+              console.log(cloverOrderId, 'Print Executed remove comment')
+              //await printCloverOrder(cloverOrderId);
             }
 
             // Then show confirmation screen
@@ -437,16 +475,21 @@ export function PaymentModal() {
 
       // Create order in Clover
       try {
-        await createCloverOrder(orderItems);
+        const { cloverOrderId } = await createCloverOrder(orderItems);
+        // Print the order
+        console.log(cloverOrderId, 'Print Executed remove comment from function')
+        //await printCloverOrder(cloverOrderId);
         setStep('cash');
         resetTimer();
       } catch (cloverError) {
+        console.error('Failed to sync with POS system:', cloverError);
         toast.error('Failed to sync with POS system');
         // Still proceed to cash screen even if Clover sync fails
         setStep('cash');
         resetTimer();
       }
     } catch (error) {
+      console.error('Failed to process payment:', error);
       toast.error('Failed to process payment');
     }
   };
