@@ -48,15 +48,14 @@ const mapToCloverOrder = (order: Order) => {
   };
 
   // Create formatted note with name and phone
-  const formattedNote = `*****Did NOT PAY***** | ${
-    order.customerName
-  } | ${formatPhoneNumber(order.customerPhone)}`;
+  const formattedNote = `*****Did NOT PAY***** | ${order.customerName
+    } | ${formatPhoneNumber(order.customerPhone)}`;
 
- 
+
 
   // Transform lineItems to separate items based on quantity
   const expandedLineItems = order.items.flatMap((item) => {
-    
+
 
     let modifications: any[] = [];
     let parsedInstructions: any = null;
@@ -65,7 +64,7 @@ const mapToCloverOrder = (order: Order) => {
     try {
       if (item.instructions) {
         parsedInstructions = JSON.parse(item.instructions);
-        
+
         // Get special instructions if any
         specialInstructions = parsedInstructions.specialInstructions || '';
 
@@ -86,7 +85,7 @@ const mapToCloverOrder = (order: Order) => {
             amount: mod.price ? Math.round(mod.price) : 0
           })));
 
-          
+
         }
         if (parsedInstructions.customizations) {
           modifications.push(...parsedInstructions.customizations.map((mod: any) => ({
@@ -95,7 +94,7 @@ const mapToCloverOrder = (order: Order) => {
             amount: mod.price ? Math.round(mod.price) : 0
           })));
 
-          
+
         }
         if (parsedInstructions.customization) {
           modifications.push(...parsedInstructions.customization.map((mod: any) => ({
@@ -104,7 +103,7 @@ const mapToCloverOrder = (order: Order) => {
             amount: mod.price ? Math.round(mod.price) : 0
           })));
 
-          
+
         }
       }
     } catch (e) {
@@ -285,10 +284,12 @@ export function PaymentModal() {
   }, [orderItems?.orderId, processingTimeout, isQRScanned]);
 
   // Update QR code generation when orderId changes
+
+  const [qrLink, setQRLink] = useState<string>("")
   useEffect(() => {
     if (orderItems?.orderId) {
       const summaryUrl = `${BASE_URL}/kiosk/${id}/summary?orderId=${orderItems.orderId}`;
-
+      setQRLink(summaryUrl)
       QRCode.toDataURL(summaryUrl, {
         width: 200,
         margin: 2,
@@ -706,9 +707,11 @@ export function PaymentModal() {
                       </div>
                     </div>
 
+                    <button onClick={() => { window.open(qrLink, "_blank") }} className='bg-red-500' > Click here (testing)</button>
                     {/* QR Code Section */}
                     {orderItems?.orderId ? (
                       <div className="flex flex-col items-center justify-center relative bg-white rounded-xl p-3 sm:p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors">
+
                         {qrCode && (
                           <>
                             <img
