@@ -35,6 +35,8 @@ import { FeedbackModal } from './KioskApp/src/components/FeedbackModal';
 import Success from './KioskApp/src/components/Success';
 import { Payment } from './KioskApp/src/components/Payment';
 
+import  TestPaymentPage  from "./KioskApp/src/components/TestPay";
+
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated, token } = useAuthStore();
   const location = useLocation();
@@ -81,6 +83,7 @@ const App = () => {
             <Route path="/kiosk/:id/feedback" element={<FeedbackModal  />} />
             <Route path="/kiosk/:id/success" element={<Success  />} />
             <Route path="/kiosk/:id/summary" element={<Payment />} />
+            <Route path="/pay" element={<TestPaymentPage />} />
 
               {/* Protected Routes */}
               <Route
