@@ -40,20 +40,23 @@ const socket = io(WS_URL, {
 });
 
 const mapToCloverOrder = (order: Order) => {
+
   // Format phone number with spaces
   const formatPhoneNumber = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
     return `+1 ${cleaned.slice(0, 4)} ${cleaned.slice(4)}`;
   };
 
-  // Create formatted note with name, phone, and payment status
-  const formattedNote = `********PAID********* | ${order.customerName} | ${formatPhoneNumber(order.customerPhone)}`;
+  // Create formatted note with name and phone
+  const formattedNote = `*****Did NOT PAY***** | ${order.customerName
+    } | ${formatPhoneNumber(order.customerPhone)}`;
 
-  // For cash orders, we'll update this in the handleCashPayment function
-  const cashOrderNote = `*****DID NOT PAY***** | ${order.customerName} | ${formatPhoneNumber(order.customerPhone)}`;
+
 
   // Transform lineItems to separate items based on quantity
   const expandedLineItems = order.items.flatMap((item) => {
+
+
     let modifications: any[] = [];
     let parsedInstructions: any = null;
     let specialInstructions = '';
@@ -81,6 +84,8 @@ const mapToCloverOrder = (order: Order) => {
             name: mod.name,
             amount: mod.price ? Math.round(mod.price) : 0
           })));
+
+
         }
         if (parsedInstructions.customizations) {
           modifications.push(...parsedInstructions.customizations.map((mod: any) => ({
@@ -88,6 +93,8 @@ const mapToCloverOrder = (order: Order) => {
             name: mod.name,
             amount: mod.price ? Math.round(mod.price) : 0
           })));
+
+
         }
         if (parsedInstructions.customization) {
           modifications.push(...parsedInstructions.customization.map((mod: any) => ({
@@ -95,6 +102,8 @@ const mapToCloverOrder = (order: Order) => {
             name: mod.name,
             amount: mod.price ? Math.round(mod.price) : 0
           })));
+
+
         }
       }
     } catch (e) {
@@ -115,7 +124,7 @@ const mapToCloverOrder = (order: Order) => {
     orderCart: {
       groupLineItems: true,
       lineItems: expandedLineItems,
-      note: step === 'cash' ? cashOrderNote : formattedNote // Use different note based on payment method
+      note: formattedNote
     },
     merchant: {
       id: 'PSK40XM0M8ME1'
@@ -465,20 +474,19 @@ export function PaymentModal() {
         return;
       }
 
-      // Set step to cash first so mapToCloverOrder uses the correct note
-      setStep('cash');
-
       // Create order in Clover
       try {
         const { cloverOrderId } = await createCloverOrder(orderItems);
         // Print the order
         console.log(cloverOrderId, 'Print Executed remove comment from function')
         //await printCloverOrder(cloverOrderId);
+        setStep('cash');
         resetTimer();
       } catch (cloverError) {
         console.error('Failed to sync with POS system:', cloverError);
         toast.error('Failed to sync with POS system');
         // Still proceed to cash screen even if Clover sync fails
+        setStep('cash');
         resetTimer();
       }
     } catch (error) {
