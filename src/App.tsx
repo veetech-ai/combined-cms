@@ -35,7 +35,7 @@ import { FeedbackModal } from './KioskApp/src/components/FeedbackModal';
 import Success from './KioskApp/src/components/Success';
 import { Payment } from './KioskApp/src/components/Payment';
 
-import  TestPaymentPage  from "./KioskApp/src/components/TestPay";
+import TestPaymentPage from "./KioskApp/src/components/TestPay";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated, token } = useAuthStore();
@@ -74,16 +74,17 @@ const App = () => {
             <Routes>
               {/* Public Route */}
               <Route path="/login" element={<Login />} />
+              <Route path="/OAuthResponse " element={<div>Authorized mao ne!</div>} />
 
-            {/* <Route path="/store/:id" element={<StorePage />} /> */}
-            <Route path="/kiosk/:id" element={<WelcomeScreen />} />
-            <Route path="/kiosk/:id/*" element={<KioskApp />} />
-            <Route path="/kiosk/:id/details" element={<CustomerDetailsModal  />} />
-            <Route path="/kiosk/:id/payment" element={<PaymentModal  />} />
-            <Route path="/kiosk/:id/feedback" element={<FeedbackModal  />} />
-            <Route path="/kiosk/:id/success" element={<Success  />} />
-            <Route path="/kiosk/:id/summary" element={<Payment />} />
-            <Route path="/pay" element={<TestPaymentPage />} />
+              {/* <Route path="/store/:id" element={<StorePage />} /> */}
+              <Route path="/kiosk/:id" element={<WelcomeScreen />} />
+              <Route path="/kiosk/:id/*" element={<KioskApp />} />
+              <Route path="/kiosk/:id/details" element={<CustomerDetailsModal />} />
+              <Route path="/kiosk/:id/payment" element={<PaymentModal />} />
+              <Route path="/kiosk/:id/feedback" element={<FeedbackModal />} />
+              <Route path="/kiosk/:id/success" element={<Success />} />
+              <Route path="/kiosk/:id/summary" element={<Payment />} />
+              <Route path="/pay" element={<TestPaymentPage />} />
 
               {/* Protected Routes */}
               <Route
