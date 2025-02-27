@@ -39,24 +39,18 @@ const socket = io(WS_URL, {
   autoConnect: false
 });
 
-const mapToCloverOrder = (order: Order) => {
-
+const mapToCloverOrder = (order: Order, paymentStatus: string) => {
   // Format phone number with spaces
   const formatPhoneNumber = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
     return `+1 ${cleaned.slice(0, 4)} ${cleaned.slice(4)}`;
   };
 
-  // Create formatted note with name and phone
-  const formattedNote = `*****Did NOT PAY***** | ${order.customerName
-    } | ${formatPhoneNumber(order.customerPhone)}`;
-
-
+  // Create formatted note with payment status, name and phone
+  const formattedNote = `${paymentStatus} | ${order.customerName} | ${formatPhoneNumber(order.customerPhone)}`;
 
   // Transform lineItems to separate items based on quantity
   const expandedLineItems = order.items.flatMap((item) => {
-
-
     let modifications: any[] = [];
     let parsedInstructions: any = null;
     let specialInstructions = '';
@@ -84,8 +78,6 @@ const mapToCloverOrder = (order: Order) => {
             name: mod.name,
             amount: mod.price ? Math.round(mod.price) : 0
           })));
-
-
         }
         if (parsedInstructions.customizations) {
           modifications.push(...parsedInstructions.customizations.map((mod: any) => ({
@@ -93,8 +85,6 @@ const mapToCloverOrder = (order: Order) => {
             name: mod.name,
             amount: mod.price ? Math.round(mod.price) : 0
           })));
-
-
         }
         if (parsedInstructions.customization) {
           modifications.push(...parsedInstructions.customization.map((mod: any) => ({
@@ -102,8 +92,6 @@ const mapToCloverOrder = (order: Order) => {
             name: mod.name,
             amount: mod.price ? Math.round(mod.price) : 0
           })));
-
-
         }
       }
     } catch (e) {
@@ -167,9 +155,9 @@ const printCloverOrder = async (orderId: string) => {
   }
 };
 
-const createCloverOrder = async (order: Order) => {
+const createCloverOrder = async (order: Order, paymentStatus: string) => {
   try {
-    const cloverOrder = mapToCloverOrder(order);
+    const cloverOrder = mapToCloverOrder(order, paymentStatus);
 
     const response = await fetch(
       `https://bq2pgkc2c7.execute-api.us-east-1.amazonaws.com/atomic_orders/orders`,
@@ -237,9 +225,9 @@ export function PaymentModal() {
           setStep('payment_processing');
         } else if (data.status === 'completed') {
           try {
-            // Create Clover order when payment is completed
+            // Create Clover order when payment is completed with "PAID" status
             if (orderItems) {
-              const { cloverOrderId } = await createCloverOrder(orderItems);
+              const { cloverOrderId } = await createCloverOrder(orderItems, "*******PAID*******");
               console.log(cloverOrderId, 'Print Executed remove comment')
               //await printCloverOrder(cloverOrderId);
             }
@@ -474,9 +462,9 @@ export function PaymentModal() {
         return;
       }
 
-      // Create order in Clover
+      // Create order in Clover with "DID NOT PAY" status
       try {
-        const { cloverOrderId } = await createCloverOrder(orderItems);
+        const { cloverOrderId } = await createCloverOrder(orderItems, "*******DID NOT PAY*******");
         // Print the order
         console.log(cloverOrderId, 'Print Executed remove comment from function')
         //await printCloverOrder(cloverOrderId);
