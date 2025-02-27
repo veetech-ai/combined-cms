@@ -74,7 +74,6 @@ const App = () => {
             <Routes>
               {/* Public Route */}
               <Route path="/login" element={<Login />} />
-              <Route path="/OAuthResponse " element={<div>Authorized mao ne!</div>} />
 
               {/* <Route path="/store/:id" element={<StorePage />} /> */}
               <Route path="/kiosk/:id" element={<WelcomeScreen />} />
@@ -86,6 +85,7 @@ const App = () => {
               <Route path="/kiosk/:id/summary" element={<Payment />} />
               <Route path="/pay" element={<TestPaymentPage />} />
 
+              <Route path="/OAuthResponse" element={<div>Authenticated!</div>} />
               {/* Protected Routes */}
               <Route
                 path="/*"
