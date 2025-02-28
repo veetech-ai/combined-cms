@@ -695,7 +695,20 @@ export function PaymentModal() {
                       </div>
                     </div>
 
-                    <button onClick={() => { window.open(qrLink, "_blank") }} className='bg-red-500' > Click here (testing)</button>
+                    <button
+                      onClick={() => {
+                        if (window.Android && typeof window.Android.receiveOrderItems === "function") {
+                         
+                          window.Android.receiveOrderItems(JSON.stringify(orderItems)); // Send to Kotlin
+                        } else {
+                          console.error("Android interface not found!");
+                        }
+                      }}
+                      className="bg-red-500"
+                    >
+                      Click here (testing)
+                    </button>
+
                     {/* QR Code Section */}
                     {orderItems?.orderId ? (
                       <div className="flex flex-col items-center justify-center relative bg-white rounded-xl p-3 sm:p-4 border-2 border-gray-100 cursor-pointer hover:border-gray-200 transition-colors">
